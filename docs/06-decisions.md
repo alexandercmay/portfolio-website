@@ -173,7 +173,7 @@ been decided.
 risky under GitHub Pages is gone — Cloudflare Pages serves from the root
 regardless of domain. The only coupling is `site:` in `astro.config.mjs`
 (canonical URLs, sitemap, social image URLs), which is a one-line change and a
-rebuild. Build against the `*.pages.dev` subdomain and swap the domain in
+rebuild. Build against the `*.workers.dev` subdomain and swap the domain in
 whenever it's ready.
 
 **Criteria**, in rough priority order:

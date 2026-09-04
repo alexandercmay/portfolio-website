@@ -1,0 +1,70 @@
+---
+interface Props {
+  /** Build time, so the "last updated" claim is honest. */
+  updated?: Date
+}
+const { updated = new Date() } = Astro.props
+
+const stamp = updated.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+
+const links = [
+  { href: 'mailto:alexcmay11@gmail.com', label: 'Email' },
+  { href: 'https://github.com/alexandercmay', label: 'GitHub' },
+]
+---
+
+<footer>
+  <div class="inner">
+    <ul>
+      {
+        links.map((l) => (
+          <li>
+            <a href={l.href}>{l.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="stamp">Last updated {stamp}</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    margin-top: var(--spacing-section);
+    border-top: 1px solid color-mix(in srgb, var(--color-rule) 10%, transparent);
+  }
+
+  .inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: var(--container-content);
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+
+  ul {
+    display: flex;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  a:hover {
+    color: var(--color-accent);
+  }
+
+  .stamp {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+  }
+</style>

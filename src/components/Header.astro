@@ -1,0 +1,92 @@
+---
+import ThemeToggle from './ThemeToggle.astro'
+
+const nav = [
+  { href: '/projects', label: 'Projects' },
+  { href: '/resume', label: 'Resume' },
+  { href: '/about', label: 'About' },
+]
+
+const path = Astro.url.pathname
+---
+
+<header>
+  <div class="inner">
+    <a class="wordmark" href="/">Alexander May</a>
+
+    <nav aria-label="Main">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={
+                  path === item.href || path.startsWith(item.href + '/')
+                    ? 'page'
+                    : undefined
+                }
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+  header {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-rule) 10%, transparent);
+  }
+
+  .inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: var(--container-content);
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  nav ul {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--color-text);
+  }
+
+  @media (max-width: 30rem) {
+    .inner {
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    nav ul {
+      gap: 1rem;
+    }
+  }
+</style>

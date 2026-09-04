@@ -1,0 +1,19 @@
+---
+/** A quiet parenthetical — smaller and set apart, but still in the flow. */
+---
+
+<div class="aside"><slot /></div>
+
+<style>
+  .aside {
+    margin: 0 0 1.4rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .aside :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

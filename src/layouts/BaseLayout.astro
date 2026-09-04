@@ -1,19 +1,20 @@
 ---
 import '@/styles/global.css'
+import SEO from '@/components/SEO.astro'
+import ThemeScript from '@/components/ThemeScript.astro'
+import Header from '@/components/Header.astro'
+import Footer from '@/components/Footer.astro'
 
 interface Props {
   title: string
   description?: string
+  image?: string
+  noindex?: boolean
+  /** Full-bleed pages opt out of the default content container. */
+  wide?: boolean
 }
 
-const { title, description } = Astro.props
-const canonical = new URL(Astro.url.pathname, Astro.site).href
-
-const nav = [
-  { href: '/projects', label: 'Projects' },
-  { href: '/resume', label: 'Resume' },
-  { href: '/about', label: 'About' },
-]
+const { title, description, image, noindex, wide } = Astro.props
 ---
 
 <!doctype html>
@@ -21,46 +22,37 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    {description && <meta name="description" content={description} />}
-    <link rel="canonical" href={canonical} />
+    <ThemeScript />
+    <SEO title={title} description={description} image={image} noindex={noindex} />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Display face is above the fold in the hero, so it is preloaded.
+         Metric-matched fallback in fonts.css keeps the swap from shifting. -->
+    <link
+      rel="preload"
+      href="/fonts/fraunces-wght.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
   </head>
 
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-
-    <header>
-      <nav aria-label="Main">
-        <a href="/">Alexander May</a>
-        <ul>
-          {
-            nav.map((item) => (
-              <li>
-                <a
-                  href={item.href}
-                  aria-current={
-                    Astro.url.pathname.startsWith(item.href) ? 'page' : undefined
-                  }
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </nav>
-    </header>
-
-    <main id="main">
+    <Header />
+    <main id="main" class:list={[!wide && 'container']}>
       <slot />
     </main>
-
-    <footer>
-      <ul>
-        <li><a href="mailto:alexcmay11@gmail.com">Email</a></li>
-        <li><a href="https://github.com/alexandercmay">GitHub</a></li>
-      </ul>
-    </footer>
+    <Footer />
   </body>
 </html>
+
+<style>
+  .container {
+    max-width: var(--container-content);
+    margin: 0 auto;
+    padding: 3rem 1.5rem 0;
+  }
+</style>

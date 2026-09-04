@@ -1,0 +1,49 @@
+---
+/**
+ * Headings inside MDX bodies. Sätteri already generates the id; this adds the
+ * visible anchor that rehype-autolink-headings would have — without pulling in
+ * the legacy unified processor for it.
+ */
+interface Props {
+  as: 'h2' | 'h3' | 'h4'
+  id?: string
+}
+const { as: Tag, id } = Astro.props
+---
+
+<Tag id={id} class="h">
+  <slot />
+  {
+    id && (
+      <a class="anchor" href={`#${id}`} aria-label="Link to this section">
+        #
+      </a>
+    )
+  }
+</Tag>
+
+<style>
+  .h {
+    position: relative;
+  }
+
+  .anchor {
+    margin-left: 0.4em;
+    color: var(--color-text-subtle);
+    text-decoration: none;
+    opacity: 0;
+    font-weight: 400;
+  }
+
+  .h:hover .anchor,
+  .anchor:focus-visible {
+    opacity: 1;
+  }
+
+  /* Touch devices never hover, so don't hide it from them. */
+  @media (hover: none) {
+    .anchor {
+      opacity: 1;
+    }
+  }
+</style>

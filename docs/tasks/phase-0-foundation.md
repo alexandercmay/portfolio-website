@@ -32,7 +32,7 @@ When you do set it up (see `docs/06-decisions.md` D-011 for the hazard):
 - [x] Add integrations: `@astrojs/mdx`, `@astrojs/sitemap`, `@astrojs/react`
 - [x] Add `@tailwindcss/vite` (Tailwind v4)
 - [x] Confirm `output: 'static'` in `astro.config.mjs`
-- [x] Set `site:` to the `*.pages.dev` URL for now (feeds sitemap + canonicals);
+- [x] Set `site:` to the `*.workers.dev` URL for now (feeds sitemap + canonicals);
       swap to the real domain when D-007 closes — one line, then rebuild
 - [x] Pin Node via `.nvmrc` + `engines`
 - [x] Path alias `@/` → `src/`
@@ -70,8 +70,8 @@ Deploy command is `npx wrangler versions upload`, which needs `wrangler.jsonc`.
 - [x] Verified locally with `npx wrangler dev`: all routes 200, `/about/` 307s
       to `/about`, unknown paths serve `404.html` with a 404, hashed assets get
       `immutable`
-- [ ] Redeploy and confirm the site is **live at the `*.workers.dev` URL**
-- [ ] Test a deep link directly in a fresh tab — must not 404
+- [x] Redeploy and confirm the site is **live at the `*.workers.dev` URL**
+- [x] Test a deep link directly in a fresh tab — must not 404
 - [ ] Open a test PR and confirm a preview deployment URL is generated
 
 ## 0.5 CI
@@ -83,7 +83,7 @@ Deploy command is `npx wrangler versions upload`, which needs `wrangler.jsonc`.
 
 ## 0.6 Domain (D-007) — can happen any time before Phase 3 ships
 
-Not a blocker. Build and deploy against `*.pages.dev`; attach the real domain
+Not a blocker. Build and deploy against `*.workers.dev`; attach the real domain
 whenever you've picked one. See `docs/06-decisions.md` D-007 for naming criteria
 and candidates — short, sayable out loud, on `.dev` or `.com`.
 
@@ -96,6 +96,16 @@ and candidates — short, sayable out loud, on `.dev` or `.com`.
       and social image URLs
 
 ---
+
+**Status:** exit criteria met on the `dev` branch deploy —
+<https://dev-portfolio-website.alexcmay11.workers.dev> serves all six routes with
+zero `<script>` tags, deep links resolve, unknown paths 404 correctly, and
+hashed assets carry immutable cache headers.
+
+**Production is not deployed yet.** `portfolio-website.alexcmay11.workers.dev`
+returns 404 until `main` is deployed. Canonical tags and the sitemap already
+point there, which is correct — a preview should tell crawlers the real page is
+production, not itself.
 
 **Exit criteria:** a public URL serves a hello-world page with zero `<script>`
 tags, and deep links don't 404.

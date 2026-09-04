@@ -1,0 +1,129 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — see docs/04-design-system.md
+
+   Colors use one level of indirection so themes can swap them:
+     @theme maps Tailwind's --color-* to a raw var
+     :root and :root[data-theme='dark'] set the raw vars
+   Everything else is static and lives directly in @theme.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Type ------------------------------------------------------------------ */
+  --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-xs: 0.79rem;
+  --text-sm: 0.889rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.9rem;
+  --text-3xl: clamp(2.2rem, 4vw, 3rem);
+  /* The token that makes the editorial treatment work: a role's headline
+     accomplishment, set large enough to read as a statement. */
+  --text-deck: clamp(1.5rem, 3.2vw, 2.4rem);
+  --text-display: clamp(3rem, 8vw, 5.5rem);
+
+  --leading-tight: 1.08;
+  --leading-deck: 1.2;
+  --leading-normal: 1.6;
+
+  --tracking-display: -0.022em;
+  --tracking-tight: -0.011em;
+  --tracking-wide: 0.06em;
+
+  /* Layout ---------------------------------------------------------------- */
+  --container-prose: 68ch;
+  --container-content: 1100px;
+  --container-wide: 1400px;
+
+  /* Editorial layouts want a much larger section rhythm than app layouts. */
+  --spacing-section: clamp(4rem, 10vw, 8rem);
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  /* Motion ---------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --duration-state: 150ms;
+  --duration-enter: 250ms;
+
+  /* Semantic colors, resolved through the raw vars below ------------------ */
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-sunk: var(--c-surface-sunk);
+  --color-border: var(--c-border);
+  --color-rule: var(--c-rule);
+  --color-text: var(--c-text);
+  --color-text-muted: var(--c-text-muted);
+  --color-text-subtle: var(--c-text-subtle);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-quiet: var(--c-accent-quiet);
+}
+
+/* Light — warm paper and ink. Reads as printed rather than emitted. --------- */
+:root {
+  --c-bg: #fbfaf7;
+  --c-surface: #ffffff;
+  --c-surface-sunk: #f2f0ea;
+  --c-border: #e2ded4;
+  --c-rule: #1c1917;
+  --c-text: #1a1714; /* 15.2:1 on bg */
+  --c-text-muted: #57514a; /*  7.1:1 */
+  --c-text-subtle: #736c63; /*  4.96:1 on bg, 4.55:1 on sunk — the floor */
+  --c-accent: #9a3412; /* burnt sienna — deliberately not tech-blue */
+  --c-accent-hover: #7c2d12;
+  --c-accent-quiet: #fdf3ee;
+
+  color-scheme: light;
+}
+
+/* Dark — a redefinition of meaning, not an inversion.
+
+   Defined TWICE, deliberately:
+     1. under prefers-color-scheme, guarded by :not([data-theme='light']),
+        so a dark-mode visitor gets dark even with JavaScript disabled
+     2. under [data-theme='dark'], so an explicit choice wins in both
+        directions
+   The inline script in BaseLayout only *stamps* the choice; it is not what
+   makes dark mode work. Without it the system preference still applies —
+   the script exists to prevent a flash when the stored choice disagrees
+   with the system.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --c-bg: #12100e;
+    --c-surface: #1a1714;
+    --c-surface-sunk: #241f1a;
+    --c-border: #332d26;
+    --c-rule: #f5f2ec;
+    --c-text: #f5f2ec;
+    --c-text-muted: #b8afa4;
+    --c-text-subtle: #918880;
+    --c-accent: #f4a582;
+    --c-accent-hover: #f7bfa4;
+    --c-accent-quiet: #2a1a12;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --c-bg: #12100e;
+  --c-surface: #1a1714;
+  --c-surface-sunk: #241f1a;
+  --c-border: #332d26;
+  --c-rule: #f5f2ec;
+  --c-text: #f5f2ec;
+  --c-text-muted: #b8afa4;
+  --c-text-subtle: #918880;
+  --c-accent: #f4a582; /* lightened — the light-mode sienna fails on dark */
+  --c-accent-hover: #f7bfa4;
+  --c-accent-quiet: #2a1a12;
+
+  color-scheme: dark;
+}

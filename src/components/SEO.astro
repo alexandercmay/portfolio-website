@@ -1,0 +1,33 @@
+---
+interface Props {
+  title: string
+  description?: string
+  /** Absolute or site-relative path to a social preview image. */
+  image?: string
+  /** Page-level noindex, e.g. for anything not meant to be found. */
+  noindex?: boolean
+}
+
+const { title, description, image, noindex } = Astro.props
+
+// Astro.site is the PRODUCTION url even on branch deploys, deliberately: a
+// preview should tell crawlers the canonical page is production, not itself.
+const canonical = new URL(Astro.url.pathname, Astro.site).href
+const ogImage = image ? new URL(image, Astro.site).href : undefined
+---
+
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:url" content={canonical} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={title} />
+{description && <meta name="twitter:description" content={description} />}
+{ogImage && <meta name="twitter:image" content={ogImage} />}

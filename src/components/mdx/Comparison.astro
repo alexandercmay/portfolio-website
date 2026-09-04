@@ -1,0 +1,46 @@
+---
+/** Before/after, side by side. Collapses to stacked on narrow screens. */
+interface Props {
+  beforeLabel?: string
+  afterLabel?: string
+}
+const { beforeLabel = 'Before', afterLabel = 'After' } = Astro.props
+---
+
+<div class="comparison">
+  <div class="col">
+    <p class="label">{beforeLabel}</p>
+    <slot name="before" />
+  </div>
+  <div class="col">
+    <p class="label">{afterLabel}</p>
+    <slot name="after" />
+  </div>
+</div>
+
+<style>
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 0 0 1.6rem;
+  }
+
+  @media (max-width: 40rem) {
+    .comparison {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .label {
+    margin: 0 0 0.5rem;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  .col :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

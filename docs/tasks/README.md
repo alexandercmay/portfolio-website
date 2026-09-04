@@ -46,7 +46,7 @@ work that no longer exists.
 4. **Phase 5 is unbounded by design.** Pick one project, build one explainer,
    post an update about it. Repeat when you have a reason to.
 5. **The domain (D-007) is not decided and does not block anything.** Build
-   against the `*.pages.dev` URL; attach a real domain any time before you start
+   against the `*.workers.dev` URL; attach a real domain any time before you start
    sending the link. Swapping it is one line in `astro.config.mjs`.
 6. **Version control is deferred** — you're setting it up yourself. It's only
    required at Phase 0.4, where Cloudflare Pages needs a repo to connect to.

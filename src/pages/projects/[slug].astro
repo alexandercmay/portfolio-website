@@ -1,16 +1,80 @@
 ---
+import { render } from 'astro:content'
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import Prose from '@/components/Prose.astro'
+import Badge from '@/components/Badge.astro'
+import Chip from '@/components/Chip.astro'
+import { mdxComponents } from '@/components/mdx'
+import { getProjects, formatPeriod, formatMonth } from '@/lib/content'
+import { TECH } from '../../../content/taxonomy'
 
-// Placeholder paths until the projects collection lands in Phase 1.
-export function getStaticPaths() {
-  return [{ params: { slug: 'placeholder' } }]
+export async function getStaticPaths() {
+  const projects = await getProjects()
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }))
 }
 
-const { slug } = Astro.params
+const { project } = Astro.props
+const { Content } = await render(project)
+const d = project.data
 ---
 
-<BaseLayout title={`${slug} — Alexander May`}>
-  <h1>{slug}</h1>
-  <p>Phase 0 skeleton.</p>
-  <p><a href="/projects">All projects</a></p>
+<BaseLayout title={`${d.title} — Alexander May`} description={d.summary}>
+  <article>
+    <header>
+      <div class="meta">
+        <Badge status={d.status} />
+        <span>{formatPeriod(d.started, d.ended)}</span>
+        {d.role && <span>{d.role}</span>}
+        <span>Updated {formatMonth(d.updated)}</span>
+      </div>
+      <h1>{d.title}</h1>
+      <p class="tagline">{d.tagline}</p>
+
+      <ul class="stack">
+        {
+          (d.stack as (keyof typeof TECH)[]).map((key) => (
+            <li>
+              <Chip href={`/stack/${key}`}>{TECH[key].label}</Chip>
+            </li>
+          ))
+        }
+      </ul>
+    </header>
+
+    <Prose>
+      <Content components={mdxComponents} />
+    </Prose>
+  </article>
 </BaseLayout>
+
+<style>
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 0 0 0.5rem;
+  }
+
+  .tagline {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    max-width: 46ch;
+    margin: 0 0 1.5rem;
+  }
+
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0 0 3rem;
+    padding: 0;
+  }
+</style>

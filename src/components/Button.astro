@@ -1,0 +1,68 @@
+---
+/** Renders <a> when given href, <button> otherwise. Never the wrong element. */
+interface Props {
+  href?: string
+  variant?: 'primary' | 'secondary'
+  type?: 'button' | 'submit'
+  download?: boolean | string
+  class?: string
+}
+const {
+  href,
+  variant = 'primary',
+  type = 'button',
+  download,
+  class: className,
+} = Astro.props
+const Tag = href ? 'a' : 'button'
+---
+
+<Tag
+  class:list={['btn', variant, className]}
+  href={href}
+  download={download}
+  type={href ? undefined : type}
+>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.6em 1.1em;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-state) var(--ease-out),
+      border-color var(--duration-state) var(--ease-out),
+      color var(--duration-state) var(--ease-out);
+  }
+
+  .primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .primary:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .secondary {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .secondary:hover {
+    border-color: var(--color-text-muted);
+  }
+</style>

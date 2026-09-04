@@ -1,0 +1,73 @@
+---
+/**
+ * The only JavaScript on the site.
+ *
+ * Two jobs, deliberately in ONE inline script so the whole site ships exactly
+ * one <script> tag:
+ *
+ *   1. Stamp a stored theme choice onto <html> before first paint.
+ *   2. Handle clicks on the theme toggle, via delegation on `document`.
+ *
+ * Dark mode already works without any of this — tokens.css defines the dark
+ * palette under `prefers-color-scheme` as well as under `[data-theme]`. What
+ * this adds is honouring an explicit choice that disagrees with the system
+ * setting, without a flash.
+ *
+ * It must be inline and blocking in <head>. An external file, `defer`, or a
+ * module would all paint before executing, which is the exact bug (1) exists
+ * to prevent. Delegation is used for (2) because the header button does not
+ * exist yet when this runs.
+ *
+ * Every localStorage access is wrapped — it throws outright in some contexts
+ * (Safari private mode, cookies blocked). On failure the toggle still works
+ * for the current page; only persistence is lost.
+ */
+---
+
+<script is:inline>
+  ;(function () {
+    const root = document.documentElement
+
+    function store(theme) {
+      try {
+        localStorage.setItem('theme', theme)
+      } catch {
+        /* persistence unavailable; the in-page toggle still works */
+      }
+    }
+
+    function current() {
+      const attr = root.getAttribute('data-theme')
+      if (attr === 'dark' || attr === 'light') return attr
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+
+    function label() {
+      const next = current() === 'dark' ? 'light' : 'dark'
+      const btns = document.querySelectorAll('[data-theme-toggle]')
+      for (let i = 0; i < btns.length; i++) {
+        btns[i].setAttribute('aria-label', 'Switch to ' + next + ' theme')
+      }
+    }
+
+    // (1) Before first paint.
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored === 'dark' || stored === 'light') root.setAttribute('data-theme', stored)
+    } catch {
+      /* prefers-color-scheme handles it */
+    }
+
+    // (2) Delegated, so it survives the button not existing yet.
+    document.addEventListener('click', function (event) {
+      const toggle = event.target.closest && event.target.closest('[data-theme-toggle]')
+      if (!toggle) return
+      const next = current() === 'dark' ? 'light' : 'dark'
+      root.setAttribute('data-theme', next)
+      store(next)
+      label()
+    })
+
+    document.addEventListener('DOMContentLoaded', label)
+  })()
+</script>

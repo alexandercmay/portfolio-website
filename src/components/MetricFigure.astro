@@ -1,0 +1,31 @@
+---
+/** A number as a graphic element. Highest impact-per-pixel on the page. */
+interface Props {
+  value: string
+  label: string
+}
+const { value, label } = Astro.props
+---
+
+<div class="metric">
+  <div class="value">{value}</div>
+  <div class="label">{label}</div>
+</div>
+
+<style>
+  .value {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: var(--tracking-display);
+    color: var(--color-text);
+  }
+
+  .label {
+    margin-top: 0.5rem;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    text-wrap: pretty;
+  }
+</style>

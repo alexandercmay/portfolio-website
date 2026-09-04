@@ -48,7 +48,7 @@ printed rather than emitted.
   --color-rule:         #1c1917;   /* hairlines and structural rules */
   --color-text:         #1a1714;   /* warm near-black ink — 15.2:1 on bg */
   --color-text-muted:   #57514a;   /*  7.1:1 */
-  --color-text-subtle:  #777067;   /*  4.7:1 — the floor */
+  --color-text-subtle:  #736c63;   /*  4.7:1 — the floor */
   --color-accent:       #9a3412;   /* burnt sienna — editorial, not tech-blue */
   --color-accent-hover: #7c2d12;
   --color-accent-quiet: #fdf3ee;
@@ -69,9 +69,14 @@ printed rather than emitted.
 }
 ```
 
-Every pair meets **WCAG AA (4.5:1)** for body text. `--color-text-subtle` is the
-floor, for genuinely secondary metadata only — never for anything a recruiter
-needs to read.
+Every pair meets **WCAG AA (4.5:1)** for body text — verified in Phase 1
+against all three light grounds and all three dark ones, not just against `bg`.
+
+`--color-text-subtle` is the floor and is the pair that binds: an earlier value
+(`#777067`) cleared 4.5:1 on `bg` but landed at **4.29:1 on `surface-sunk`**,
+which is exactly the kind of failure that survives a spot-check against one
+background. Use it for genuinely secondary metadata only — never for anything a
+recruiter needs to read.
 
 The accent is deliberately not blue. Tech-blue is the default of the category;
 a warm accent supports the editorial register and is instantly more distinctive.

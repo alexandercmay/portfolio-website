@@ -233,7 +233,7 @@ not a chosen domain. Naming criteria and candidates are in `06-decisions.md`
 
 Whatever is chosen, put DNS on Cloudflare — same account as hosting, so it's one
 dashboard and automatic TLS. Until then the site is reachable at its
-`*.pages.dev` subdomain, which works fine for development and even for early
+`*.workers.dev` subdomain, which works fine for development and even for early
 sharing; it just reads worse on a resume.
 
 The only build-time coupling is `site:` in `astro.config.mjs`, which feeds

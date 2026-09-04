@@ -1,0 +1,19 @@
+---
+/** Hairline separator. Cheap, and very editorial. */
+interface Props {
+  class?: string
+}
+const { class: className } = Astro.props
+---
+
+<hr class:list={['rule', className]} />
+
+<style>
+  .rule {
+    border: 0;
+    height: 1px;
+    background: var(--color-rule);
+    opacity: 0.12;
+    margin: 0;
+  }
+</style>

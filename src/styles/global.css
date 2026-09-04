@@ -1,25 +1,122 @@
 @import 'tailwindcss';
+@import './tokens.css';
+@import './fonts.css';
 
-/* Design tokens, type scale, and the editorial system land in Phase 1.
-   What follows is the minimum needed for the skeleton to be *correct*
-   rather than styled. */
+/* ─────────────────────────────────────────────────────────────────────────
+   Base — see docs/04-design-system.md
+   ───────────────────────────────────────────────────────────────────────── */
 
-/* Skip link: offscreen until focused. This is an accessibility requirement,
-   not a design choice, so it lives here from the start. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display face carries the editorial identity: name, section headers, decks,
+   metric figures. Body text stays on the system stack. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+/* Never `outline: none` without a replacement. Visible in both themes. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Skip link: offscreen until focused. Accessibility requirement, not a
+   design choice — it has been here since the Phase 0 skeleton. */
 .skip-link {
   position: absolute;
   left: -9999px;
   top: 0;
-  padding: 0.5rem 1rem;
-  background: #fff;
-  color: #000;
   z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .skip-link:focus {
-  left: 0;
+  left: 0.5rem;
+  top: 0.5rem;
 }
 
+/* ── Scroll-driven reveal ────────────────────────────────────────────────
+   AUTHORED OPT-IN, AND IT MUST STAY THAT WAY.
+
+   Content is visible by default. The animation is added only where BOTH
+   `animation-timeline` is supported AND the reader has not asked for reduced
+   motion. Inverting this — hiding content and revealing it on scroll — makes
+   the page blank in every browser without support and for anyone with
+   reduced motion enabled. On a site whose entire purpose is being read, that
+   is a silent, catastrophic failure.
+
+   See docs/04-design-system.md, Motion.
+   ────────────────────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Global reduced-motion override — a base rule, not something remembered
+   per component. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

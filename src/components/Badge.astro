@@ -1,0 +1,40 @@
+---
+/**
+ * Project status. One of the few things that legitimately carries colour —
+ * `exploration` and `archived` let unfinished work be published honestly
+ * rather than overstated. See docs/02-content-model.md.
+ */
+export type Status = 'active' | 'shipped' | 'archived' | 'exploration'
+
+interface Props {
+  status: Status
+}
+const { status } = Astro.props
+
+const LABEL: Record<Status, string> = {
+  active: 'Active',
+  shipped: 'Shipped',
+  archived: 'Archived',
+  exploration: 'Exploration',
+}
+---
+
+<span class:list={['badge', status]}>{LABEL[status]}</span>
+
+<style>
+  .badge {
+    display: inline-block;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  .active {
+    color: var(--color-accent);
+  }
+
+  .shipped {
+    color: var(--color-text-muted);
+  }
+</style>
