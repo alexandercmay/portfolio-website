@@ -1,0 +1,124 @@
+---
+import { Image } from 'astro:assets'
+import Badge from './Badge.astro'
+import StackChips from './StackChips.astro'
+import { formatMonth } from '@/lib/content'
+import type { Project } from '@/lib/content'
+
+interface Props {
+  project: Project
+}
+const { project } = Astro.props
+const d = project.data
+---
+
+{
+  /*
+  Only the heading is a link, with an overlay stretching the hit area across
+  the card.
+
+  Wrapping the whole card in an <a> instead would give the link an accessible
+  name built from every scrap of text inside it — a screen reader would
+  announce "Shipped Updated August 2026 Retrieval Service Semantic search
+  over 12M documents..." as one link. This way the link is named "Retrieval
+  Service" and the card is still fully clickable.
+
+  The stack chips sit above the overlay so they stay independently clickable —
+  nested interactive elements would be invalid HTML.
+*/
+}
+<article class="card">
+  {
+    d.cover && (
+      <div class="cover">
+        <Image src={d.cover} alt="" width={640} height={360} />
+      </div>
+    )
+  }
+
+  <div class="meta">
+    <Badge status={d.status} />
+    <span class="updated">Updated {formatMonth(d.updated)}</span>
+  </div>
+
+  <h3>
+    <a href={`/projects/${project.id}`}>{d.title}</a>
+  </h3>
+  <p class="tagline">{d.tagline}</p>
+
+  <div class="chips">
+    <StackChips stack={d.stack} />
+  </div>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  h3 a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* Stretch the heading link across the card. */
+  h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .card:hover h3 a {
+    color: var(--color-accent);
+  }
+
+  /* Above the overlay, so chips stay clickable in their own right. */
+  .chips {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* No cover image is the normal case, not a broken one — the layout must
+     not depend on it. */
+  .cover {
+    margin-bottom: 1rem;
+  }
+
+  .cover :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .meta {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .updated {
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+  }
+
+  h3 {
+    font-size: var(--text-xl);
+    margin: 0 0 0.35rem;
+  }
+
+  .tagline {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    max-width: 44ch;
+  }
+</style>

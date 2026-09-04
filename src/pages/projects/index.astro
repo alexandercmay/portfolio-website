@@ -1,10 +1,107 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import ProjectCard from '@/components/ProjectCard.astro'
+import EmptyState from '@/components/EmptyState.astro'
+import Chip from '@/components/Chip.astro'
+import { getProjects, getStackUsage } from '@/lib/content'
+
+const projects = await getProjects()
+const stackUsage = await getStackUsage()
+
+/**
+ * Only technology links here. A status filter was dropped: with a handful of
+ * projects the whole list fits on one screen, every card already shows its
+ * status, and chips that look interactive but aren't are worse than no chips.
+ * Each link below is a real, prerendered, shareable URL — not a JS widget.
+ */
 ---
 
-<BaseLayout title="Projects — Alexander May" description="Things I have built.">
-  <h1>Projects</h1>
-  <ul>
-    <li><a href="/projects/placeholder">Placeholder project</a></li>
-  </ul>
+<BaseLayout
+  title="Projects — Alexander May"
+  description="Things I have built, with what was hard about each."
+>
+  <div class="head">
+    <h1>Projects</h1>
+    <p class="lead">What I have built, and what was actually hard about each one.</p>
+  </div>
+
+  <nav class="filters" aria-label="Browse by technology">
+    <p class="filter-label">By technology</p>
+    <ul>
+      {
+        stackUsage
+          .filter((u) => u.projects.length > 0)
+          .map((u) => (
+            <li>
+              <Chip href={`/stack/${u.key}`}>{u.label}</Chip>
+            </li>
+          ))
+      }
+    </ul>
+  </nav>
+
+  {
+    projects.length > 0 ? (
+      <div class="grid">
+        {projects.map((project) => (
+          <ProjectCard project={project} />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        message="No projects published yet."
+        actionHref="/"
+        actionLabel="Back to the homepage"
+      />
+    )
+  }
 </BaseLayout>
+
+<style>
+  .head {
+    margin-bottom: 2.5rem;
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 0 0 0.5rem;
+  }
+
+  .lead {
+    margin: 0;
+    color: var(--color-text-muted);
+    max-width: 48ch;
+  }
+
+  .filters {
+    margin-bottom: 3rem;
+  }
+
+  .filter-label {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    margin: 0 0 0.6rem;
+  }
+
+  .filters ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+  }
+
+  .filters ul:last-child {
+    margin-bottom: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 2.5rem;
+    padding-bottom: var(--spacing-section);
+  }
+</style>

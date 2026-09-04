@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, globSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { resume } from '../content/resume'
 
 /**
  * Assertions against what actually ships.
@@ -97,5 +98,122 @@ describe('the scroll-reveal utility is opt-in, not opt-out', () => {
 
   it('keeps a global reduced-motion override', () => {
     expect(css).toMatch(/prefers-reduced-motion:reduce/)
+  })
+})
+
+describe('internal links all resolve', () => {
+  /**
+   * Catches the class of bug where a page links somewhere that was never
+   * generated. This actually happened in Phase 2: SkillsComposition linked
+   * every skill to /stack/:tech, but stack pages are only generated for
+   * technologies with real usage — so seven resume skills pointed at 404s.
+   *
+   * A dead link on a portfolio is the kind of thing a reviewer clicks first.
+   */
+  const pages = globSync('**/*.html', { cwd: DIST })
+
+  function routeExists(href: string): boolean {
+    const clean = href.split('#')[0].split('?')[0].replace(/^\//, '')
+    if (clean === '') return true
+    return (
+      existsSync(join(DIST, clean, 'index.html')) ||
+      existsSync(join(DIST, `${clean}.html`)) ||
+      existsSync(join(DIST, clean))
+    )
+  }
+
+  /**
+   * Known-missing targets, each with the phase that produces it. An entry here
+   * is a recorded gap, not a hidden one — remove it when the file lands.
+   */
+  const NOT_YET_BUILT = new Set([
+    '/alexander-may-resume.pdf', // generated in Phase 4 (scripts/build-resume-pdf.ts)
+  ])
+
+  const broken: string[] = []
+  for (const p of pages) {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    const hrefs = [...html.matchAll(/href="(\/[^"]*)"/g)].map((m) => m[1])
+    for (const href of new Set(hrefs)) {
+      if (NOT_YET_BUILT.has(href)) continue
+      if (!routeExists(href)) broken.push(`${p} -> ${href}`)
+    }
+  }
+
+  it('has no links to routes that were never generated', () => {
+    expect(broken).toEqual([])
+  })
+})
+
+describe('the resume page', () => {
+  it('emits valid schema.org/Person JSON-LD', () => {
+    const html = page('resume/index.html')
+    const match = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)
+    expect(match).not.toBeNull()
+    const data = JSON.parse(match![1])
+    expect(data['@type']).toBe('Person')
+    expect(data.name).toBeTruthy()
+  })
+
+  it('shows every work entry, where the homepage shows only featured ones', () => {
+    // The non-featured role must appear on /resume and NOT on the homepage.
+    // That difference is the entire reason the two views exist.
+    const nonFeatured = resume.work.find((w) => !w.featured)
+    expect(
+      nonFeatured,
+      'fixtures need a non-featured role to exercise this',
+    ).toBeDefined()
+    expect(page('resume/index.html')).toContain(nonFeatured!.org)
+    expect(page('index.html')).not.toContain(nonFeatured!.org)
+  })
+
+  it('offers the PDF download', () => {
+    expect(page('resume/index.html')).toMatch(/href="\/alexander-may-resume\.pdf"/)
+  })
+})
+
+describe('the metrics band', () => {
+  it('renders nothing when resume.metrics is absent', () => {
+    // Padding this section with invented figures does more damage than
+    // omitting it, so absence must produce no markup at all.
+    expect(page('index.html')).not.toMatch(/class="[^"]*metrics/)
+  })
+})
+
+describe('landmark structure', () => {
+  /**
+   * Two banner landmarks on one page makes landmark navigation ambiguous for
+   * screen reader users. Chrome maps <header> to banner even inside <article>
+   * — contrary to what the HTML spec implies — so page-level heading blocks
+   * use <div>, and only the site header is a <header>.
+   *
+   * Unnamed <section> elements are also landmark noise, so every section
+   * carries an accessible name.
+   */
+  const pages = globSync('**/*.html', { cwd: DIST })
+
+  it.each(pages)('%s has exactly one <header>', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect((html.match(/<header/g) ?? []).length).toBe(1)
+  })
+
+  it.each(pages)('%s names every section', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect(html.match(/<section(?![^>]*aria-label)/g) ?? []).toHaveLength(0)
+  })
+
+  it.each(pages)('%s has exactly one <h1>', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect((html.match(/<h1[\s>]/g) ?? []).length).toBe(1)
+  })
+
+  it.each(pages)('%s starts with a skip link', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect(html).toMatch(/class="skip-link"[^>]*href="#main"/)
+  })
+
+  it.each(pages)('%s has a main landmark', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect(html).toMatch(/<main[\s>]/)
   })
 })

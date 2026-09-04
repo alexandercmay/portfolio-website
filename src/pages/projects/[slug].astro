@@ -20,7 +20,7 @@ const d = project.data
 
 <BaseLayout title={`${d.title} — Alexander May`} description={d.summary}>
   <article>
-    <header>
+    <div class="head">
       <div class="meta">
         <Badge status={d.status} />
         <span>{formatPeriod(d.started, d.ended)}</span>
@@ -39,7 +39,7 @@ const d = project.data
           ))
         }
       </ul>
-    </header>
+    </div>
 
     <Prose>
       <Content components={mdxComponents} />

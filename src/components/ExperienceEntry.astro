@@ -1,0 +1,118 @@
+---
+import Deck from './Deck.astro'
+import StackChips from './StackChips.astro'
+import { formatPeriod } from '@/lib/content'
+import type { WorkEntry } from '../../content/resume'
+
+interface Props {
+  role: WorkEntry
+  /** Featured entries lead with the headline; the full list shows highlights. */
+  variant?: 'featured' | 'full'
+}
+const { role, variant = 'featured' } = Astro.props
+---
+
+<article class:list={['entry', variant]}>
+  <div class="aside">
+    <p class="period">{formatPeriod(role.start, role.end)}</p>
+    <p class="org">{role.org}</p>
+    <p class="title">{role.title}</p>
+  </div>
+
+  <div class="body">
+    {
+      variant === 'featured' ? (
+        <Deck>{role.headline}</Deck>
+      ) : (
+        <p class="headline">{role.headline}</p>
+      )
+    }
+
+    {
+      role.highlights.length > 0 && (
+        <ul class="highlights">
+          {role.highlights.map((h) => (
+            <li>{h}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    <StackChips stack={role.stack} />
+  </div>
+</article>
+
+<style>
+  /* Asymmetric: quiet metadata in a narrow column, content in a wide one.
+     That asymmetry is a large part of what reads as designed rather than
+     stacked. */
+  .entry {
+    display: grid;
+    grid-template-columns: minmax(9rem, 1fr) minmax(0, 3fr);
+    gap: 2rem;
+    padding: 2.5rem 0;
+  }
+
+  .aside > * {
+    margin: 0;
+  }
+
+  .period {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    margin-bottom: 0.5rem;
+  }
+
+  .org {
+    font-size: var(--text-base);
+    color: var(--color-text);
+  }
+
+  .title {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .headline {
+    font-size: var(--text-lg);
+    margin: 0 0 0.75rem;
+    color: var(--color-text);
+  }
+
+  .highlights {
+    margin: 1rem 0 1.1rem;
+    padding-left: 1.1rem;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+
+  .highlights li {
+    margin-bottom: 0.4rem;
+  }
+
+  .full .highlights {
+    margin-top: 0.6rem;
+  }
+
+  @media (max-width: 46rem) {
+    .entry {
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+      padding: 2rem 0;
+    }
+
+    .aside {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .period {
+      margin-bottom: 0;
+    }
+  }
+</style>

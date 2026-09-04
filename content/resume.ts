@@ -115,6 +115,17 @@ export const resume: Resume = {
       ],
       stack: ['python', 'pytorch', 'transformers'],
     },
+    {
+      org: 'Placeholder Internship',
+      title: 'Software Engineering Intern',
+      start: new Date('2022-05-01'),
+      end: new Date('2022-08-01'),
+      headline: 'Shipped an internal dashboard three teams still use',
+      // Not featured — appears on /resume but not on the homepage, which is
+      // the distinction the two views exist to make.
+      highlights: ['Replaced a weekly manual report with a live view'],
+      stack: ['javascript', 'react', 'node'],
+    },
   ],
 
   education: [

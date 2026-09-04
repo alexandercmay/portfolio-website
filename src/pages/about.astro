@@ -1,8 +1,28 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import Prose from '@/components/Prose.astro'
+import { mdxComponents } from '@/components/mdx'
+import About, { frontmatter } from '../../content/about.mdx'
+
+/**
+ * Imported directly rather than as a collection — it is one page, and a
+ * single-entry collection would be ceremony without benefit.
+ */
 ---
 
-<BaseLayout title="About — Alexander May" description="Background and how I work.">
-  <h1>About</h1>
-  <p>Phase 0 skeleton.</p>
+<BaseLayout
+  title={`${frontmatter.title} — Alexander May`}
+  description={frontmatter.description}
+>
+  <h1>{frontmatter.title}</h1>
+  <Prose>
+    <About components={mdxComponents} />
+  </Prose>
 </BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 0 0 2rem;
+  }
+</style>

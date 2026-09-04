@@ -49,8 +49,12 @@ describe('built output ships no JavaScript', () => {
 
   it.each(pages)('%s has at most the one sanctioned inline script', (page) => {
     const html = readFileSync(join(DIST, page), 'utf8')
-    const scripts = html.match(/<script/g) ?? []
-    expect(scripts.length).toBeLessThanOrEqual(1)
+    // application/ld+json is structured data for crawlers, not executable
+    // code — it costs the visitor nothing at runtime, so it does not count
+    // against the budget. Every other script does.
+    const executable =
+      html.match(/<script(?![^>]*type=["']application\/ld\+json["'])/g) ?? []
+    expect(executable.length).toBeLessThanOrEqual(1)
   })
 
   it.each(pages)('%s ships no framework runtime', (page) => {

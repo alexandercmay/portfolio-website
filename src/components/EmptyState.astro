@@ -1,0 +1,33 @@
+---
+/** Always says what to do next, never just "no results". */
+interface Props {
+  message: string
+  actionHref?: string
+  actionLabel?: string
+}
+const { message, actionHref, actionLabel } = Astro.props
+---
+
+<p class="empty">
+  {message}
+  {
+    actionHref && actionLabel && (
+      <>
+        {' '}
+        <a href={actionHref}>{actionLabel}</a>.
+      </>
+    )
+  }
+</p>
+
+<style>
+  .empty {
+    padding: 2rem 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+</style>

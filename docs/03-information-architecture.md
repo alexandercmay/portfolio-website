@@ -164,7 +164,10 @@ presentations, no drift.**
 ## `/projects` — Index
 
 - Grid of cards, ordered `featured` → `weight` → `updated`
-- Static filter links by status and technology — real URLs, not a JS widget
+- Static filter links by technology — real URLs, not a JS widget
+- **No status filter.** Dropped in Phase 2: with a handful of projects the
+  whole list fits on one screen, every card already shows its status, and
+  chips that look interactive but aren't are worse than no chips at all.
 - Each card shows status and `updated`, so project state and recency are legible
   at a glance
 - Status visible on every card, so unfinished work reads as unfinished

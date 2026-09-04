@@ -1,11 +1,205 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import Button from '@/components/Button.astro'
+import ExperienceEntry from '@/components/ExperienceEntry.astro'
+import SkillsComposition from '@/components/SkillsComposition.astro'
+import { formatPeriod } from '@/lib/content'
+import { resume } from '../../content/resume'
+
+/**
+ * The formal, complete, document-shaped view. Deliberately NOT the editorial
+ * treatment used on the homepage — this page's job is legibility and
+ * completeness, for the recruiter who wants the document.
+ *
+ * Renders EVERY work entry with full highlights, where the homepage shows only
+ * `featured` ones. Same source object, two presentations, no drift.
+ */
+const { basics, work, education, skills } = resume
+
+const sorted = [...work].sort((a, b) => b.start.getTime() - a.start.getTime())
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: basics.name,
+  jobTitle: basics.headline,
+  email: `mailto:${basics.email}`,
+  address: { '@type': 'PostalAddress', addressLocality: basics.location },
+  url: Astro.site?.href,
+  sameAs: basics.profiles.map((p) => p.url),
+  alumniOf: education.map((e) => ({
+    '@type': 'CollegeOrUniversity',
+    name: e.institution,
+  })),
+}
 ---
 
 <BaseLayout
   title="Resume — Alexander May"
-  description="Work history, education, and skills."
+  description={`Full work history, education, and skills for ${basics.name}.`}
+  jsonLd={jsonLd}
 >
-  <h1>Resume</h1>
-  <p>Phase 0 skeleton.</p>
+  <div class="head">
+    <div>
+      <h1>{basics.name}</h1>
+      <p class="headline">{basics.headline}</p>
+      <p class="contact">
+        {basics.location} &middot;
+        <a href={`mailto:${basics.email}`}>{basics.email}</a>
+        {
+          basics.profiles.map((p) => (
+            <>
+              &middot; <a href={p.url}>{p.network}</a>
+            </>
+          ))
+        }
+      </p>
+    </div>
+
+    <div class="download">
+      <Button href="/alexander-may-resume.pdf" download>Download PDF</Button>
+    </div>
+  </div>
+
+  <section class="band" aria-labelledby="experience">
+    <h2 id="experience">Experience</h2>
+    {sorted.map((role) => <ExperienceEntry role={role} variant="full" />)}
+  </section>
+
+  <section class="band" aria-labelledby="education">
+    <h2 id="education">Education</h2>
+    {
+      education.map((e) => (
+        <div class="edu">
+          <p class="period">{formatPeriod(e.start, e.end)}</p>
+          <div>
+            <p class="institution">{e.institution}</p>
+            <p class="degree">
+              {e.degree} {e.field}
+            </p>
+            {e.highlights.length > 0 && (
+              <ul>
+                {e.highlights.map((h) => (
+                  <li>{h}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ))
+    }
+  </section>
+
+  <section class="band" aria-labelledby="skills">
+    <h2 id="skills">Skills</h2>
+    <SkillsComposition groups={skills} />
+  </section>
 </BaseLayout>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  h1 {
+    font-size: var(--text-3xl);
+    margin: 0 0 0.35rem;
+  }
+
+  .headline {
+    margin: 0 0 0.6rem;
+    color: var(--color-text);
+  }
+
+  .contact {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .contact a {
+    color: var(--color-text-muted);
+  }
+
+  .contact a:hover {
+    color: var(--color-accent);
+  }
+
+  .band {
+    padding: 2rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .band:last-child {
+    padding-bottom: var(--spacing-section);
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    margin: 0 0 0.5rem;
+  }
+
+  .edu {
+    display: grid;
+    grid-template-columns: minmax(9rem, 1fr) minmax(0, 3fr);
+    gap: 2rem;
+    padding: 1.5rem 0;
+  }
+
+  .edu p {
+    margin: 0;
+  }
+
+  .period {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  .degree {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 46rem) {
+    .edu {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  }
+
+  /* ── Print ────────────────────────────────────────────────────────────
+     Cmd-P should produce something clean for anyone who does that instead
+     of using the download button. Phase 4 generates the PDF from this. */
+  @media print {
+    .download {
+      display: none;
+    }
+
+    .band {
+      padding: 0.8rem 0;
+      break-inside: avoid;
+    }
+
+    h1 {
+      font-size: 20pt;
+    }
+
+    h2 {
+      font-size: 12pt;
+    }
+
+    /* Show link targets, since a printed link is otherwise dead. */
+    .contact a::after {
+      content: ' (' attr(href) ')';
+      font-size: 8pt;
+      color: #555;
+    }
+  }
+</style>

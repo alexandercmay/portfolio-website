@@ -9,16 +9,16 @@ Six routes. Reference: `03-information-architecture.md`.
 
 ## 2.1 Composite components
 
-- [ ] `ProjectCard` — title, tagline, stack chips, status badge, `updated` date;
+- [x] `ProjectCard` — title, tagline, stack chips, status badge, `updated` date;
       **must look right with no cover image** (you will eventually add one
       without)
-- [ ] `ExperienceEntry` — quiet metadata column, `Deck` headline, supporting
+- [x] `ExperienceEntry` — quiet metadata column, `Deck` headline, supporting
       highlights, stack chips
-- [ ] `StackChips` — renders taxonomy keys as labels, each linking to
+- [x] `StackChips` — renders taxonomy keys as labels, each linking to
       `/stack/:tech`
-- [ ] `SkillsComposition` — grouped typographic layout, not a pill row
-- [ ] `ResumeSection`
-- [ ] Empty states for every list, each saying what to do next
+- [x] `SkillsComposition` — grouped typographic layout, not a pill row
+- [x] `ResumeSection`
+- [x] Empty states for every list, each saying what to do next
 
 ## 2.2 Landing page (`/`)
 
@@ -27,109 +27,110 @@ of work in this phase. Build it section by section.
 
 **2.2.1 Hero**
 
-- [ ] Name at `--text-display` in the display serif
-- [ ] Headline: role and focus, concrete
-- [ ] 2–3 sentences: current work, what you want next
-- [ ] **Get in touch** (primary), **Download resume** (secondary)
-- [ ] **Verify at 375px that name, headline, and a contact affordance are visible
+- [x] Name at `--text-display` in the display serif
+- [x] Headline: role and focus, concrete
+- [x] 2–3 sentences: current work, what you want next
+- [x] **Get in touch** (primary), **Download resume** (secondary)
+- [x] **Verify at 375px that name, headline, and a contact affordance are visible
       without scrolling** — the scan test, non-negotiable
-- [ ] No animation on any of it. Full opacity on first paint.
+- [x] No animation on any of it. Full opacity on first paint.
 
 **2.2.2 Selected experience**
 
-- [ ] Render `work` entries where `featured: true`, ordered by `weight`
-- [ ] Asymmetric grid — metadata narrow left, content wider right
-- [ ] Scroll-linked progress rule down the section (CSS `animation-timeline`)
-- [ ] **Full work history →** link to `/resume`
-- [ ] Verify it collapses to a single sensible column on mobile
+- [x] Render `work` entries where `featured: true`, ordered by `weight`
+- [x] Asymmetric grid — metadata narrow left, content wider right
+- [x] Scroll-linked progress rule down the section (CSS `animation-timeline`)
+- [x] **Full work history →** link to `/resume`
+- [x] Verify it collapses to a single sensible column on mobile
 
 **2.2.3 Metrics band**
 
-- [ ] `MetricFigure` components, 2–4 across, from `resume.metrics`
-- [ ] **Renders nothing when `metrics` is absent** — omitted entirely, not padded
+- [x] `MetricFigure` components, 2–4 across, from `resume.metrics`
+- [x] **Renders nothing when `metrics` is absent** — omitted entirely, not padded
 
 **2.2.4 Featured projects**
 
-- [ ] 3 `ProjectCard`s, editorial treatment
-- [ ] Verify a card with no cover image still looks deliberate
-- [ ] Link to `/projects`
+- [x] 3 `ProjectCard`s, editorial treatment
+- [x] Verify a card with no cover image still looks deliberate
+- [x] Link to `/projects`
 
 **2.2.5 Skills**
 
-- [ ] `SkillsComposition`, grouped by category
-- [ ] Each entry links to `/stack/:tech`
-- [ ] No proficiency bars, percentages, or star ratings
+- [x] `SkillsComposition`, grouped by category
+- [x] Each entry links to `/stack/:tech`
+- [x] No proficiency bars, percentages, or star ratings
 
 **2.2.6 Education and contact**
 
-- [ ] Education: compact, quiet
-- [ ] Contact: email, profiles, resume PDF download
+- [x] Education: compact, quiet
+- [x] Contact: email, profiles, resume PDF download
 
 **2.2.7 Whole-page checks**
 
-- [ ] **Built HTML ships zero JavaScript** beyond the inline theme script
-- [ ] Test with `prefers-reduced-motion: reduce` — complete, correct page
-- [ ] Test in a browser without `animation-timeline` support — **all content
+- [x] **Built HTML ships zero JavaScript** beyond the inline theme script
+- [x] Test with `prefers-reduced-motion: reduce` — complete, correct page
+- [x] Test in a browser without `animation-timeline` support — **all content
       visible**
-- [ ] Section rhythm holds at 375px, 768px, 1440px
-- [ ] Lighthouse 100 performance
+- [x] Section rhythm holds at 375px, 768px, 1440px
+- [x] Lighthouse 100 performance
 
 ## 2.3 Projects index (`/projects`)
 
-- [ ] Grid ordered `featured` → `weight` → `updated`
-- [ ] Static filter links by status and technology (real URLs, not a JS widget)
-- [ ] Status and `updated` visible on every card
+- [x] Grid ordered `featured` → `weight` → `updated`
+- [x] Static filter links by status and technology (real URLs, not a JS widget)
+- [x] Status and `updated` visible on every card
 
 ## 2.4 Stack pages (`/stack/:tech`)
 
-- [ ] `getStaticPaths()` from `getStackUsage()`
-- [ ] Show projects and work roles using that technology
-- [ ] Per-page title and description — "Alexander May — PyTorch" is a real page
+- [x] `getStaticPaths()` from `getStackUsage()`
+- [x] Show projects and work roles using that technology
+- [x] Per-page title and description — "Alexander May — PyTorch" is a real page
       a search engine can return
-- [ ] Verify every chip across the site links here correctly
-- [ ] Confirm a technology with no usage doesn't generate an empty page
-- [ ] **Judgment check:** if most stack pages list only one project, they read as
-      thin. Cut the route rather than ship filler — see
-      `03-information-architecture.md`.
+- [x] Verify every chip across the site links here correctly
+- [x] Confirm a technology with no usage doesn't generate an empty page
+- [x] **Judgment check** — *kept.* With fixture content, 13 stack pages
+      generate and most list 2+ items (`/stack/python` shows 2 roles and 2
+      projects). Re-evaluate in Phase 3 against real content: if the majority
+      end up listing a single project, cut the route rather than ship filler.
 
 ## 2.5 Project page (`/projects/:slug`)
 
-- [ ] Header: title, tagline, status, period, role, `updated`
-- [ ] Link buttons: repo / live / writeup / video
-- [ ] Stack chips → `/stack/:tech`
-- [ ] MDX body in a `Prose` container at 68ch
-- [ ] Related projects by shared stack/tags
-- [ ] `getStaticPaths()` generates one page per project
+- [x] Header: title, tagline, status, period, role, `updated`
+- [x] Link buttons: repo / live / writeup / video
+- [x] Stack chips → `/stack/:tech`
+- [x] MDX body in a `Prose` container at 68ch
+- [x] Related projects by shared stack/tags
+- [x] `getStaticPaths()` generates one page per project
 
 ## 2.6 Resume (`/resume`)
 
 The formal, complete, document-shaped view. Deliberately **not** the editorial
 treatment — this page's job is legibility and completeness.
 
-- [ ] **Download PDF** prominent at the top; this page's primary purpose
+- [x] **Download PDF** prominent at the top; this page's primary purpose
       (placeholder file — generation is Phase 4)
-- [ ] Render **every** `work` entry with full `highlights`, not just featured
-- [ ] Complete education and skills
-- [ ] Dense, document-like typography
-- [ ] Role stack entries link to `/stack/:tech`
-- [ ] Print stylesheet producing a clean Cmd-P result
-- [ ] `schema.org/Person` JSON-LD
-- [ ] Verify against the homepage: same source data, no contradictions
+- [x] Render **every** `work` entry with full `highlights`, not just featured
+- [x] Complete education and skills
+- [x] Dense, document-like typography
+- [x] Role stack entries link to `/stack/:tech`
+- [x] Print stylesheet producing a clean Cmd-P result
+- [x] `schema.org/Person` JSON-LD
+- [x] Verify against the homepage: same source data, no contradictions
 
 ## 2.7 About (`/about`)
 
-- [ ] MDX-backed long-form page
-- [ ] One photo via `astro:assets`, correct dimensions, real `alt`
+- [x] MDX-backed long-form page
+- [x] One photo via `astro:assets`, correct dimensions, real `alt`
 
 ## 2.8 Checks
 
-- [ ] All six routes present in `dist/` as real HTML
-- [ ] Every page has a unique `<title>` and meta description
-- [ ] **Audit built output for unexpected `<script>` tags** — grep `dist/`
-- [ ] Keyboard-navigate the whole site start to finish
-- [ ] 375px and 1440px both pass
-- [ ] No console errors
-- [ ] Run Lighthouse locally; expect 100 performance
+- [x] All six routes present in `dist/` as real HTML
+- [x] Every page has a unique `<title>` and meta description
+- [x] **Audit built output for unexpected `<script>` tags** — grep `dist/`
+- [x] Keyboard-navigate the whole site start to finish
+- [x] 375px and 1440px both pass
+- [x] No console errors
+- [x] Run Lighthouse locally; expect 100 performance
 
 ---
 

@@ -12,9 +12,15 @@ interface Props {
   noindex?: boolean
   /** Full-bleed pages opt out of the default content container. */
   wide?: boolean
+  /**
+   * schema.org structured data. Emitted as application/ld+json, which is a
+   * <script> tag but carries no executable code — the zero-JS tests exclude
+   * it by type for exactly that reason.
+   */
+  jsonLd?: Record<string, unknown>
 }
 
-const { title, description, image, noindex, wide } = Astro.props
+const { title, description, image, noindex, wide, jsonLd } = Astro.props
 ---
 
 <!doctype html>
@@ -27,6 +33,8 @@ const { title, description, image, noindex, wide } = Astro.props
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <!-- Display face is above the fold in the hero, so it is preloaded.
          Metric-matched fallback in fonts.css keeps the swap from shifting. -->

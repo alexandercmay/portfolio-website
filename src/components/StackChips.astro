@@ -1,0 +1,32 @@
+---
+import Chip from './Chip.astro'
+import { TECH, type TechKey } from '../../content/taxonomy'
+
+interface Props {
+  stack: readonly string[]
+  /** Chips link to /stack/:tech by default; set false for a static list. */
+  link?: boolean
+}
+const { stack, link = true } = Astro.props
+---
+
+<ul class="stack">
+  {
+    (stack as TechKey[]).map((key) => (
+      <li>
+        <Chip href={link ? `/stack/${key}` : undefined}>{TECH[key].label}</Chip>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+</style>
