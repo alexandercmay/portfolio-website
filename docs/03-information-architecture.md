@@ -1,178 +1,220 @@
 # Information Architecture
 
+## The core shift
+
+**The site conveys the resume. It does not point at one.**
+
+A PDF is a commodity — every applicant has one, and it looks like every other
+one. If someone is already on your site, rendering a document-shaped page wastes
+the visit. The homepage should communicate everything a resume communicates, as
+a designed editorial experience that a document cannot be.
+
+The formal resume still exists, at `/resume`, with the PDF. It is one click away
+for the recruiter who specifically wants it. It is not the destination the site
+pushes you toward.
+
+**The one thing this does not change:** the first screen must still answer *who
+is this, what do they do, how do I reach them.* Editorial treatment is about how
+that information is presented, never about delaying it.
+
 ## Routes
 
-All routes are prerendered to static HTML. The **JS** column is the JavaScript
-actually shipped to the browser — the number that determines how the site feels.
+Nine routes became six. All prerendered to static HTML.
 
 | Route | Page | JS shipped |
 | --- | --- | --- |
-| `/` | Landing | **0KB** |
-| `/resume` | Resume | **0KB** |
+| `/` | Landing — the resume, told well | **0KB** |
+| `/resume` | Formal resume + PDF | **0KB** |
 | `/projects` | Project index | **0KB** |
-| `/projects/:slug` | Project detail | 0KB, unless it contains an island |
-| `/projects/:slug/:update` | Single update | **0KB** |
-| `/feed` | All updates merged | **0KB** |
-| `/about` | About | **0KB** |
+| `/projects/:slug` | Project page | 0KB, unless it contains an island |
 | `/stack/:tech` | Everything using one technology | **0KB** |
-| `/search` | Search | Pagefind, loaded on interaction |
+| `/about` | About | **0KB** |
 | `/404` | Not found | **0KB** |
 
-The only pages that ship JavaScript are ones with a deliberate interactive
-island, plus a ~1KB inline theme script. Nothing else has a runtime.
+Removed with the devlog: `/feed` and `/projects/:slug/:update`.
 
-Deliberately absent: tag archives, year archives, pagination. Content volume
-doesn't justify them, and each is another page that can look empty.
+Scroll-driven motion on the landing page is **CSS, not JavaScript** — see
+`04-design-system.md`. The editorial treatment costs nothing at runtime.
 
-### `/stack/:tech` — a consequence of the framework choice
+### On search
 
-In the React plan, "show me everything you built with PyTorch" was a client-side
-filter: shipped JS, needed URL state syncing, needed an ARIA live region for
-result counts.
+**Deferred, and possibly never.** With well under a dozen pages, browsing beats
+searching, and a search box on a small site reads as scaffolding for content
+that isn't there.
 
-With Astro it is a **prerendered page per technology**, generated from
-`getStackUsage()` via `getStaticPaths()`. It loads instantly, works without JS,
-is independently linkable and shareable, and gets its own social preview. It is
-also better for SEO — a real page for "Alexander May PyTorch" rather than a query
-string.
+If the project count ever justifies it, Pagefind indexes the built HTML as a
+post-build step — no content-model change, no schema migration. It's a Phase 4
+addition whenever it earns its place, not now.
 
-This is the single clearest example of the stack change making the site both
-simpler and better. Every technology chip on the site links here.
+### On `/stack/:tech`
+
+Kept, because it answers the exact question a hiring manager has — *have they
+actually used the thing in my job description?* — and it's nearly free: one
+template plus `getStaticPaths()` over `getStackUsage()`, from data that already
+exists.
+
+Worth restating: this is a **static page**, not a client-side filter. It loads
+instantly, works without JS, is linkable, and gives you a real page for
+"Alexander May PyTorch" in search results.
+
+Cut it if you end up with so few projects that the pages read as thin — a stack
+page listing one project is worse than no stack page.
 
 ## Navigation
 
-Persistent header, five items maximum:
-
 ```
-Alexander May          Projects   Writing   Resume   About      [Search]
+Alexander May          Projects   Resume   About
 ```
 
-- "Writing" points at `/feed` — friendlier than "Feed" or "Blog," and it doesn't
-  promise a publishing cadence.
-- Resume is a link, not a dropdown. The PDF download lives on the resume page so
-  there is one obvious path.
-- Search is a link to `/search`, not a modal. A modal requires JS on every page
-  to open it; a link costs nothing. `⌘K` can be added later as a progressive
-  enhancement, but not at the cost of the zero-JS property.
+Three items. "Writing" is gone with the feed; search is gone with the search
+page. A three-item nav is a feature, not a compromise — there's no ambiguity
+about where anything lives.
 
-Footer: email, GitHub, LinkedIn, and a "last updated" date derived from the most
-recent content commit at build time. That timestamp is a quiet but real signal —
-a portfolio obviously updated last week reads very differently from one last
-touched two years ago.
+"Resume" means "the formal document version," not "the main content." The
+homepage's own calls to action are **Get in touch** (primary) and **Download
+resume, PDF** (secondary), so the recruiter who wants the file gets it
+immediately without the site being organized around delivering it.
 
-## Page specifications
+Footer: email, GitHub, LinkedIn, and a build-time "last updated" date.
 
-### `/` — Landing
+## `/` — Landing
 
-The most important page. Its entire job is to answer, above the fold: *who is
-this, what do they do, are they relevant to my open role, where is the resume.*
+The centerpiece. A long-form editorial page carrying curated resume content.
 
-**Above the fold — no scroll, on a phone:**
+### 1. Hero
 
-- Name
-- One-line headline: role and focus. Concrete. "Full-stack engineer building AI
-  systems" beats "passionate technologist."
-- Two or three sentences of context: what you're working on, what you want next
-- Two actions: **View resume** (primary), **Email me** (secondary)
-- Nothing else. No hero animation, no scroll indicator, no typewriter effect.
+- Name in large display type
+- Headline: role and focus, concrete — "Full-stack engineer building AI systems"
+- Two or three sentences: what you're working on, what you want next
+- **Get in touch** (primary), **Download resume** (secondary)
 
-**Below the fold:**
+**Constraint:** name, headline, and a contact affordance visible without
+scrolling at 375px. This is the scan test and it's non-negotiable. Everything
+below can be as expressive as it wants.
 
-1. **Featured projects** — three cards: title, tagline, stack chips, status
-2. **Recent activity** — four most recent feed entries, compact. The "actively
-   building" signal.
-3. **Skills at a glance** — grouped chips, each linking to `/stack/:tech`. Not
-   proficiency bars; nobody believes them, and "React 90%" invites a question you
-   can't answer.
-4. Footer
+No animation gating the hero. Full opacity on first paint.
 
-Ships zero JavaScript. Should be a single HTML document plus CSS and one image.
+### 2. Selected experience
 
-### `/resume`
+The heart of the page, and where the editorial treatment earns its keep.
 
-Two audiences: recruiters want the PDF to attach to an application; hiring
-managers read the web version.
+Two or three roles flagged `featured` in `content/resume.ts`, each rendered as
+an editorial entry rather than a resume bullet list:
 
-- **Download PDF** button, prominent, at the top. Generated at build time from
-  `content/resume.ts`, so it cannot drift from the web version.
-- Work, education, skills, selected projects — all from the same data
-- Each role's stack entries link to `/stack/:tech`
-- Print stylesheet, so Cmd-P produces something clean for anyone who does that
-  instead of using the button
+- Org, title, dates — structural metadata, small and quiet
+- **A headline accomplishment set large**, magazine-deck style. The `headline`
+  field. The one sentence you'd want read if they read nothing else.
+- Two or three supporting highlights at body size
+- Stack chips linking to `/stack/:tech`
+
+A scroll-linked progress rule runs down the section, connecting entries into a
+visible career line. Pure CSS, progressively enhanced.
+
+Ends with: **Full work history →** `/resume`.
+
+### 3. Metrics band *(only if you have real numbers)*
+
+Two to four figures in large display type. Editorial design uses numbers as
+graphic elements, and this is the highest-impact-per-pixel section on the page.
+
+**Omitted entirely when `resume.metrics` is absent.** Better no metrics than
+padded ones.
+
+### 4. Featured projects
+
+Three cards: cover image if present, title, tagline, stack, status, `updated`
+date. Must look right with no cover image. Links to `/projects`.
+
+### 5. Skills
+
+Grouped by category, set as a typographic composition rather than a row of
+uniform pills. Each entry links to `/stack/:tech`.
+
+No proficiency bars, percentages, or star ratings. Nobody believes them, and
+"React 90%" invites a question you can't answer.
+
+### 6. Education
+
+Compact. Institution, degree, field, dates, one or two highlights. Quiet
+treatment — expected content, not a selling point, unless it genuinely is.
+
+### 7. Contact
+
+Email, profile links, resume PDF download. The page ends with a clear way to act.
+
+*(The old "Recent activity" section is gone with the feed. Recency now comes
+from `updated` dates on the project cards above.)*
+
+## `/resume` — Formal resume
+
+For the recruiter who wants the document, and anyone wanting the complete
+history rather than the curated view.
+
+- **Download PDF** prominent at the top — this page's primary purpose
+- Complete work history, every role
+- Full education and skills
+- Dense, document-like typography. Deliberately *not* the editorial treatment;
+  this page's job is legibility and completeness.
+- Print stylesheet so Cmd-P produces something clean
 - `schema.org/Person` JSON-LD
 
-### `/projects` — Index
+Renders from the same `content/resume.ts` as the homepage. **One source, two
+presentations, no drift.**
 
-- Grid of cards: `featured` and `weight` first, then most recently updated
-- Static filter links by status and by technology (each a real URL), rather than
-  a JS filter widget
-- Every card shows status, so unfinished work is legible as unfinished
+## `/projects` — Index
 
-### `/projects/:slug` — Project detail
+- Grid of cards, ordered `featured` → `weight` → `updated`
+- Static filter links by status and technology — real URLs, not a JS widget
+- Each card shows status and `updated`, so project state and recency are legible
+  at a glance
+- Status visible on every card, so unfinished work reads as unfinished
 
-Where a hiring manager decides whether you can build things. Top to bottom:
+## `/projects/:slug` — Project page
 
-1. **Title, tagline, status, period, role**
+A single standalone page per project. Where a hiring manager decides whether you
+can build things.
+
+1. **Title, tagline, status, period, role**, and `updated`
 2. **Links**: repo, live, writeup, video — as buttons, immediately visible
 3. **Stack chips** → `/stack/:tech`
-4. **Overview** (the MDX body). The substantive part: what the problem was, what
-   you built, what was hard, what you'd do differently. MDX means a diagram or an
-   explainer can sit inline exactly where it explains something.
-5. **Devlog** — this project's updates, reverse-chronological. Show the five most
-   recent with a link to the rest; a long devlog must not bury the overview.
-   Uses `<details>` for expansion — no JavaScript.
-6. **Related projects** — shared stack or tags
+4. **Body** (MDX): what the problem was, what you built, what was genuinely
+   hard, what the results were, what you'd do differently
+5. **Related projects** — shared stack or tags
 
-This is the only route that may ship JavaScript, and only when the MDX body
-contains an island.
+When you make progress, you edit this page and bump `updated`. There is no
+separate update to write, no second place for the information to live, and no
+feed that can go stale.
 
-### `/projects/:slug/:update` — Single update
+The only route that may ship JavaScript, and only when its MDX contains an
+island.
 
-A focused page for one update, so updates are individually linkable and get their
-own social preview. Header links back to the parent project; footer has prev/next
-within that project.
+## `/stack/:tech`
 
-### `/feed` — Writing
+Prerendered page per technology from `getStackUsage()`. Shows every project and
+work role using it. Own title and description — "Alexander May — PyTorch" is a
+real page a search engine can return.
 
-All updates and standalone posts, merged, reverse-chronological.
+## `/about`
 
-- Each entry: date, project badge (if any), title, summary, styled by `kind`
-- Static filter links by project and tag
-- The one page where visual density is the goal — it should read like a log, not
-  a magazine
-
-### `/about`
-
-Longer-form: background, how you got here, how you work, what you want next. One
-photo. Read by people who already like your work and are deciding whether they'd
-want to work with you — so it should sound like a person, not a LinkedIn summary.
-
-### `/search`
-
-Pagefind over the built HTML. The index is fetched only when someone types, so
-the page costs nothing until used. Because Pagefind indexes rendered output, it
-covers MDX bodies and component content automatically.
-
-### `/404`
-
-Useful links, not a dead end. Cloudflare Pages serves this automatically.
+Background, path, how you work, what you want next. One photo. Read by people
+who already like your work and are deciding whether they'd want you on their
+team — so it should sound like a person, not a LinkedIn summary.
 
 ## URL rules
 
 - Lowercase, hyphenated. No dates in project URLs — dates go stale, slugs
   shouldn't.
-- **Slugs are permanent once published.** If one must change, add a redirect in
-  `public/_redirects`. A link in an application you sent three weeks ago must
-  not 404.
+- **Slugs are permanent once published.** If one must change, add a
+  `public/_redirects` entry — a link in an application you sent three weeks ago
+  must not 404.
 - Every page sets its own `<title>`, meta description, canonical URL, and social
   image.
 
 ## Social previews
 
-Generated at build time with `astro-og-canvas` (or Satori) — one image per
-project, update, and top-level page, rendered from title and tagline against a
-consistent template. 1200×630.
+Generated at build time, 1200×630, one per project and top-level page, from
+title and tagline against a consistent template.
 
-This matters more than it sounds. Your link gets pasted into Slack channels and
-ATS notes by people deciding whether to talk to you. A missing or generic preview
-wastes the one piece of visual real estate you get in someone else's inbox.
+Your link gets pasted into Slack channels and ATS notes by people deciding
+whether to talk to you. A missing preview wastes the one piece of visual real
+estate you get in someone else's inbox.

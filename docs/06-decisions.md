@@ -16,8 +16,8 @@ what changed.
 
 **Status:** accepted
 
-**Decision:** Astro 5, static output, with React available for the rare
-interactive island.
+**Decision:** Astro (7.x as installed), static output, with React available for
+the rare interactive island.
 
 **Reasoning:** the stated priorities are presentation, performance, and easy
 updates, with interactivity confined to deep pages. Astro ships **zero JS by
@@ -79,22 +79,48 @@ thing most worth protecting).
 
 ---
 
-### D-004 — Projects own their updates; the feed is derived
+### D-004 — One page per project, edited in place *(reversed)*
 
-**Status:** accepted, unchanged
+**Status:** accepted — reverses the original decision
 
-An update is an MDX file in a project's `updates/` folder. The project page
-renders its own updates as a devlog; `/feed` merges everything across projects
-plus standalone posts.
+**Decision:** each project is a **single standalone `.mdx` file**. Progress is
+recorded by editing that file and bumping an `updated` date. There are no
+updates, no posts, no feed.
 
-This answers your original question — site-wide blog or per-project? — with
-both, from one authoring action, no duplication, no decision at write time. It
-also solves blog staleness: a general blog needs a reason to write, a project
-devlog always has one.
+**What was reversed:** the original D-004 had projects owning a stream of dated
+update files, merged into a site-wide `/feed` — a devlog. It was designed to
+solve blog staleness, on the theory that a project devlog always has a reason to
+write where a general blog doesn't.
 
-**Rejected:** site-wide only (project pages go stale); per-project only (no
-single "actively building" signal); one changelog file per project (no individual
-URLs, no social previews, can't link one update in an application).
+**Why that was wrong:** it optimized the wrong failure. A devlog only pays for
+its machinery if it's *actually maintained*, and an abandoned feed showing three
+entries from eight months ago signals abandonment **more strongly** than having
+no feed at all. The original design added a visible, dated commitment during a
+period — a job search — when the maintainer has the least spare attention.
+
+Editing a page in place has no staleness failure mode. The page describes what's
+true now. There is nothing to fall behind.
+
+**What this deletes:** the `updates` and `posts` collections, `/feed`,
+`/projects/:slug/:update`, prev/next navigation, the `kind` field, the RSS feed,
+the `new:update` scaffolder, and the `DevlogList` / `UpdateEntry` / `FeedList`
+components. Nine routes became six.
+
+**What replaces the recency signal:** an `updated` date in project frontmatter,
+shown on cards and project pages and driving default ordering. Same signal,
+none of the machinery. Kept manual rather than derived from git mtime, so a
+formatting pass doesn't claim you updated every project.
+
+**Cost, stated honestly:** you lose per-update permalinks — you can no longer
+link one specific piece of progress in an application, and updates get no
+individual social previews. That's a real loss, and it's the right trade at this
+scale: it only mattered if you were publishing often enough for individual
+updates to be worth citing, which is the assumption that didn't hold.
+
+**Revisit if:** you find yourself repeatedly wanting to link one specific update,
+or you're actually writing at a cadence that would sustain a feed. Adding an
+`updates` collection later is additive — it doesn't invalidate the project
+pages.
 
 ---
 
@@ -187,26 +213,46 @@ domain name.
 
 ---
 
-### D-008 — AI demos: recorded runs by default, live only if earned *(revised)*
+### D-008 — No live LLM API calls, at all *(revised twice)*
 
-**Status:** accepted
+**Status:** accepted, closed
 
-**What changed:** the original decision said live LLM calls were effectively
-impossible, because GitHub Pages cannot hold a secret. Cloudflare Pages Functions
-can, so live demos are now possible.
+**Decision:** the site never calls an LLM API. AI work is presented through
+clearly-labeled recordings of real runs, or through models running in the
+visitor's browser. **No serverless proxy, no `functions/` directory, no
+server-side code anywhere in this project.**
 
-**Decision, nonetheless:** default to clearly-labeled recorded runs, or
-in-browser models where they fit. A serverless proxy is permitted for **at most
-one** flagship project, and only with rate limiting, a hard spend cap, locked
-CORS, and a static fallback.
+**History:** the original entry ruled live calls out on technical grounds —
+GitHub Pages can't hold a secret. The move to Cloudflare Pages removed that
+constraint, so the entry was revised to permit one proxied demo under strict
+conditions. It is now ruled out again on better grounds, which are not
+technical:
 
-**Reasoning:** the constraint moved from "impossible" to "possible with
-discipline," but the risk calculus didn't change much. A live demo that is down
-or drained during someone's review window turns your best project into a broken
-page. Recorded runs also *show more* — the reasoning trace, not just the output.
+1. **It demonstrates almost nothing.** A hosted wrapper around someone else's
+   API is the single most common thing on portfolio sites right now. Every other
+   candidate for the same roles has built one. Reviewers discount them on sight,
+   so the demo consumes your best page real estate and returns nothing.
+2. **It creates real downside.** Cost exposure, an abuse surface that bots
+   *will* find, and a page that can be broken during the exact window someone is
+   evaluating you — the one failure this project can't afford.
 
-**Rejected:** visitor-supplied API keys (nobody will, and it models bad practice
-publicly); any key obfuscation (not a control).
+Asymmetric in the wrong direction: no upside, live downside.
+
+**What replaces it is stronger.** Recorded runs expose the reasoning trace, tool
+calls, and intermediate state that a live black-box demo hides. An in-browser
+model demonstrates quantization, runtime constraints, and memory budgeting —
+actual engineering an API call never touches.
+
+**Also rejected:** visitor-supplied API keys (nobody will, and it models bad
+practice publicly); any form of key obfuscation (not a control).
+
+**Second-order benefit:** this closes the project's entire server-side surface.
+No secrets to manage, no spend cap to monitor, no rate limiting to implement, no
+runtime failure mode. The site is a directory of files.
+
+**Revisit if:** you build something where live inference is genuinely the point
+and *the model is yours*. Even then, host that service separately and link to it
+— don't couple your portfolio's uptime to it.
 
 ---
 
@@ -215,9 +261,9 @@ publicly); any key obfuscation (not a control).
 **Status:** accepted, unchanged
 
 A form needs an endpoint that can fail silently — the worst failure mode
-available, since you'd never know a message was lost. Cloudflare Functions could
-now host one, which makes this a real choice rather than a constraint; the answer
-is still no, for the same reason.
+available, since you'd never know a message was lost. Consistent with D-008,
+there is no server-side code in this project, so there is nowhere to host one
+anyway.
 
 ---
 
@@ -281,17 +327,84 @@ doesn't hold.
   renewal, firewall, monitoring — during a job search, which is when your time is
   worth the most.
 
-What a VPS actually offers is server-side secrets and server-side compute. Pages
-Functions provide both, without the box.
+What a VPS actually offers is server-side secrets and server-side compute — and
+per D-008, this project deliberately uses neither. The case for it is now empty.
 
 **Reasoning for Cloudflare Pages over GitHub Pages:** same CDN-delivered static
-model, but adds server-side capability when needed (Functions), real cache-header
-control (`_headers`), per-PR preview deployments, and built-in cookieless
-analytics. Same setup effort, no ceiling.
+model, plus real cache-header control (`_headers`), per-PR preview deployments,
+and built-in cookieless analytics that add zero client JavaScript. Same setup
+effort.
+
+Note that D-008 removed the *strongest* original argument for Cloudflare
+(serverless functions for a live demo). The remaining reasons are smaller but
+still real, and there's no cost to them — so the choice stands. If Cloudflare
+ever becomes annoying, GitHub Pages is now a perfectly adequate fallback rather
+than a downgrade.
 
 **Revisit if:** something genuinely needs a long-running process — a persistent
 websocket, a background worker, a GPU. Nothing planned does. If it ever happens,
 host *that service* separately and keep the site on the CDN.
+
+---
+
+### D-013 — The site is the resume; editorial direction
+
+**Status:** accepted
+
+**Decision:** the homepage carries curated resume content — selected experience
+with headline accomplishments, skills, education, featured projects — presented
+as an editorial layout. `/resume` becomes the formal, complete, document-shaped
+view plus the PDF, reachable in one click but not the site's destination.
+
+Visual register: **editorial / magazine.** Large display type, generous
+whitespace, a strong asymmetric grid, restrained warm palette, one self-hosted
+display serif, accomplishments set as decks.
+
+**Reasoning:**
+
+- A resume PDF is a commodity. If someone is already on your site, rendering a
+  document-shaped page wastes the visit — they could have read the PDF.
+- The terminal-inflected dark developer aesthetic is the default of this
+  category, so it blends in. Editorial stands out by contrast, ages better, and
+  reads as judgment rather than novelty.
+- Setting each role's strongest sentence at ~3× body size applies real pressure
+  to the writing. A vague accomplishment looks worse set large than it does
+  buried in a bullet list, which is a feature.
+
+**Why this doesn't cost performance:** the treatment is typography, layout, and
+CSS scroll-driven animation (`animation-timeline`). No JavaScript, no library,
+no IntersectionObserver. Total cost: one subsetted variable font, ~40KB. Budgets
+moved fonts 30 → 45KB and LCP 1.2 → 1.4s. **The JavaScript budget did not move.**
+
+**Constraints that survive it:**
+
+- The first screen still answers who / what / how to reach, at 375px, with no
+  animation in front of it.
+- Scroll animations are opt-in via `@supports` + `prefers-reduced-motion`, with
+  content visible by default. Authored backwards, they make the site's content
+  invisible in unsupported browsers — a silent, catastrophic failure on a site
+  whose purpose is being read.
+- Scroll-*jacking* remains banned. Scroll-*linked* animation is permitted. The
+  first takes control from the reader; the second responds to them.
+
+**Curation costs nothing.** Both views render from `content/resume.ts`; a
+`featured` flag selects the homepage subset. There is no second copy of your work
+history, so the curated homepage carries no maintenance burden — a concern raised
+when choosing this option, and resolved by D-005 already being in place.
+
+**Rejected:**
+
+- *Resume-first homepage (the previous plan).* Terse landing page whose main job
+  was routing to `/resume`. Made the site a delivery mechanism for a document
+  rather than a thing worth visiting.
+- *Full history on the homepage.* Complete, but a long scroll dilutes the
+  editorial impact and buries the projects.
+- *Technical/terminal aesthetic.* Most common look in the category; blends in.
+- *Bold graphic / high contrast.* Most memorable when it lands, reads as trying
+  too hard when it doesn't. Higher variance than this situation warrants.
+
+**Revisit if:** the homepage tests poorly with an actual reader — specifically,
+if someone can't tell you what you do after fifteen seconds on it.
 
 ---
 
@@ -302,4 +415,5 @@ host *that service* separately and keep the site on the CDN.
 | D-007 | Domain name | Before launch |
 | D-005 | PDF generation mechanism | Phase 4 |
 | — | Which 3 projects are featured | Phase 3 |
-| — | Display typeface for headings (or none) | Phase 1 |
+| — | Which display serif (Fraunces / Instrument Serif / Newsreader) | Phase 1 |
+| — | Which 2–3 roles are `featured` on the homepage | Phase 3 |

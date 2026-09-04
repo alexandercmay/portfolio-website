@@ -25,7 +25,7 @@ Runs against a site that is already live and already being sent to people.
 
 - [ ] Add `astro-og-canvas` (or a Satori-based generator)
 - [ ] One template: name, page title, tagline, consistent branding
-- [ ] Generate per project, per update, and per top-level page
+- [ ] Generate per project and per top-level page
 - [ ] 1200×630, under ~200KB each
 - [ ] Wire `og:image` / `twitter:image` per route in the `SEO` component
 - [ ] Test real unfurls: paste URLs into Slack, iMessage, LinkedIn
@@ -37,8 +37,6 @@ Runs against a site that is already live and already being sent to people.
 - [ ] `@astrojs/sitemap` configured and verified
 - [ ] `robots.txt` pointing at the sitemap
 - [ ] `schema.org/Person` JSON-LD on `/` and `/resume`
-- [ ] `schema.org/BlogPosting` on update pages
-- [ ] RSS feed at `/rss.xml` via `@astrojs/rss`
 - [ ] Favicon set + `site.webmanifest` + apple-touch-icon
 - [ ] Verify with Google Rich Results Test
 - [ ] Verify `/stack/:tech` pages have distinct, useful titles and descriptions
@@ -57,8 +55,8 @@ Runs against a site that is already live and already being sent to people.
 
 - [ ] Lighthouse CI with the budgets from `04-design-system.md`; fail on
       regression
-- [ ] **Automated check that surface pages ship no unexpected JavaScript** — a
-      test asserting `<script>` count in `dist/index.html`, `resume/`, `feed/`.
+- [ ] **Automated check that pages ship no unexpected JavaScript** — a test
+      asserting `<script>` count in `dist/index.html`, `resume/`, `projects/`.
       This is the property most likely to erode silently.
 - [ ] Confirm all images go through `astro:assets` with modern formats and
       explicit dimensions

@@ -1,44 +1,84 @@
 # Phase 2 — Pages
 
-**Goal:** every route renders real data from the content collections. Still using
+**Goal:** every route renders real data from the content collection. Still using
 fixture content.
 
-Reference: `03-information-architecture.md`.
+Six routes. Reference: `03-information-architecture.md`.
 
 ---
 
 ## 2.1 Composite components
 
-- [ ] `ProjectCard` — title, tagline, stack chips, status badge; **must look
-      right with no cover image** (you will eventually post one without)
-- [ ] `UpdateEntry` — date, project badge, title, summary; visual weight varies
-      by `kind`
-- [ ] `FeedList`
+- [ ] `ProjectCard` — title, tagline, stack chips, status badge, `updated` date;
+      **must look right with no cover image** (you will eventually add one
+      without)
+- [ ] `ExperienceEntry` — quiet metadata column, `Deck` headline, supporting
+      highlights, stack chips
 - [ ] `StackChips` — renders taxonomy keys as labels, each linking to
       `/stack/:tech`
-- [ ] `DevlogList` — reverse-chronological, `<details>` for "show all", no JS
-- [ ] `ResumeSection`, `Timeline`
+- [ ] `SkillsComposition` — grouped typographic layout, not a pill row
+- [ ] `ResumeSection`
 - [ ] Empty states for every list, each saying what to do next
 
 ## 2.2 Landing page (`/`)
 
-The 30-second page. Build it deliberately.
+The centerpiece — the resume told as an editorial page. The largest single piece
+of work in this phase. Build it section by section.
 
-- [ ] Above the fold: name, one-line headline, 2–3 sentences, **View resume** +
-      **Email me**
-- [ ] Verify on a 375px viewport that all of the above fits without scrolling
-- [ ] Featured projects — 3 cards
-- [ ] Recent activity — 4 most recent feed entries
-- [ ] Skills at a glance — grouped chips linking to `/stack/:tech`
-- [ ] No animation, no hero image, nothing delaying first paint
-- [ ] **Verify the built HTML ships zero JavaScript** beyond the inline theme
-      script
+**2.2.1 Hero**
+
+- [ ] Name at `--text-display` in the display serif
+- [ ] Headline: role and focus, concrete
+- [ ] 2–3 sentences: current work, what you want next
+- [ ] **Get in touch** (primary), **Download resume** (secondary)
+- [ ] **Verify at 375px that name, headline, and a contact affordance are visible
+      without scrolling** — the scan test, non-negotiable
+- [ ] No animation on any of it. Full opacity on first paint.
+
+**2.2.2 Selected experience**
+
+- [ ] Render `work` entries where `featured: true`, ordered by `weight`
+- [ ] Asymmetric grid — metadata narrow left, content wider right
+- [ ] Scroll-linked progress rule down the section (CSS `animation-timeline`)
+- [ ] **Full work history →** link to `/resume`
+- [ ] Verify it collapses to a single sensible column on mobile
+
+**2.2.3 Metrics band**
+
+- [ ] `MetricFigure` components, 2–4 across, from `resume.metrics`
+- [ ] **Renders nothing when `metrics` is absent** — omitted entirely, not padded
+
+**2.2.4 Featured projects**
+
+- [ ] 3 `ProjectCard`s, editorial treatment
+- [ ] Verify a card with no cover image still looks deliberate
+- [ ] Link to `/projects`
+
+**2.2.5 Skills**
+
+- [ ] `SkillsComposition`, grouped by category
+- [ ] Each entry links to `/stack/:tech`
+- [ ] No proficiency bars, percentages, or star ratings
+
+**2.2.6 Education and contact**
+
+- [ ] Education: compact, quiet
+- [ ] Contact: email, profiles, resume PDF download
+
+**2.2.7 Whole-page checks**
+
+- [ ] **Built HTML ships zero JavaScript** beyond the inline theme script
+- [ ] Test with `prefers-reduced-motion: reduce` — complete, correct page
+- [ ] Test in a browser without `animation-timeline` support — **all content
+      visible**
+- [ ] Section rhythm holds at 375px, 768px, 1440px
+- [ ] Lighthouse 100 performance
 
 ## 2.3 Projects index (`/projects`)
 
-- [ ] Grid: `featured` + `weight` first, then most recently updated
+- [ ] Grid ordered `featured` → `weight` → `updated`
 - [ ] Static filter links by status and technology (real URLs, not a JS widget)
-- [ ] Status visible on every card, so unfinished work reads as unfinished
+- [ ] Status and `updated` visible on every card
 
 ## 2.4 Stack pages (`/stack/:tech`)
 
@@ -48,65 +88,51 @@ The 30-second page. Build it deliberately.
       a search engine can return
 - [ ] Verify every chip across the site links here correctly
 - [ ] Confirm a technology with no usage doesn't generate an empty page
+- [ ] **Judgment check:** if most stack pages list only one project, they read as
+      thin. Cut the route rather than ship filler — see
+      `03-information-architecture.md`.
 
-## 2.5 Project detail (`/projects/:slug`)
+## 2.5 Project page (`/projects/:slug`)
 
-- [ ] Header: title, tagline, status, period, role
+- [ ] Header: title, tagline, status, period, role, `updated`
 - [ ] Link buttons: repo / live / writeup / video
 - [ ] Stack chips → `/stack/:tech`
-- [ ] MDX overview in a `Prose` container at 68ch
-- [ ] Devlog section via `DevlogList`
+- [ ] MDX body in a `Prose` container at 68ch
 - [ ] Related projects by shared stack/tags
 - [ ] `getStaticPaths()` generates one page per project
 
-## 2.6 Update detail (`/projects/:slug/:update`)
+## 2.6 Resume (`/resume`)
 
-- [ ] Breadcrumb back to the parent project
-- [ ] Date, kind, title, MDX body
-- [ ] Prev/next within the same project
-- [ ] `getStaticPaths()` generates one page per update
+The formal, complete, document-shaped view. Deliberately **not** the editorial
+treatment — this page's job is legibility and completeness.
 
-## 2.7 Feed (`/feed`)
-
-- [ ] Updates + standalone posts, merged, date-descending
-- [ ] Project badge on entries belonging to a project
-- [ ] Static filter links by project and tag
-- [ ] Dense, log-like layout — the one page where density is the goal
-
-## 2.8 Resume (`/resume`)
-
-- [ ] Render from `content/resume.ts`
-- [ ] **Download PDF** button at the top (placeholder file; generation is Phase 4)
-- [ ] Work, education, skills, selected projects
+- [ ] **Download PDF** prominent at the top; this page's primary purpose
+      (placeholder file — generation is Phase 4)
+- [ ] Render **every** `work` entry with full `highlights`, not just featured
+- [ ] Complete education and skills
+- [ ] Dense, document-like typography
 - [ ] Role stack entries link to `/stack/:tech`
 - [ ] Print stylesheet producing a clean Cmd-P result
 - [ ] `schema.org/Person` JSON-LD
+- [ ] Verify against the homepage: same source data, no contradictions
 
-## 2.9 About (`/about`)
+## 2.7 About (`/about`)
 
 - [ ] MDX-backed long-form page
 - [ ] One photo via `astro:assets`, correct dimensions, real `alt`
 
-## 2.10 Search (`/search`)
+## 2.8 Checks
 
-- [ ] Add Pagefind as a post-build step over `dist/`
-- [ ] Search page mounting the Pagefind UI
-- [ ] Style it to match the design system
-- [ ] Verify content inside MDX components is indexed
-- [ ] Confirm nothing loads until the user interacts
-
-## 2.11 Checks
-
-- [ ] Every route present in `dist/` as real HTML
+- [ ] All six routes present in `dist/` as real HTML
 - [ ] Every page has a unique `<title>` and meta description
 - [ ] **Audit built output for unexpected `<script>` tags** — grep `dist/`
 - [ ] Keyboard-navigate the whole site start to finish
 - [ ] 375px and 1440px both pass
 - [ ] No console errors
-- [ ] Run Lighthouse locally; expect 100 performance on the static pages
+- [ ] Run Lighthouse locally; expect 100 performance
 
 ---
 
-**Exit criteria:** all routes render fixture content correctly, stack pages and
-search work, the site is keyboard-navigable, and the surface pages ship no
-JavaScript. Ready for real content.
+**Exit criteria:** all routes render fixture content correctly, stack pages work,
+the site is keyboard-navigable, and every page ships no JavaScript. Ready for
+real content.

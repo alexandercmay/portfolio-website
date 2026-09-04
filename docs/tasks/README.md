@@ -3,7 +3,7 @@
 Phased task lists derived from the specs in `../`. Each phase ends in a state
 where the site still works.
 
-**Stack:** Astro 5 (static output) + React islands where earned, deployed to
+**Stack:** Astro 7 (static output) + React islands where earned, deployed to
 Cloudflare Pages. See `../06-decisions.md` D-001 and D-012 for why.
 
 ## Sequencing principle
@@ -21,8 +21,8 @@ page than against a finished site.
 | Phase | Outcome | Est. |
 | --- | --- | --- |
 | [0 — Foundation](phase-0-foundation.md) | Repo, Astro scaffold, hello world **live on the internet** | ~2–3 hours |
-| [1 — Design & content](phase-1-pipeline.md) | Tokens, components, content collections | ~1 day |
-| [2 — Pages](phase-2-pages.md) | Every route rendering real data | ~1 day |
+| [1 — Design & content](phase-1-pipeline.md) | Tokens, editorial primitives, content collection | ~1 day |
+| [2 — Pages](phase-2-pages.md) | All six routes rendering real data | ~1 day |
 | [3 — Real content](phase-3-content.md) | Actual resume + 3 project pages written | ~1–2 days (writing) |
 | **🎯 Milestone: sendable** | **The URL can go in an application** | |
 | [4 — Polish](phase-4-polish.md) | PDF, social images, SEO, a11y, perf enforcement | ~1 day |

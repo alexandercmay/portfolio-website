@@ -4,7 +4,7 @@
 pages genuinely better.
 
 Unbounded and ongoing by design. Everything here happens on a live, already
-sendable site. Pick one item, ship it, post a devlog update about it.
+sendable site. Pick one item, ship it, bump that project's `updated` date.
 
 Reference: `05-interactivity.md` — every item must pass the four-part bar, and
 interactivity is permitted **only on individual project pages, below the
@@ -56,12 +56,13 @@ Requirements:
 
 ## 5.3 AI demo
 
-Read `05-interactivity.md` fully first. **Never ship an API key in the bundle.**
+Read `05-interactivity.md` fully first. **The site never calls an LLM API** —
+neither from the browser nor through a serverless proxy (D-008).
 
 ### Option A — recorded runs (recommended default)
 
 - [ ] Capture real runs offline: inputs, outputs, latencies, intermediate steps
-- [ ] Commit as JSON under the project's folder
+- [ ] Commit as JSON under `content/projects/assets/<slug>/`
 - [ ] Scenario picker + a stepper through the trace
 - [ ] For agent systems, expose the **reasoning trace and tool calls** — the part
       a live black-box demo can't show, and the interesting part
@@ -76,22 +77,20 @@ Read `05-interactivity.md` fully first. **Never ship an API key in the bundle.**
 - [ ] Mobile fallback — many devices can't run it; say so rather than hanging
 - [ ] Verify it doesn't affect any other page's bundle
 
-### Option C — Cloudflare Pages Function proxy (at most one project)
+### Not an option
 
-- [ ] Function in `functions/` holding the key as an environment variable
-- [ ] **Hard monthly spend cap on the provider account — set this first**
-- [ ] Per-IP rate limiting
-- [ ] CORS locked to your origin
-- [ ] Small `max_tokens`, cheap model, fixed system prompt
-- [ ] Graceful "demo temporarily unavailable" state
-- [ ] Static fallback so the project page is never broken when the Function is
-- [ ] Verify the key never appears in the built output: grep `dist/`
-- [ ] Monitor spend — assume bots will find it
+Proxying an LLM API through a serverless function is **ruled out** (D-008). It
+demonstrates little, and it adds cost exposure and a page that can break while
+someone is evaluating you. There is no `functions/` directory in this project.
+
+If you catch yourself reaching for it, the underlying want is usually "this
+project needs a demo" — and the answer is Option A. A recording of the real
+system, showing its intermediate state, is more informative than a live wrapper.
 
 ## 5.4 Ongoing
 
-- [ ] Post a devlog update whenever you ship something — the whole point of the
-      content model
+- [ ] Edit the relevant project page and bump `updated` whenever you ship
+      something — that's the whole update workflow
 - [ ] Add an interactive to a second project only after the first pattern proves
       itself
 - [ ] Keep `resume.ts` current; the PDF regenerates automatically
@@ -106,4 +105,4 @@ A half-finished demo on a site that isn't deployed is worth nothing during a job
 search. A live site with a strong resume and three well-written project pages is
 worth a great deal.
 
-Ship first. Deepen in public.
+Ship first. Deepen later.

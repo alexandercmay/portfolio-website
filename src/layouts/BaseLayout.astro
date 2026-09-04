@@ -1,0 +1,66 @@
+---
+import '@/styles/global.css'
+
+interface Props {
+  title: string
+  description?: string
+}
+
+const { title, description } = Astro.props
+const canonical = new URL(Astro.url.pathname, Astro.site).href
+
+const nav = [
+  { href: '/projects', label: 'Projects' },
+  { href: '/resume', label: 'Resume' },
+  { href: '/about', label: 'About' },
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header>
+      <nav aria-label="Main">
+        <a href="/">Alexander May</a>
+        <ul>
+          {
+            nav.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={
+                    Astro.url.pathname.startsWith(item.href) ? 'page' : undefined
+                  }
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer>
+      <ul>
+        <li><a href="mailto:alexcmay11@gmail.com">Email</a></li>
+        <li><a href="https://github.com/alexandercmay">GitHub</a></li>
+      </ul>
+    </footer>
+  </body>
+</html>

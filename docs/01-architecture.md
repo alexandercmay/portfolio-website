@@ -2,17 +2,20 @@
 
 ## Stack
 
+Versions below are what is actually installed, verified at Phase 0. The planning
+docs originally assumed Astro 5; Astro 7 was current at scaffold time and the
+APIs this plan depends on — content collections, the `glob()` loader,
+`astro:assets`, `output: 'static'` — are all present and unchanged.
+
 | Concern | Choice | Why |
 | --- | --- | --- |
-| Framework | **Astro 5** | Ships zero JS by default. Islands architecture matches the layering in `00-overview.md` structurally. |
+| Framework | **Astro 7** | Ships zero JS by default. Islands architecture matches the layering in `00-overview.md` structurally. |
 | Interactive islands | **React 19** (via `@astrojs/react`) | Only loaded on pages that use one. Keeps existing React knowledge useful. |
 | Language | **TypeScript**, strict | Content collections are typed end-to-end from schema to template. |
 | Content | **MDX** (`@astrojs/mdx`) + Content Collections | Markdown prose with components inline where they explain something. |
 | Styling | **Tailwind CSS v4** (`@tailwindcss/vite`) | CSS-first config. Astro scopes component styles by default. |
 | Images | **`astro:assets`** | Built-in optimization, responsive `srcset`, automatic width/height. |
-| Search | **Pagefind** | Indexes the *built HTML* post-build. No hand-maintained index. |
-| Hosting | **Cloudflare Pages** | Global CDN, free, zero maintenance, Workers available. |
-| Serverless (optional) | **Cloudflare Pages Functions** | Only if a live demo ever needs a server-side secret. |
+| Hosting | **Cloudflare Pages** | Global CDN, free, zero maintenance, real cache headers, preview deploys. |
 | Testing | **Vitest** + **Playwright** | Unit for content logic, smoke for built routes. |
 
 ### Why Astro
@@ -40,13 +43,13 @@ Both are worth it here.
 ## Rendering model
 
 **`output: 'static'`.** Every page is prerendered at build time. There is no
-server-rendered page, no runtime data fetching, no adapter needed for the site
-itself.
+server-rendered page, no runtime data fetching, no adapter, and **no
+server-side code of any kind**.
 
-Any serverless endpoint lives in a top-level `functions/` directory as a
-Cloudflare Pages Function, entirely separate from the Astro build. This keeps
-the Astro configuration trivially simple and guarantees that **no page can fail
-to render because a function is down**.
+The site is a directory of HTML, CSS, images, and a small amount of JavaScript
+on a handful of deep pages. There is no backend to deploy, monitor, secure, or
+pay for, and no request-time failure mode: once a build succeeds, every page
+works until you change it.
 
 ## Repository layout
 
@@ -55,14 +58,12 @@ to render because a function is down**.
 ├── .github/workflows/ci.yml   # typecheck, lint, test, a11y, Lighthouse budget
 ├── docs/                      # these planning documents
 ├── content/                   # ALL authored content — see 02-content-model.md
-│   ├── projects/
-│   ├── posts/
+│   ├── projects/          # one .mdx per project
 │   └── resume.ts
-├── functions/                 # optional Cloudflare Pages Functions
 ├── public/                    # copied verbatim: favicon, robots.txt
 ├── scripts/
 │   ├── build-resume-pdf.ts
-│   └── new-update.ts
+│   └── new-project.ts
 ├── src/
 │   ├── content.config.ts      # collection definitions (Zod schemas)
 │   ├── components/            # .astro presentational components
@@ -76,9 +77,9 @@ to render because a function is down**.
 
 Two boundaries are strict:
 
-1. **`content/` vs `src/`** — you should never open `src/` to publish an update.
-   If a routine content change requires a code change, the content model is
-   wrong.
+1. **`content/` vs `src/`** — you should never open `src/` to add or update a
+   project. If a routine content change requires a code change, the content
+   model is wrong.
 2. **`components/` vs `islands/`** — anything in `islands/` ships JavaScript to
    the browser. Keeping them in a separate directory makes the cost visible.
    A component only moves there when it has earned it per `05-interactivity.md`.
@@ -94,7 +95,7 @@ import { defineCollection, z } from 'astro:content'
 import { glob } from 'astro/loaders'
 
 const projects = defineCollection({
-  loader: glob({ pattern: '**/index.mdx', base: './content/projects' }),
+  loader: glob({ pattern: '*.mdx', base: './content/projects' }),
   schema: ({ image }) => z.object({ /* see 02-content-model.md */ }),
 })
 ```
@@ -114,12 +115,11 @@ getCollection('projects') — fully typed
 Astro builds one static HTML file per route
       │
       ▼
-Pagefind indexes the built HTML → search index
+dist/ — one HTML file per route, ready to serve
 ```
 
 Frontmatter validation is not optional and not something to remember to run —
-an invalid file fails the build with the file path and the failing field. This
-matters when publishing quickly.
+an invalid file fails the build with the file path and the failing field.
 
 ## Routing
 
@@ -129,10 +129,9 @@ File-based, in `src/pages/`:
 index.astro                          → /
 resume.astro                         → /resume
 about.astro                          → /about
-feed.astro                           → /feed
 projects/index.astro                 → /projects
 projects/[slug].astro                → /projects/:slug
-projects/[slug]/[update].astro       → /projects/:slug/:update
+stack/[tech].astro                   → /stack/:tech
 404.astro                            → /404
 ```
 
@@ -143,18 +142,14 @@ collections. Every route becomes a real file in `dist/`.
 means `base` is `/`. The env-var indirection planned for GitHub Pages project
 sites is no longer needed — one class of bug removed by the hosting change.
 
-## Search
+## Search — deferred
 
-**Pagefind**, run as a post-build step against `dist/`. It indexes the actual
-rendered HTML, which means:
+There is no search. With well under a dozen pages, browsing beats searching, and
+a search box on a small site reads as scaffolding for content that isn't there.
 
-- No hand-maintained search index that can drift from content
-- Content inside MDX components is indexed automatically
-- The index is chunked and fetched on demand — nothing loads until a user
-  searches
-
-This replaces the MiniSearch + build-script approach from the earlier plan and
-removes a whole script from `scripts/`.
+If the project count ever justifies it, **Pagefind** indexes the built HTML as a
+post-build step — no content-model change, no schema migration, no hand-built
+index. It's a drop-in addition whenever it earns its place.
 
 ## Deployment
 
@@ -217,25 +212,26 @@ that banner would sit between a recruiter and your resume.
 
 ## Security and privacy posture
 
-- **No secrets in the repo.** The build output is public and the repo is public.
-  Secrets belong in Cloudflare's environment variables, readable only by a Pages
-  Function at runtime — never in the site bundle.
+- **No secrets, anywhere.** There is no server-side component, so there is
+  nowhere a secret could safely live and nothing that needs one. Any credential
+  in this repo is simply a mistake.
 - **No personal address or phone number** in source or content. Email only.
 - Contact is a `mailto:` link, not a form. A form needs an endpoint that can
   fail silently, which is the worst failure mode available — you'd never know a
   message was lost.
 - Third-party embeds load lazily and only on pages that need them.
 
-## The AI-demo constraint, revisited
+## No live LLM API calls
 
-The earlier plan treated live LLM calls as effectively impossible, because
-GitHub Pages offers no server-side secret storage.
+Decided and closed: the site never calls an LLM API. Not from the browser
+(impossible without publishing a key) and not through a serverless proxy (which
+Cloudflare would technically allow).
 
-**Cloudflare Pages Functions change this.** A Worker can hold an API key in an
-environment variable and proxy requests, with the key never reaching the browser.
-This is the clean solution the previous plan lacked.
+The reasoning is in `06-decisions.md` D-008, and it is not primarily technical:
+a hosted wrapper around someone else's API demonstrates almost nothing about
+your engineering, while introducing cost exposure, an abuse surface, and a page
+that can be broken during the exact window someone is evaluating you.
 
-It is still not free of consequences — rate limiting, a spend cap, and a graceful
-degraded state are mandatory, and a demo that is down is worse than no demo. The
-full treatment is in `05-interactivity.md`, but the constraint has moved from
-"impossible" to "possible, with discipline."
+Practical consequence: **there is no `functions/` directory and no server-side
+code in this project.** AI work is presented through recorded real runs or
+models running in the visitor's browser — see `05-interactivity.md`.

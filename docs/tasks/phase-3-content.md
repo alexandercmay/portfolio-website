@@ -22,6 +22,16 @@ not let toolchain polish become a way to avoid it.
         with a cached ANN index"
       Numbers where you have them. Where you don't, name the specific technical
       problem you solved.
+- [ ] **Write a `headline` for every role** — the one sentence you'd want read if
+      they read nothing else about that job
+- [ ] Mark 2–3 roles `featured` and set `weight` — these appear on the homepage
+- [ ] **Preview each featured headline at display size before committing to it.**
+      It gets set ~3× body size, which is unforgiving: a vague sentence looks
+      worse set large than buried in a bullet list. If it doesn't hold up there,
+      the sentence is wrong — not the type size.
+- [ ] Decide whether you have real metrics for the homepage metrics band. **If
+      the numbers are weak, omit the section.** Three invented-sounding figures
+      do more damage than none.
 - [ ] Location: city/region only — never a street address
 - [ ] Use an email you're willing to have scraped
 - [ ] Populate `content/taxonomy.ts` with your real stack
@@ -51,13 +61,13 @@ For each, the overview should answer, in this order:
 - [ ] Be accurate about `role` — "team of 4, led the backend" is a stronger claim
       than an ambiguous "built"
 
-## 3.4 Backfill devlog entries
+## 3.4 Set project metadata
 
-- [ ] 2–4 historical updates per featured project, honestly dated
-- [ ] At least one `milestone` per project
-- [ ] At least one entry about something that **didn't** work — these read as
-      real and are more memorable than a wall of successes
-- [ ] Verify they all render correctly in `/feed`
+- [ ] Set an honest `updated` date on every project
+- [ ] Verify `status` is accurate on each — `active` / `shipped` / `archived` /
+      `exploration`
+- [ ] Include at least one thing that **didn't** work in a project body — these
+      read as real and are more memorable than a wall of successes
 
 ## 3.5 Remaining projects
 

@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/* Design tokens, type scale, and the editorial system land in Phase 1.
+   What follows is the minimum needed for the skeleton to be *correct*
+   rather than styled. */
+
+/* Skip link: offscreen until focused. This is an accessibility requirement,
+   not a design choice, so it lives here from the start. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  color: #000;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

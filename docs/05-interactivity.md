@@ -32,24 +32,41 @@ each of these and the framework change eliminated them:
 | Feature | Old plan | Now |
 | --- | --- | --- |
 | Filter projects by technology | Client-side filter, URL state sync, ARIA live region | Prerendered `/stack/:tech` page |
-| Filter feed by project | Client-side filter | Prerendered filter links |
-| Devlog show/hide | React state | `<details>` element |
-| Search | MiniSearch + hand-built index + modal | Pagefind over built HTML |
+| Filter projects by status | Client-side filter | Prerendered filter links |
+| Progressive disclosure | React state | `<details>` element |
 | Card hover states | — | CSS |
 | Theme toggle | React island | ~15 lines of inline script |
 
 Every one is now faster, works without JS, is independently linkable, and is less
 code to maintain.
 
+## Visual richness is not interactivity
+
+The site's editorial treatment — large display type, scroll-linked reveals, the
+career timeline's progress rule, section transitions — is **CSS**, not
+JavaScript. See `04-design-system.md`.
+
+This distinction matters for scoping. "Make the site more engaging" is a
+typography and layout problem here, and it is solved with zero runtime cost.
+Reaching for a JavaScript component to make something feel alive is almost
+always the wrong move on this site; reaching for better type and spacing is
+almost always the right one.
+
+So the pages below are *visually rich and ship no JavaScript.* Those aren't in
+tension.
+
 ## Explicitly excluded
 
 Decided once, so it isn't relitigated during a late-night build session:
 
-- Landing-page hero animations, particle fields, animated gradient meshes
+- **Scroll-jacking** — hijacking scroll speed or position. Distinct from
+  scroll-*linked* animation, which is permitted: the first takes control away
+  from the reader, the second responds to what they're already doing.
+- Hero animations that delay the name, headline, or contact affordance
 - Typewriter effects on your job title
+- Particle fields, animated gradient meshes
 - Custom cursors, cursor-follow effects
-- Scroll-jacking, parallax, horizontal scroll sections
-- Scroll-triggered fade-in on primary content
+- Horizontal scroll sections
 - Terminal/CLI emulator as site navigation
 - Preloader screens
 - Sound
@@ -59,10 +76,16 @@ Shared failure mode: they put spectacle between a busy person and the informatio
 they came for, and they signal "I had time to spend on this" rather than "I can
 build systems."
 
+**Note the relaxation.** Scroll-triggered reveals were previously on this list
+and are now permitted, because the editorial direction uses them and CSS makes
+them free. The constraints in `04-design-system.md` still bind: content visible
+by default, `@supports`-guarded, reduced-motion respected, never on the hero,
+never on text someone is scanning.
+
 ## Where interactivity is permitted
 
 **Only on individual project pages, below the overview.** Never on the landing
-page, resume, feed, or project index.
+page, resume, project index, or stack pages.
 
 The premise you identified is right: someone reaching an interactive explainer
 has already decided to go deep. They will tolerate a moment of loading. Someone
@@ -100,9 +123,18 @@ beat eight thin ones. A hiring manager reads one or two.
 
 ### Tier 2 — AI demos
 
-The hosting change materially improved the options here. Cloudflare Pages
-Functions can hold an API key server-side, so a live demo is now genuinely
-possible — but that does not make it the right default.
+**The site never calls an LLM API.** Not from the browser, and not through a
+serverless proxy — even though the host would technically allow one. This is
+settled; see `06-decisions.md` D-008.
+
+The reason isn't the API key. It's that a hosted wrapper around someone else's
+API demonstrates almost nothing about your engineering — everyone applying to
+the same roles has built one — while adding cost exposure, an abuse surface, and
+a page that can break during the exact window someone is evaluating you. Bad
+trade in both directions.
+
+What's left is better anyway: show the system you actually built, either by
+replaying real runs of it or by running a real model in the visitor's browser.
 
 #### Option A — recorded real runs (recommended default)
 
@@ -134,39 +166,26 @@ quantized LLMs run via WebLLM on WebGPU-capable desktop browsers.
   button stating the model name and size, never automatic. WebGPU support is
   uneven on mobile.
 
-For AI-targeted roles, "I shipped a real model to the browser" is a stronger
-story than "I proxied an API call."
+For AI-targeted roles, "I shipped a real model to the browser" is a genuinely
+strong story — it requires understanding quantization, runtime constraints, and
+memory budgets, none of which an API call demonstrates.
 
-#### Option C — Cloudflare Pages Function proxy
+#### Rejected
 
-A Function in `functions/` holds the key in an environment variable and proxies
-requests. The key never reaches the browser.
-
-Mandatory if you do this:
-
-- Per-IP rate limiting (Cloudflare Rate Limiting rules, or KV counters)
-- **A hard monthly spend cap on the provider account** — set this first
-- CORS locked to your origin
-- Small `max_tokens`, a cheap model, a fixed system prompt
-- A graceful "demo temporarily unavailable" state, because bots will find it
-- A static fallback so the project page is never broken when the Function is
-
-Use for **at most one** flagship project, and only if live interaction is the
-actual point.
-
-#### Option D — visitor-supplied API key
-
-Rejected. Asking a recruiter to paste an API key into your website is a bad
-experience and a bad practice to model publicly. Nobody will do it.
+- **Serverless proxy holding an API key.** Technically possible on this host.
+  Rejected — see the section intro and D-008.
+- **Visitor-supplied API key.** Asking a recruiter to paste an API key into your
+  website is a bad experience and a bad practice to model publicly. Nobody will
+  do it.
 
 #### Recommendation
 
 Default to **A**. Use **B** where a browser-runnable model genuinely fits the
-project. Reach for **C** only for one flagship demo, if any.
+project.
 
-Never let a live demo be the *only* evidence of an AI project. A demo that's down
-during someone's review window turns your best project into a broken page. The
-writeup must stand alone.
+And regardless of which: **the writeup must stand alone.** A demo is supporting
+evidence, never the primary artifact. Most readers won't run it, and the ones
+who matter most are often skimming on a phone.
 
 ## Implementation notes
 
@@ -186,5 +205,5 @@ Do not build any of this until the site is deployed, has a real resume, and has
 three well-written project pages. A half-finished WebGPU demo on an undeployed
 site is worth nothing during a job search.
 
-Ship the useful version first, then deepen it in public — which is exactly what
-the devlog structure is designed to let you do.
+Ship the useful version first. A project page can gain an explainer later —
+that's just editing the page.

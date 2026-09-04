@@ -1,0 +1,15 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+
+// Placeholder paths until the taxonomy lands in Phase 1.
+export function getStaticPaths() {
+  return [{ params: { tech: 'typescript' } }]
+}
+
+const { tech } = Astro.params
+---
+
+<BaseLayout title={`${tech} — Alexander May`}>
+  <h1>{tech}</h1>
+  <p>Phase 0 skeleton.</p>
+</BaseLayout>
