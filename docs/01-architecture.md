@@ -153,8 +153,39 @@ index. It's a drop-in addition whenever it earns its place.
 
 ## Deployment
 
-Cloudflare Pages, connected directly to the GitHub repo. No deploy workflow to
-maintain.
+**Cloudflare Workers with Static Assets**, connected directly to the GitHub
+repo. No deploy workflow to maintain.
+
+> These docs originally said "Cloudflare Pages." Cloudflare now provisions new
+> projects as Workers with Static Assets and deploys them via
+> `npx wrangler versions upload`. Everything D-012 argued for still holds — same
+> global CDN, same free tier, same zero maintenance, `_headers` still supported,
+> preview deployments still per-branch. Only the product name and the deploy
+> mechanism changed. The site remains a directory of static files with no Worker
+> script and no server-side code.
+
+Configuration lives in `wrangler.jsonc`:
+
+```jsonc
+{
+  "name": "portfolio-website",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    "html_handling": "drop-trailing-slash"
+  }
+}
+```
+
+Two settings are load-bearing and easy to get wrong:
+
+- **`not_found_handling: "404-page"`** serves the prerendered `404.html` with a
+  real 404 status. The default (`"none"`) returns a bare Cloudflare page.
+  Never use `"single-page-application"` — it serves `index.html` with a **200**
+  for every bad URL, which hides broken links from crawlers and from you.
+- **`html_handling: "drop-trailing-slash"`** must match `trailingSlash: 'never'`
+  in `astro.config.mjs`. If they disagree, every internal link returns a 307
+  redirect and every canonical tag points at a redirect target.
 
 - **Production**: push to `main` → build → live
 - **Preview**: every pull request gets its own URL automatically. Useful for
@@ -172,15 +203,27 @@ deploying; GitHub handles gating.
 Cloudflare Pages allows a `public/_headers` file — real cache control, which
 GitHub Pages does not offer:
 
+Astro fingerprints hashed assets into `/_astro/`, so they can be cached
+permanently and safely.
+
+**Cloudflare applies every matching rule and concatenates values for the same
+header**, and `_headers` has no negative matching. So a `Cache-Control` on `/*`
+appends to the `/_astro/*` rule and produces
+`max-age=31536000, immutable, max-age=0, must-revalidate` — conflicting
+directives in one header, silently defeating the immutable caching.
+
+Cache-Control is therefore set only on non-overlapping specific paths, never on
+`/*`. HTML is left to Cloudflare's default, which is already
+`max-age=0, must-revalidate` — so a deploy is visible immediately.
+
 ```
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
-/*.pdf
-  Cache-Control: public, max-age=3600
-```
 
-Astro fingerprints hashed assets into `/_astro/`, so they can be cached
-permanently and safely.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+```
 
 ## Domain
 

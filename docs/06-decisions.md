@@ -303,9 +303,17 @@ cleaning up on its own.
 
 ---
 
-### D-012 — Cloudflare Pages, not a VPS and not GitHub Pages
+### D-012 — Cloudflare, not a VPS and not GitHub Pages
 
 **Status:** accepted
+
+> **Naming note (Phase 0):** Cloudflare now provisions new projects as **Workers
+> with Static Assets** rather than Pages, deployed via
+> `npx wrangler versions upload` with a `wrangler.jsonc`. Every argument below
+> still applies unchanged — same CDN, same free tier, same zero maintenance,
+> `_headers` supported, per-branch preview deployments. Read "Cloudflare Pages"
+> below as "Cloudflare's managed static hosting." The site still has no Worker
+> script and no server-side code.
 
 **Decision:** deploy to Cloudflare Pages. Do not self-host.
 

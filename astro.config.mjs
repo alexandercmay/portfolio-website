@@ -18,6 +18,12 @@ export default defineConfig({
   // see docs/06-decisions.md D-008.
   output: 'static',
 
+  // Canonical URLs carry no trailing slash (/resume, not /resume/). This must
+  // stay in sync with `assets.html_handling` in wrangler.jsonc — if they
+  // disagree, every internal link eats a 307 redirect and canonical tags point
+  // at redirect targets.
+  trailingSlash: 'never',
+
   integrations: [mdx(), sitemap(), react()],
 
   vite: {

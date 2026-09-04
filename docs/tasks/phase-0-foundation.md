@@ -52,17 +52,27 @@ When you do set it up (see `docs/06-decisions.md` D-011 for the hazard):
 - [x] **Verify the built HTML contains zero `<script>` tags** — this is the
       baseline property to protect for the rest of the project
 
-## 0.4 Cloudflare Pages deployment
+## 0.4 Cloudflare deployment
 
-- [ ] Create a Cloudflare account
-- [ ] Pages → connect the GitHub repo
-- [ ] Build command `npm run build`, output directory `dist`
-- [ ] Set `NODE_VERSION` to match `.nvmrc`
-- [ ] Deploy; confirm hello world is **live at the `*.pages.dev` URL**
+Cloudflare provisions new projects as **Workers with Static Assets**, not Pages.
+Deploy command is `npx wrangler versions upload`, which needs `wrangler.jsonc`.
+
+- [x] Create a Cloudflare account
+- [x] Connect the GitHub repo
+- [x] Build command `npm run build`, output directory `dist`
+- [x] `wrangler.jsonc` with `assets.directory`, `not_found_handling: "404-page"`,
+      `html_handling: "drop-trailing-slash"`
+- [x] `trailingSlash: 'never'` in `astro.config.mjs` to match — otherwise every
+      internal link 307s and canonicals point at redirect targets
+- [x] `public/_headers` — Cache-Control on specific paths only, never on `/*`
+      (Cloudflare concatenates matching rules; a `/*` rule silently breaks the
+      immutable asset caching)
+- [x] Verified locally with `npx wrangler dev`: all routes 200, `/about/` 307s
+      to `/about`, unknown paths serve `404.html` with a 404, hashed assets get
+      `immutable`
+- [ ] Redeploy and confirm the site is **live at the `*.workers.dev` URL**
 - [ ] Test a deep link directly in a fresh tab — must not 404
 - [ ] Open a test PR and confirm a preview deployment URL is generated
-- [x] `public/_headers` with immutable caching for `/_astro/*`
-- [ ] Verify cache headers with `curl -I` on a hashed asset
 
 ## 0.5 CI
 

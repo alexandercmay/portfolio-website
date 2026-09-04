@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portfolio-website",
+  "compatibility_date": "2026-09-04",
+
+  // Static assets only — there is no Worker script and no "main" entry point.
+  // The site is a directory of prerendered HTML; see docs/06-decisions.md D-008
+  // for why there is deliberately no server-side code.
+  "assets": {
+    "directory": "./dist",
+
+    // Unknown paths serve the prerendered dist/404.html with a real 404 status.
+    // The default ("none") returns a bare Cloudflare 404 page instead.
+    // Never "single-page-application" — that would serve index.html with a 200
+    // for every bad URL, which breaks crawlers and hides broken links.
+    "not_found_handling": "404-page",
+
+    // /about serves dist/about/index.html directly; /about/ redirects to it.
+    // Must match `trailingSlash: 'never'` in astro.config.mjs — with the
+    // default ("auto-trailing-slash") every internal link 307s instead.
+    "html_handling": "drop-trailing-slash",
+  },
+}

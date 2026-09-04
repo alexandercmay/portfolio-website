@@ -1,7 +1,15 @@
-# Cloudflare Pages cache control.
-# Astro fingerprints hashed assets into /_astro/, so they can be cached
-# permanently and safely — the filename changes when the content does.
+# Cloudflare applies EVERY matching rule and concatenates values for the same
+# header. So a `/*` rule setting Cache-Control would append to the `/_astro/*`
+# rule below and produce
+#   `max-age=31536000, immutable, max-age=0, must-revalidate`
+# — conflicting directives in one header. There is no negative matching, so
+# Cache-Control is set ONLY on non-overlapping specific paths, never on `/*`.
+#
+# HTML is left to Cloudflare's default for static assets, which revalidates —
+# so a deploy is visible immediately.
 
+# Astro fingerprints hashed assets into /_astro/. The filename changes when the
+# content does, so these can be cached permanently.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -11,8 +19,7 @@
 /*.pdf
   Cache-Control: public, max-age=3600
 
-# HTML is revalidated so a deploy is visible immediately.
+# Security headers only — no Cache-Control here, deliberately.
 /*
-  Cache-Control: public, max-age=0, must-revalidate
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
