@@ -1,0 +1,78 @@
+---
+title: Chalk Talk
+tagline: Turning highlighted transcript phrases into generated imagery in under three seconds
+status: shipped
+started: 2024-01-15
+ended: 2024-05-03
+updated: 2024-05-03
+role: senior design team, NC State Laboratory for Analytic Sciences
+stack: [react, fastapi, postgres, docker, python, typescript, stable-diffusion]
+tags: [research, full-stack, generative]
+featured: true
+weight: 10
+summary: >-
+  A research web app built with the NC State Laboratory for Analytic Sciences.
+  Analysts highlight a phrase in an audio transcript and get back generated
+  "conceptual peg" imagery — a memory aid that makes abstract language stick.
+---
+
+## The problem
+
+The Laboratory for Analytic Sciences works on how analysts process large volumes
+of recorded material. One of the harder parts is retention: transcripts are long,
+abstract, and largely undifferentiated. Text alone is a bad medium for
+remembering _which_ passage said what.
+
+The research idea was **conceptual pegs** — attaching a concrete visual to an
+abstract phrase so it can be recalled later. The open question was whether
+generated imagery could produce those pegs fast enough to sit inside an analyst's
+normal workflow, rather than being something they waited on.
+
+## What I built
+
+A full-stack web app where the transcript is the interface. An analyst plays
+audio, follows the synchronised transcript, highlights a phrase, and gets an
+image generated from it in place.
+
+- **React + TypeScript** front end, with `wavesurfer.js` for the waveform and
+  WebVTT parsing to keep the transcript locked to audio position
+- **FastAPI** backend brokering generation requests and handling persistence
+- **Stable Diffusion** for image generation
+- **PostgreSQL** for transcripts, highlights, and generated media
+- **Docker** so the lab could run the whole thing without a setup ritual
+
+## What was hard
+
+**Three seconds is not a lot of time.** Generation is the slow step and it is not
+one you can optimise away from the outside. Most of the work went into everything
+_around_ it — keeping the request path short, persisting media rather than
+regenerating, and making the interface respond immediately so the wait was
+visible progress instead of a frozen page.
+
+**Transcript-to-audio synchronisation is fiddlier than it looks.** WebVTT gives
+you cue timings; keeping the highlighted region, the waveform position, and the
+playhead agreeing with each other while the user scrubs is where the real
+complexity lives. Getting this wrong is immediately obvious to the user, which
+made it worth over-investing in.
+
+**Highlight boundaries do not respect cue boundaries.** A user selects across
+whatever text they want, not the segments the transcript happens to be chunked
+into. Mapping an arbitrary selection back onto the underlying timing data was the
+piece I redid the most.
+
+## Results
+
+The app worked inside the target latency and was delivered to the lab as a
+functioning research tool at the end of the senior design cycle.
+
+## What I'd do differently
+
+I would separate the generation path from the request path earlier. It worked as
+built, but coupling them meant that every latency question became an
+architectural one. A queue with a streamed result would have made the timing
+behaviour something I could tune rather than something I had to design around.
+
+I would also have pushed harder, earlier, on what "good" meant for the generated
+images. We optimised the thing we could measure — latency — because image quality
+had no agreed evaluation method. That is a familiar failure mode and I would
+recognise it faster now.

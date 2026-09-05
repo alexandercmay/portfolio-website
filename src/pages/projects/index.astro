@@ -2,11 +2,9 @@
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import ProjectCard from '@/components/ProjectCard.astro'
 import EmptyState from '@/components/EmptyState.astro'
-import Chip from '@/components/Chip.astro'
-import { getProjects, getStackUsage } from '@/lib/content'
+import { getProjects } from '@/lib/content'
 
 const projects = await getProjects()
-const stackUsage = await getStackUsage()
 
 /**
  * Only technology links here. A status filter was dropped: with a handful of
@@ -24,21 +22,6 @@ const stackUsage = await getStackUsage()
     <h1>Projects</h1>
     <p class="lead">What I have built, and what was actually hard about each one.</p>
   </div>
-
-  <nav class="filters" aria-label="Browse by technology">
-    <p class="filter-label">By technology</p>
-    <ul>
-      {
-        stackUsage
-          .filter((u) => u.projects.length > 0)
-          .map((u) => (
-            <li>
-              <Chip href={`/stack/${u.key}`}>{u.label}</Chip>
-            </li>
-          ))
-      }
-    </ul>
-  </nav>
 
   {
     projects.length > 0 ? (

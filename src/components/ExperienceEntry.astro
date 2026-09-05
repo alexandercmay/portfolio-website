@@ -10,6 +10,17 @@ interface Props {
   variant?: 'featured' | 'full'
 }
 const { role, variant = 'featured' } = Astro.props
+
+/**
+ * The homepage leads with the headline and a couple of supporting points; the
+ * full list lives on /resume. Without this cap the "Selected" section shows
+ * every bullet and the curation does nothing — which is exactly what it did
+ * before this line existed.
+ */
+const FEATURED_HIGHLIGHTS = 3
+const highlights =
+  variant === 'featured' ? role.highlights.slice(0, FEATURED_HIGHLIGHTS) : role.highlights
+const hidden = role.highlights.length - highlights.length
 ---
 
 <article class:list={['entry', variant]}>
@@ -29,12 +40,20 @@ const { role, variant = 'featured' } = Astro.props
     }
 
     {
-      role.highlights.length > 0 && (
+      highlights.length > 0 && (
         <ul class="highlights">
-          {role.highlights.map((h) => (
+          {highlights.map((h) => (
             <li>{h}</li>
           ))}
         </ul>
+      )
+    }
+
+    {
+      hidden > 0 && (
+        <p class="more">
+          <a href="/resume">{hidden} more on the full resume &rarr;</a>
+        </p>
       )
     }
 
@@ -95,6 +114,20 @@ const { role, variant = 'featured' } = Astro.props
 
   .full .highlights {
     margin-top: 0.6rem;
+  }
+
+  .more {
+    margin: 0 0 1.1rem;
+    font-size: var(--text-sm);
+  }
+
+  .more a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .more a:hover {
+    color: var(--color-accent);
   }
 
   @media (max-width: 46rem) {

@@ -18,28 +18,28 @@ const DIST = join(import.meta.dirname, '..', 'dist')
 const page = (p: string) => readFileSync(join(DIST, p), 'utf8')
 
 describe('projects render from the collection', () => {
-  const slugs = ['retrieval-service', 'eval-harness', 'parser-experiment']
+  const slugs = ['chalk-talk', 'networked-game-engine']
 
   it.each(slugs)('%s built a page', (slug) => {
     expect(existsSync(join(DIST, 'projects', slug, 'index.html'))).toBe(true)
   })
 
-  it('renders MDX body content, not just frontmatter', () => {
-    expect(page('projects/retrieval-service/index.html')).toMatch(/The problem/)
+  it.each(slugs)('%s renders MDX body content, not just frontmatter', (slug) => {
+    expect(page(`projects/${slug}/index.html`)).toMatch(/What was hard/)
   })
 
   it('gives headings ids so long writeups are deep-linkable', () => {
-    expect(page('projects/retrieval-service/index.html')).toMatch(/<h2 id="the-problem"/)
+    expect(page('projects/chalk-talk/index.html')).toMatch(/<h2 id="the-problem"/)
   })
 
-  it('links stack chips to /stack/:tech', () => {
-    const html = page('projects/retrieval-service/index.html')
-    expect(html).toMatch(/href="\/stack\/python"/)
-    expect(html).toMatch(/href="\/stack\/postgres"/)
+  it.each(slugs)('%s shows an updated date, carrying the recency signal', (slug) => {
+    expect(page(`projects/${slug}/index.html`)).toMatch(/Updated \w+ \d{4}/)
   })
 
-  it('shows an updated date, carrying the recency signal', () => {
-    expect(page('projects/retrieval-service/index.html')).toMatch(/Updated \w+ \d{4}/)
+  it('has no /stack/ links — that route was cut in Phase 3 (D-014)', () => {
+    for (const p of globSync('**/*.html', { cwd: DIST })) {
+      expect(readFileSync(join(DIST, p), 'utf8')).not.toMatch(/href="\/stack\//)
+    }
   })
 })
 
@@ -155,16 +155,10 @@ describe('the resume page', () => {
     expect(data.name).toBeTruthy()
   })
 
-  it('shows every work entry, where the homepage shows only featured ones', () => {
-    // The non-featured role must appear on /resume and NOT on the homepage.
-    // That difference is the entire reason the two views exist.
-    const nonFeatured = resume.work.find((w) => !w.featured)
-    expect(
-      nonFeatured,
-      'fixtures need a non-featured role to exercise this',
-    ).toBeDefined()
-    expect(page('resume/index.html')).toContain(nonFeatured!.org)
-    expect(page('index.html')).not.toContain(nonFeatured!.org)
+  it('shows every work entry', () => {
+    for (const role of resume.work) {
+      expect(page('resume/index.html')).toContain(role.org)
+    }
   })
 
   it('offers the PDF download', () => {
@@ -173,10 +167,36 @@ describe('the resume page', () => {
 })
 
 describe('the metrics band', () => {
-  it('renders nothing when resume.metrics is absent', () => {
-    // Padding this section with invented figures does more damage than
-    // omitting it, so absence must produce no markup at all.
-    expect(page('index.html')).not.toMatch(/class="[^"]*metrics/)
+  it('renders when resume.metrics has real figures', () => {
+    expect(resume.metrics?.length).toBeGreaterThan(0)
+    expect(page('index.html')).toMatch(/class="[^"]*metrics/)
+  })
+
+  it('shows every metric value', () => {
+    const esc = (s: string) =>
+      s.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    for (const m of resume.metrics ?? []) {
+      expect(page('index.html')).toContain(esc(m.value))
+    }
+  })
+})
+
+describe('nothing private leaks into the build', () => {
+  /**
+   * The repo is public and built pages get scraped. The phone number on the
+   * LaTeX resume must never reach the site, and neither should a street
+   * address. Location stays city-level.
+   */
+  const pages = globSync('**/*.html', { cwd: DIST })
+
+  it.each(pages)('%s contains no phone number', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect(html).not.toMatch(/\b\d{3}[\s.-]?\d{3}[\s.-]?\d{4}\b/)
+  })
+
+  it.each(pages)('%s contains no tel: link', (p) => {
+    const html = readFileSync(join(DIST, p), 'utf8')
+    expect(html).not.toMatch(/href="tel:/)
   })
 })
 
@@ -215,5 +235,27 @@ describe('landmark structure', () => {
   it.each(pages)('%s has a main landmark', (p) => {
     const html = readFileSync(join(DIST, p), 'utf8')
     expect(html).toMatch(/<main[\s>]/)
+  })
+})
+
+describe('the build ships no unreferenced assets', () => {
+  /**
+   * @astrojs/react emitted a ~187KB client runtime into dist/ even with zero
+   * islands — half the deploy, downloaded by nobody, and a latent foot-gun the
+   * first time someone adds a client: directive. The integration was removed
+   * in Phase 3 and comes back in Phase 5 with the first real island.
+   *
+   * This catches any future dead asset the same way.
+   */
+  it('has no JavaScript file that no page references', () => {
+    const js = globSync('**/*.js', { cwd: DIST })
+    const html = globSync('**/*.html', { cwd: DIST }).map((p) =>
+      readFileSync(join(DIST, p), 'utf8'),
+    )
+    const orphans = js.filter((f) => {
+      const name = f.split('/').pop()!
+      return !html.some((h) => h.includes(name))
+    })
+    expect(orphans).toEqual([])
   })
 })

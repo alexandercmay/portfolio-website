@@ -88,10 +88,10 @@ of work in this phase. Build it section by section.
       a search engine can return
 - [x] Verify every chip across the site links here correctly
 - [x] Confirm a technology with no usage doesn't generate an empty page
-- [x] **Judgment check** — *kept.* With fixture content, 13 stack pages
-      generate and most list 2+ items (`/stack/python` shows 2 roles and 2
-      projects). Re-evaluate in Phase 3 against real content: if the majority
-      end up listing a single project, cut the route rather than ship filler.
+- [x] **Judgment check** — *cut in Phase 3.* Fixture content made this look
+      viable, but real content did not: 20 of 24 generated pages listed a
+      single item. The route, `getStackUsage()`, and the chip links were all
+      removed. See D-014.
 
 ## 2.5 Project page (`/projects/:slug`)
 

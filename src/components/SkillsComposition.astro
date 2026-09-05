@@ -1,21 +1,10 @@
 ---
 import { TECH, type TechKey } from '../../content/taxonomy'
-import { getStackUsage } from '@/lib/content'
 
 interface Props {
   groups: { category: string; items: readonly TechKey[] }[]
 }
 const { groups } = Astro.props
-
-/**
- * Only link technologies that actually have a /stack/:tech page.
- *
- * Stack pages are generated from real usage in projects and work history, so a
- * skill listed on the resume but not yet used in either has no page. Linking
- * it anyway produces a 404 — which is worse than not linking, and exactly the
- * kind of dead link a reviewer clicks first.
- */
-const linkable = new Set((await getStackUsage()).map((u) => u.key))
 ---
 
 {
@@ -31,11 +20,7 @@ const linkable = new Set((await getStackUsage()).map((u) => u.key))
           {group.items.map((key, i) => (
             <>
               {i > 0 && <span class="sep"> · </span>}
-              {linkable.has(key) ? (
-                <a href={`/stack/${key}`}>{TECH[key].label}</a>
-              ) : (
-                <span>{TECH[key].label}</span>
-              )}
+              <span>{TECH[key].label}</span>
             </>
           ))}
         </p>
@@ -67,16 +52,7 @@ const linkable = new Set((await getStackUsage()).map((u) => u.key))
   .items {
     margin: 0;
     line-height: 1.9;
-  }
-
-  a {
     color: var(--color-text);
-    text-decoration: none;
-  }
-
-  a:hover {
-    color: var(--color-accent);
-    text-decoration: underline;
   }
 
   .sep {

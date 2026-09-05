@@ -2,43 +2,56 @@
  * Canonical technology vocabulary.
  *
  * Everything in a project's `stack` and the resume's `skills` must be a key
- * here. Without this you end up with `Postgres`, `PostgreSQL`, and `postgres`
- * as three separate things, which breaks /stack/:tech and makes the skills
- * section look careless.
+ * here. Without this you get `Postgres`, `PostgreSQL`, and `postgres` as three
+ * separate things, which breaks /stack/:tech and makes the skills section look
+ * careless.
  *
  * The collection schema builds a `z.enum` from these keys, so an unknown
  * technology is both a TypeScript error and a build failure naming the file.
- * Renaming one is a one-line change here.
  *
- * Phase 3 replaces this with the real stack.
+ * Keep this list to things worth a chip and a page. Every technology listed on
+ * the resume belongs here; incidental libraries generally do not.
  */
 export const TECH = {
   // Languages
-  typescript: { label: 'TypeScript', category: 'Languages' },
-  javascript: { label: 'JavaScript', category: 'Languages' },
   python: { label: 'Python', category: 'Languages' },
+  go: { label: 'Go', category: 'Languages' },
   java: { label: 'Java', category: 'Languages' },
-  c: { label: 'C', category: 'Languages' },
+  cpp: { label: 'C++', category: 'Languages' },
+  typescript: { label: 'TypeScript', category: 'Languages' },
   sql: { label: 'SQL', category: 'Languages' },
 
-  // AI / ML
-  pytorch: { label: 'PyTorch', category: 'AI / ML' },
-  transformers: { label: 'Transformers', category: 'AI / ML' },
-  embeddings: { label: 'Embeddings', category: 'AI / ML' },
-  rag: { label: 'RAG', category: 'AI / ML' },
+  // AI systems
+  'llm-tools': { label: 'LLM Tool Design', category: 'AI systems' },
+  'react-agents': { label: 'ReAct Agents', category: 'AI systems' },
+  llamaindex: { label: 'LlamaIndex', category: 'AI systems' },
+  mcp: { label: 'MCP', category: 'AI systems' },
+  a2a: { label: 'A2A Protocol', category: 'AI systems' },
+  bedrock: { label: 'AWS Bedrock', category: 'AI systems' },
+  'stable-diffusion': { label: 'Stable Diffusion', category: 'AI systems' },
 
-  // Web
-  react: { label: 'React', category: 'Web' },
-  astro: { label: 'Astro', category: 'Web' },
-  node: { label: 'Node.js', category: 'Web' },
-  fastapi: { label: 'FastAPI', category: 'Web' },
+  // Backend & infrastructure
+  fastapi: { label: 'FastAPI', category: 'Backend & infrastructure' },
+  'spring-boot': { label: 'Spring Boot', category: 'Backend & infrastructure' },
+  kubernetes: { label: 'Kubernetes', category: 'Backend & infrastructure' },
+  docker: { label: 'Docker', category: 'Backend & infrastructure' },
+  postgres: { label: 'PostgreSQL', category: 'Backend & infrastructure' },
+  amqp: { label: 'RabbitMQ / AMQP', category: 'Backend & infrastructure' },
+  'event-driven': {
+    label: 'Event-Driven Microservices',
+    category: 'Backend & infrastructure',
+  },
+  zeromq: { label: 'ZeroMQ', category: 'Backend & infrastructure' },
 
-  // Data & infrastructure
-  postgres: { label: 'PostgreSQL', category: 'Data & infrastructure' },
-  redis: { label: 'Redis', category: 'Data & infrastructure' },
-  docker: { label: 'Docker', category: 'Data & infrastructure' },
-  aws: { label: 'AWS', category: 'Data & infrastructure' },
-  cloudflare: { label: 'Cloudflare', category: 'Data & infrastructure' },
+  // Frontend
+  react: { label: 'React', category: 'Frontend' },
+
+  // Security
+  stride: { label: 'STRIDE Threat Modeling', category: 'Security' },
+  cvss: { label: 'CVSS v3.1', category: 'Security' },
+  vault: { label: 'HashiCorp Vault', category: 'Security' },
+  rbac: { label: 'RBAC', category: 'Security' },
+  oauth: { label: 'OAuth2 / OIDC', category: 'Security' },
 } as const
 
 export type TechKey = keyof typeof TECH

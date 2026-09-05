@@ -27,11 +27,12 @@ Nine routes became six. All prerendered to static HTML.
 | `/resume` | Formal resume + PDF | **0KB** |
 | `/projects` | Project index | **0KB** |
 | `/projects/:slug` | Project page | 0KB, unless it contains an island |
-| `/stack/:tech` | Everything using one technology | **0KB** |
 | `/about` | About | **0KB** |
 | `/404` | Not found | **0KB** |
 
 Removed with the devlog: `/feed` and `/projects/:slug/:update`.
+Removed in Phase 3: `/stack/:tech` — see D-014. With two projects and two
+roles, 20 of 24 generated pages listed a single item.
 
 Scroll-driven motion on the landing page is **CSS, not JavaScript** — see
 `04-design-system.md`. The editorial treatment costs nothing at runtime.
@@ -45,20 +46,6 @@ that isn't there.
 If the project count ever justifies it, Pagefind indexes the built HTML as a
 post-build step — no content-model change, no schema migration. It's a Phase 4
 addition whenever it earns its place, not now.
-
-### On `/stack/:tech`
-
-Kept, because it answers the exact question a hiring manager has — *have they
-actually used the thing in my job description?* — and it's nearly free: one
-template plus `getStaticPaths()` over `getStackUsage()`, from data that already
-exists.
-
-Worth restating: this is a **static page**, not a client-side filter. It loads
-instantly, works without JS, is linkable, and gives you a real page for
-"Alexander May PyTorch" in search results.
-
-Cut it if you end up with so few projects that the pages read as thin — a stack
-page listing one project is worse than no stack page.
 
 ## Navigation
 
@@ -105,7 +92,7 @@ an editorial entry rather than a resume bullet list:
 - **A headline accomplishment set large**, magazine-deck style. The `headline`
   field. The one sentence you'd want read if they read nothing else.
 - Two or three supporting highlights at body size
-- Stack chips linking to `/stack/:tech`
+- Stack chips
 
 A scroll-linked progress rule runs down the section, connecting entries into a
 visible career line. Pure CSS, progressively enhanced.
@@ -128,7 +115,7 @@ date. Must look right with no cover image. Links to `/projects`.
 ### 5. Skills
 
 Grouped by category, set as a typographic composition rather than a row of
-uniform pills. Each entry links to `/stack/:tech`.
+uniform pills.
 
 No proficiency bars, percentages, or star ratings. Nobody believes them, and
 "React 90%" invites a question you can't answer.
@@ -164,7 +151,6 @@ presentations, no drift.**
 ## `/projects` — Index
 
 - Grid of cards, ordered `featured` → `weight` → `updated`
-- Static filter links by technology — real URLs, not a JS widget
 - **No status filter.** Dropped in Phase 2: with a handful of projects the
   whole list fits on one screen, every card already shows its status, and
   chips that look interactive but aren't are worse than no chips at all.
@@ -179,7 +165,7 @@ can build things.
 
 1. **Title, tagline, status, period, role**, and `updated`
 2. **Links**: repo, live, writeup, video — as buttons, immediately visible
-3. **Stack chips** → `/stack/:tech`
+3. **Stack chips**
 4. **Body** (MDX): what the problem was, what you built, what was genuinely
    hard, what the results were, what you'd do differently
 5. **Related projects** — shared stack or tags
@@ -190,12 +176,6 @@ feed that can go stale.
 
 The only route that may ship JavaScript, and only when its MDX contains an
 island.
-
-## `/stack/:tech`
-
-Prerendered page per technology from `getStackUsage()`. Shows every project and
-work role using it. Own title and description — "Alexander May — PyTorch" is a
-real page a search engine can return.
 
 ## `/about`
 

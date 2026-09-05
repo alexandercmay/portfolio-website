@@ -416,6 +416,38 @@ if someone can't tell you what you do after fifteen seconds on it.
 
 ---
 
+### D-014 — /stack/:tech cut *(reverses a Phase 2 build)*
+
+**Status:** accepted
+
+**Decision:** remove the per-technology route. Stack entries render as labels,
+not links.
+
+**Why:** `03-information-architecture.md` kept this route on the argument that
+it answers the question a hiring manager actually has — *have they used the
+thing in my job description* — and cost almost nothing. Phase 2 wrote down the
+condition for cutting it, before any real content existed:
+
+> if most stack pages list only one project, they read as thin. Cut the route
+> rather than ship filler.
+
+With the real resume in place — two projects, two roles — **20 of 24 generated
+pages listed a single item.** A page titled "Kubernetes" showing one job is
+filler, and 24 of them is sitemap noise that a search engine reads as thin
+content.
+
+The cross-referencing idea needs volume to work. It does not have it.
+
+**What this removes:** the route, `getStackUsage()`, the `/projects` technology
+nav, and the link behaviour on every chip. Skills and stack lists still say what
+was used where — on the homepage, on `/resume`, and on each project page.
+
+**Revisit if:** the project count grows enough that most technologies appear in
+two or more places. Re-adding it is additive — the taxonomy and the data it
+derived from are unchanged.
+
+---
+
 ## Open decisions
 
 | ID | Decision | Needed by |

@@ -1,0 +1,68 @@
+---
+title: Networked Game Engine
+tagline: A 2D engine in C++ with an embedded JavaScript runtime and client-server multiplayer
+status: archived
+started: 2023-08-15
+ended: 2023-12-10
+updated: 2023-12-10
+role: solo
+stack: [cpp, zeromq, typescript]
+tags: [systems, engine, networking]
+featured: true
+weight: 8
+summary: >-
+  A 2D game engine written from scratch for NC State's Game Engine Foundations
+  course — SFML rendering, a priority-ordered event system, collision physics,
+  an embedded V8 runtime for gameplay scripting, and ZeroMQ multiplayer.
+---
+
+## The problem
+
+The course premise was that you do not understand an engine until you have
+written the parts that are normally invisible: the event bus, the timeline, the
+network model. Not a game — the substrate a game sits on.
+
+## What I built
+
+A 2D engine in **C++** with:
+
+- **SFML** for rendering and input
+- A **priority-ordered event system** — the backbone everything else registers
+  against, so subsystems never call each other directly
+- **Collision physics** for the entity model
+- An embedded **V8 JavaScript runtime**, so gameplay logic could be scripted
+  without recompiling the engine
+- **Client-server multiplayer over ZeroMQ**
+- A **thread-safe anchored timeline** supporting pause and variable tick rates
+
+## What was hard
+
+**The timeline is the part that teaches you the most.** Once time can be paused,
+scaled, or run at a different rate on the client than the server, every
+assumption about "how much time passed" becomes a question you have to answer
+explicitly. Anchoring the timeline — deriving current time from a reference point
+rather than accumulating deltas — is what made pause and variable tick rates
+tractable instead of a source of drift.
+
+Making it thread-safe was a separate problem again. The timeline is read from
+nearly everywhere, which makes it exactly the kind of shared state that punishes
+a careless locking strategy.
+
+**Embedding V8 is mostly about the boundary.** Getting a script to run is the
+easy part. Deciding what the engine exposes, how object lifetimes work across the
+boundary, and what happens when a script misbehaves is the actual design work.
+
+**Networked multiplayer forces you to be honest about your event system.** A
+design that works in-process often turns out to have assumed synchronous ordering
+that the network cannot provide.
+
+## What I'd do differently
+
+I would design the event system with the network in mind from the start rather
+than retrofitting it. The retrofit worked, but several decisions that were fine
+for a single process became constraints once messages could arrive late or out of
+order.
+
+I would also have built a way to observe the engine's internal state early — a
+debug overlay for the event queue and timeline. I spent more time than I should
+have inferring behaviour from symptoms.

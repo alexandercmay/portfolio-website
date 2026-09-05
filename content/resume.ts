@@ -7,16 +7,11 @@ import type { TechKey } from './taxonomy'
  *   3. the generated PDF (Phase 4)
  *   4. schema.org/Person JSON-LD
  *
- * A hand-maintained PDF beside a hand-maintained web page drifts within two
- * edits, and then a recruiter and an interviewer are reading different
- * versions. Generating everything from here removes that failure mode entirely.
- * See docs/06-decisions.md D-005.
+ * See docs/06-decisions.md D-005 for why this is data rather than prose.
  *
- * ─────────────────────────────────────────────────────────────────────────
- * PLACEHOLDER DATA. Phase 3 replaces all of it. See
- * docs/tasks/phase-3-content.md — that phase is writing, not code, and it is
- * the highest-leverage work in this project.
- * ─────────────────────────────────────────────────────────────────────────
+ * DELIBERATELY OMITTED: phone number. The repo is public and the built pages
+ * are scraped; a number here ends up on spam lists permanently. Email and
+ * LinkedIn only. Location is city-level for the same reason.
  */
 
 export interface WorkEntry {
@@ -29,11 +24,11 @@ export interface WorkEntry {
    * THE sentence — set at ~3x body size on the homepage.
    *
    * That size is unforgiving: a vague headline looks worse set large than it
-   * does buried in a bullet list, because the design gives it nowhere to hide.
-   * Verb-first, concrete outcome, a number where one exists.
+   * does buried in a bullet list. Verb-first, concrete outcome, a number where
+   * one exists.
    */
   headline: string
-  /** Appears in the homepage "Selected experience" section. Two or three. */
+  /** Appears in the homepage "Selected experience" section. */
   featured?: boolean
   weight?: number
   /** Supporting accomplishments. Verb-first. Shown in full on /resume. */
@@ -65,8 +60,8 @@ export interface Resume {
   skills: { category: string; items: readonly TechKey[] }[]
   /**
    * Optional. The homepage metrics band renders nothing when this is absent.
-   * Omit it rather than padding — three invented-sounding figures do more
-   * damage than none.
+   * Omit rather than pad — three invented-sounding figures do more damage
+   * than none.
    */
   metrics?: { value: string; label: string }[]
 }
@@ -75,9 +70,14 @@ export const resume: Resume = {
   basics: {
     name: 'Alexander May',
     headline: 'Full-stack engineer building AI systems',
-    location: 'Raleigh, NC',
+    location: 'Cambridge, MA',
     email: 'alexcmay11@gmail.com',
     profiles: [
+      {
+        network: 'LinkedIn',
+        url: 'https://www.linkedin.com/in/alexandercmay/',
+        username: 'alexandercmay',
+      },
       {
         network: 'GitHub',
         url: 'https://github.com/alexandercmay',
@@ -85,46 +85,68 @@ export const resume: Resume = {
       },
     ],
     summary:
-      'Placeholder summary. Phase 3 replaces this with two or three sentences on what you build, what you are working on now, and what you want next.',
+      'I spent two years at Dell building AI-powered infrastructure tooling — LLM tool layers over production storage systems, event-driven pipelines moving a million messages a day, and the security work that kept it all shippable. I am looking for my next full-stack or AI engineering role.',
   },
 
   work: [
     {
-      org: 'Placeholder Company',
+      org: 'Dell Technologies',
       title: 'Software Engineer',
-      start: new Date('2024-06-01'),
-      headline: 'Cut p99 retrieval latency from 340ms to 90ms across 12M documents',
+      location: 'Hopkinton, MA',
+      start: new Date('2024-07-01'),
+      end: new Date('2026-08-31'),
+      headline:
+        'Built the LLM tool layer that answers natural-language questions about production storage in under 7 seconds',
       featured: true,
       weight: 10,
       highlights: [
-        'Replaced per-query embedding with a cached approximate-nearest-neighbour index',
-        'Added request-level tracing that surfaced a connection-pool exhaustion bug',
+        'Built LLM-routable diagnostic tools computing health and update-plan risk for customer storage assets at query time, answering natural-language questions in under 7 seconds',
+        'Extended Agent2Agent (A2A) routing for a LlamaIndex ReAct agent running Claude on AWS Bedrock, so update workflows executed reliably against production storage arrays',
+        'Architected an event-driven AMQP pipeline ingesting and enriching 1M+ messages daily, replacing a manual data-loading step between legacy and modern systems',
+        'Designed a timestamp tagging protocol and prompt contract keeping timestamps machine-parseable through LLM output, unifying localization across A2A stream events and eliminating client-side timezone bugs',
+        'Engineered Golang controllers that detect and gracefully recover from failed Kubernetes node lifecycle operations, preventing a disruptive 8-hour cluster redeploy',
+        "Published an AI threat-modeling skill to the organization's shared engineering platform, producing CVSS-scored assessments via a security-scanning MCP server — cutting a multi-day process to minutes",
+        'Stood up the first production-fidelity penetration testing environment for an agentic storage platform, replicating 50+ microservices, and authored the runbook used in subsequent cycles',
+        'Triaged CVEs, ran STRIDE threat models, and managed quarterly security assessments across two products as Security Champion',
+        'Mentored a team of summer interns through a chaos engineering project, guiding their selection of Chaos Mesh for Kubernetes fault injection',
       ],
-      stack: ['typescript', 'python', 'postgres', 'redis'],
+      stack: [
+        'python',
+        'go',
+        'java',
+        'typescript',
+        'llamaindex',
+        'react-agents',
+        'llm-tools',
+        'a2a',
+        'mcp',
+        'bedrock',
+        'fastapi',
+        'spring-boot',
+        'kubernetes',
+        'amqp',
+        'postgres',
+        'event-driven',
+        'stride',
+        'cvss',
+        'vault',
+      ],
     },
     {
-      org: 'Placeholder Lab',
-      title: 'Research Assistant',
-      start: new Date('2023-01-01'),
+      org: 'North Carolina State University',
+      title: 'Teaching Assistant, E115 — Introduction to Computing Environments',
+      location: 'Raleigh, NC',
+      start: new Date('2022-08-01'),
       end: new Date('2024-05-01'),
-      headline: 'Built the evaluation harness that made three models comparable',
+      headline:
+        'Taught Unix and Linux fundamentals to 200+ students across four semesters',
       featured: true,
       weight: 5,
       highlights: [
-        'Standardised preprocessing so results across teams were finally comparable',
+        'Taught shell navigation, file systems, permissions, and remote access to ~50 students per semester across four semesters',
+        'Ran office hours and lab sessions debugging student code, graded assignments, and worked with course staff on delivery each term',
       ],
-      stack: ['python', 'pytorch', 'transformers'],
-    },
-    {
-      org: 'Placeholder Internship',
-      title: 'Software Engineering Intern',
-      start: new Date('2022-05-01'),
-      end: new Date('2022-08-01'),
-      headline: 'Shipped an internal dashboard three teams still use',
-      // Not featured — appears on /resume but not on the homepage, which is
-      // the distinction the two views exist to make.
-      highlights: ['Replaced a weekly manual report with a live view'],
-      stack: ['javascript', 'react', 'node'],
+      stack: ['python'],
     },
   ],
 
@@ -133,22 +155,43 @@ export const resume: Resume = {
       institution: 'North Carolina State University',
       degree: 'B.S.',
       field: 'Computer Science',
-      start: new Date('2021-08-01'),
-      end: new Date('2025-05-01'),
-      highlights: [],
+      start: new Date('2020-08-01'),
+      end: new Date('2024-05-01'),
+      highlights: ['GPA 3.98'],
     },
   ],
 
   skills: [
-    { category: 'Languages', items: ['typescript', 'python', 'java', 'sql'] },
-    { category: 'AI / ML', items: ['pytorch', 'transformers', 'embeddings', 'rag'] },
-    { category: 'Web', items: ['react', 'astro', 'node', 'fastapi'] },
     {
-      category: 'Data & infrastructure',
-      items: ['postgres', 'redis', 'docker', 'aws'],
+      category: 'Languages',
+      items: ['python', 'go', 'java', 'cpp', 'typescript', 'sql'],
     },
+    {
+      category: 'AI systems',
+      items: ['llamaindex', 'react-agents', 'llm-tools', 'mcp', 'a2a', 'bedrock'],
+    },
+    {
+      category: 'Backend & infrastructure',
+      items: [
+        'fastapi',
+        'spring-boot',
+        'kubernetes',
+        'docker',
+        'postgres',
+        'amqp',
+        'event-driven',
+      ],
+    },
+    { category: 'Frontend', items: ['react'] },
+    { category: 'Security', items: ['stride', 'cvss', 'vault', 'rbac', 'oauth'] },
   ],
 
-  // Deliberately absent until there are real numbers. See the interface note.
-  // metrics: [{ value: '340ms → 90ms', label: 'p99 retrieval latency' }],
+  metrics: [
+    { value: '1M+', label: 'AMQP messages ingested daily by the pipeline I architected' },
+    { value: '<7s', label: 'Natural-language query to computed storage answer' },
+    {
+      value: '50+',
+      label: 'Microservices replicated for the first pen-test environment',
+    },
+  ],
 }

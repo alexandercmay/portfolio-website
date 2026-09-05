@@ -34,7 +34,7 @@ const d = project.data
         {
           (d.stack as (keyof typeof TECH)[]).map((key) => (
             <li>
-              <Chip href={`/stack/${key}`}>{TECH[key].label}</Chip>
+              <Chip>{TECH[key].label}</Chip>
             </li>
           ))
         }

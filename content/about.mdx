@@ -3,17 +3,39 @@ title: About
 description: Background, how I work, and what I am looking for next.
 ---
 
-Placeholder fixture content. Phase 3 replaces this with real writing.
+I build software at the boundary between AI systems and the infrastructure they
+run on.
 
-This page is read by people who already like your work and are deciding whether
-they would want you on their team — so it should sound like a person, not a
-LinkedIn summary.
+For two years at Dell I worked on AI-powered infrastructure tooling: the LLM tool
+layer that let storage administrators ask questions in plain language and get
+computed answers back, the event-driven pipeline that fed it, and — as Security
+Champion — the threat modeling and penetration testing work that kept it
+shippable. Before that I studied computer science at NC State, where I spent four
+semesters teaching Unix fundamentals to first-year engineers.
 
 ## How I work
 
-What you value in an engineering team, how you approach problems, what you are
-good at and what you are still learning.
+**I try to find the part that might not work, first.** Most projects have one
+assumption that everything else rests on. Building the tractable parts first
+feels productive and tells you nothing. The pen test environment and the node
+recovery controllers both went that way — the interesting question was never the
+happy path.
+
+**I care about the boundary between systems more than the systems themselves.**
+The timestamp protocol I designed at Dell existed because a value crossing four
+services and an LLM response has four chances to be quietly wrong. Most of the
+bugs I have found worth writing down lived in a handoff rather than in a
+component.
+
+**I write things down.** The pen test runbook got reused for later cycles; the
+threat-modeling skill got adopted across the organization. Both were worth more
+than the original task because someone bothered to make them repeatable.
 
 ## What I'm looking for
 
-Be specific. Vague availability reads as indecision.
+Full-stack or AI engineering work where the AI part is a real system rather than
+a wrapper — tool design, agent orchestration, retrieval, evaluation, the
+infrastructure underneath. I am most useful on teams that treat security and
+correctness as design inputs rather than a final gate.
+
+I am based in Cambridge, MA. The fastest way to reach me is email.

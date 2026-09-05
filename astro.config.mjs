@@ -3,7 +3,6 @@ import { defineConfig } from 'astro/config'
 
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
-import react from '@astrojs/react'
 import tailwindcss from '@tailwindcss/vite'
 
 // The PRODUCTION url, until D-007 (domain) closes. Feeds canonical URLs, the
@@ -29,7 +28,11 @@ export default defineConfig({
   // at redirect targets.
   trailingSlash: 'never',
 
-  integrations: [mdx(), sitemap(), react()],
+  // No @astrojs/react: it emits a ~187KB client runtime into dist/ whether or
+  // not anything uses it. With no islands yet, that was half the deploy sitting
+  // unreferenced. Add it back in Phase 5 alongside the first island — it is one
+  // import and one array entry.
+  integrations: [mdx(), sitemap()],
 
   markdown: {
     // Astro 7 defaults to the Sätteri processor, which generates heading ids

@@ -1,6 +1,4 @@
 import { getCollection, type CollectionEntry } from 'astro:content'
-import { TECH, type TechKey } from '../../content/taxonomy'
-import { resume } from '../../content/resume'
 
 export type Project = CollectionEntry<'projects'>
 
@@ -51,44 +49,6 @@ export async function getRelated(project: Project, limit = 3): Promise<Project[]
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((c) => c.project)
-}
-
-export interface StackUsage {
-  key: TechKey
-  label: string
-  category: string
-  projects: Project[]
-  roles: (typeof resume.work)[number][]
-}
-
-/**
- * The connective tissue: technology → everything you built with it.
- *
- * This answers the exact question a hiring manager has — has this person
- * actually used the thing in my job description — and it costs zero
- * JavaScript, because /stack/:tech is a prerendered page rather than a
- * client-side filter.
- *
- * Only returns technologies with at least one use. A stack page listing
- * nothing is worse than no stack page.
- */
-export async function getStackUsage(): Promise<StackUsage[]> {
-  const projects = await getProjects()
-
-  return (Object.keys(TECH) as TechKey[])
-    .map((key) => ({
-      key,
-      label: TECH[key].label,
-      category: TECH[key].category,
-      projects: projects.filter((p) => (p.data.stack as string[]).includes(key)),
-      roles: resume.work.filter((w) => (w.stack as readonly string[]).includes(key)),
-    }))
-    .filter((u) => u.projects.length > 0 || u.roles.length > 0)
-}
-
-export async function getStackUsageFor(key: string): Promise<StackUsage | undefined> {
-  const all = await getStackUsage()
-  return all.find((u) => u.key === key)
 }
 
 /** "March 2026" — used for `updated` on cards and project headers. */

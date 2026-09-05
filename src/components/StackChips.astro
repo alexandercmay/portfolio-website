@@ -2,19 +2,25 @@
 import Chip from './Chip.astro'
 import { TECH, type TechKey } from '../../content/taxonomy'
 
+/**
+ * Labels, not links.
+ *
+ * /stack/:tech was cut in Phase 3: with two projects and two roles, 20 of 24
+ * generated pages listed a single item, and a page titled "Kubernetes" showing
+ * one job is filler. The criterion for cutting it was written down in Phase 2
+ * before the content existed — see docs/06-decisions.md D-014.
+ */
 interface Props {
   stack: readonly string[]
-  /** Chips link to /stack/:tech by default; set false for a static list. */
-  link?: boolean
 }
-const { stack, link = true } = Astro.props
+const { stack } = Astro.props
 ---
 
 <ul class="stack">
   {
     (stack as TechKey[]).map((key) => (
       <li>
-        <Chip href={link ? `/stack/${key}` : undefined}>{TECH[key].label}</Chip>
+        <Chip>{TECH[key].label}</Chip>
       </li>
     ))
   }
