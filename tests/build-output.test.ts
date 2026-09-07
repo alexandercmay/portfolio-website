@@ -409,12 +409,14 @@ describe('the skill galaxy', () => {
 
   const stars = [
     ...html.matchAll(
-      /class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"(.*?)<\/span><\/span>/gs,
+      /class="star" data-side="(left|right)"[^>]*style="left:([\d.]+)%;top:([\d.]+)%[^"]*"(.*?)<\/span><\/span>/gs,
     ),
   ].map((m) => ({
-    x: parseFloat(m[1]),
-    y: parseFloat(m[2]),
-    label: m[3].match(/class="name"[^>]*>([^<]+)</)?.[1] ?? '',
+    // +1 = the name hangs off the right of the star, -1 = off the left.
+    side: m[1] === 'right' ? 1 : -1,
+    x: parseFloat(m[2]),
+    y: parseFloat(m[3]),
+    label: m[4].match(/class="name"[^>]*>([^<]+)</)?.[1] ?? '',
   }))
 
   it('renders a star for every skill', () => {
@@ -427,14 +429,25 @@ describe('the skill galaxy', () => {
     // sync with the layout constants the way a hardcoded copy did.
     const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
     expect(W, 'galaxy did not publish its canvas size').toBeGreaterThan(0)
-    const CHAR = 8.4
-    const boxes = stars.map((s) => ({
-      label: s.label,
-      cx: (s.x / 100) * W,
-      cy: (s.y / 100) * H,
-      w: s.label.length * CHAR + 30,
-      h: 28,
-    }))
+    // The box model is published too, for the same reason the canvas size is:
+    // a hardcoded copy drifts. The star itself is the anchor point and the
+    // name hangs off one side of it, so the box is NOT centred on the star.
+    const [CHAR, PAD, BOX_H] = (
+      html.match(/data-star-box="([\d.]+),([\d.]+),([\d.]+)"/) ?? []
+    )
+      .slice(1)
+      .map(Number)
+    expect(CHAR, 'galaxy did not publish its star box model').toBeGreaterThan(0)
+    const boxes = stars.map((s) => {
+      const w = s.label.length * CHAR + PAD
+      return {
+        label: s.label,
+        cx: (s.x / 100) * W + (s.side * w) / 2,
+        cy: (s.y / 100) * H,
+        w,
+        h: BOX_H,
+      }
+    })
     const collisions: string[] = []
     for (let i = 0; i < boxes.length; i++) {
       for (let j = i + 1; j < boxes.length; j++) {
@@ -492,8 +505,9 @@ describe('constellation identity', () => {
     for (const group of resume.skills) {
       expect(html).toContain(group.category.replace(/&/g, '&amp;'))
     }
-    expect(html).toMatch(/class="desig"[^>]*>NGC \d+</)
-    expect(html).toMatch(/class="count"/)
+    // Designation and count share the caption line under the name: two extra
+    // stacked elements next to a constellation name read as a UI badge.
+    expect(html).toMatch(/class="desig"[^>]*>NGC \d+ · \d+</)
   })
 
   it('lights a whole constellation when its label is hovered', () => {
@@ -605,7 +619,7 @@ describe('constellation shape', () => {
           : null
       })(),
       stars: [
-        ...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/g),
+        ...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%[^"]*"/g),
       ].map((s) => ({
         x: (parseFloat(s[1]) / 100) * W,
         y: (parseFloat(s[2]) / 100) * H,
@@ -654,6 +668,55 @@ describe('constellation shape', () => {
         expect(dOther, `${c.name} label is nearer ${other.name}`).toBeGreaterThan(dOwn)
       }
     }
+  })
+
+  /**
+   * Constellation lines are the cluster's minimum spanning tree. The version
+   * before this drew spokes from a hub, which reads as an asterisk rather than
+   * as a constellation — every star pointed at the same middle.
+   *
+   * An MST over n stars has exactly n-1 edges, and every endpoint is one of
+   * that cluster's own stars. A hub layout fails the second check, because the
+   * hub is a centroid and not a star at all.
+   */
+  const lineGroups = [
+    ...html.matchAll(/class="cluster-lines"[^>]*>([\s\S]*?)<\/g>/g),
+  ].map((m) =>
+    [
+      ...m[1].matchAll(/x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g),
+    ].map((l) => ({
+      x1: parseFloat(l[1]),
+      y1: parseFloat(l[2]),
+      x2: parseFloat(l[3]),
+      y2: parseFloat(l[4]),
+    })),
+  )
+
+  it('draws each constellation as a spanning tree, not a hub and spokes', () => {
+    expect(lineGroups.length).toBe(clusters.length)
+    clusters.forEach((c, i) => {
+      expect(lineGroups[i].length, `${c.name} edge count`).toBe(c.stars.length - 1)
+
+      const onAStar = (x: number, y: number) =>
+        c.stars.some((s) => Math.abs(s.x - x) < 0.5 && Math.abs(s.y - y) < 0.5)
+      for (const l of lineGroups[i]) {
+        expect(onAStar(l.x1, l.y1), `${c.name} edge starts off-star`).toBe(true)
+        expect(onAStar(l.x2, l.y2), `${c.name} edge ends off-star`).toBe(true)
+      }
+    })
+  })
+
+  it('flares exactly one star per constellation', () => {
+    // Diffraction spikes say "this is the bright one". On more than one star
+    // per cluster they stop saying anything.
+    const bright = [
+      ...html.matchAll(
+        /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
+      ),
+    ]
+      .map((m) => [...m[1].matchAll(/data-bright/g)].length)
+      .filter((_, i) => i < clusters.length)
+    expect(bright).toEqual(clusters.map(() => 1))
   })
 
   it('keeps constellations loose, not knotted, and not sprawling', () => {
