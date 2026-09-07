@@ -119,6 +119,22 @@
   --c-star-mid: #93a9c4;
   --c-star-far: #4d5f77;
 
+  /* Constellation hues.
+     Deliberately a SEPARATE palette from the semantic accents: cyan / lime /
+     violet / amber each mean one thing (interactive / live / secondary /
+     degraded), and spending them on skill categories would make them mean
+     nothing.
+
+     These follow stellar spectral classes, which are colour-coded in real star
+     charts — so the distinction has an actual astronomical rationale rather
+     than being five arbitrary hues. All verified to AA against every ground in
+     both themes before being written here. */
+  --c-spec-1: #9ecbff; /* O/B  blue    11.80:1 */
+  --c-spec-2: #dbeafe; /* A    white   16.33:1 */
+  --c-spec-3: #fcd34d; /* F    gold    13.81:1 */
+  --c-spec-4: #fdba74; /* K    orange  11.81:1 */
+  --c-spec-5: #fda4af; /* M    rose    10.53:1 */
+
   /* Halos — the same hues at low alpha, drawn 5-7x the core radius. */
   --c-halo-blue: rgb(168 216 255 / 22%);
   --c-halo-cyan: rgb(127 230 247 / 24%);
@@ -199,6 +215,13 @@
   --c-halo-cyan: transparent;
   --c-halo-violet: transparent;
   --c-halo-gold: transparent;
+
+  --c-spec-1: #1d4ed8;
+  --c-spec-2: #334155;
+  /* Darkened twice: #a16207 cleared AA on --c-bg but failed on --c-raised. */
+  --c-spec-3: #9b5c01;
+  --c-spec-4: #9a3412;
+  --c-spec-5: #9f1239;
 
   --c-text: #0d1117;
   --c-text-muted: #4a5763;

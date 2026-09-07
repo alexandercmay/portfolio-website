@@ -82,8 +82,19 @@ body {
     128px 128px;
 }
 
-/* A nebula wash — the galaxy the lab is orbiting in. Fixed, decorative, and
-   behind everything. */
+/* ── Celestial backdrop ───────────────────────────────────────────────────
+   Replaces two large round colour blobs, which read as random splotches
+   rather than as sky. Three structured forms instead:
+
+     1. A milky-way BAND on a diagonal — soft, slightly multi-hued, the way a
+        galactic plane actually crosses a frame.
+     2. Faint concentric ORBITAL RINGS from an off-screen focus, drawn as
+        hairline stops in a radial gradient.
+     3. A low HORIZON GLOW at the bottom edge — the limb of something lit.
+
+   Fixed and behind everything, so it never moves under the content or
+   intercepts a pointer.
+   ─────────────────────────────────────────────────────────────────────── */
 body::before {
   content: '';
   position: fixed;
@@ -91,16 +102,34 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
+    /* 3 — horizon glow */
     radial-gradient(
-      60% 45% at 78% 8%,
-      color-mix(in srgb, var(--color-violet) 12%, transparent),
-      transparent 65%
+      140% 45% at 50% 108%,
+      color-mix(in srgb, var(--color-cyan) 13%, transparent),
+      transparent 60%
     ),
+    /* 2 — orbital rings, hairline stops from an off-screen focus */
     radial-gradient(
-      55% 40% at 8% 72%,
-      color-mix(in srgb, var(--color-cyan) 9%, transparent),
-      transparent 65%
-    );
+        circle at 88% 12%,
+        transparent 27.5%,
+        color-mix(in srgb, var(--color-violet) 15%, transparent) 27.7%,
+        transparent 28%,
+        transparent 43.5%,
+        color-mix(in srgb, var(--color-violet) 11%, transparent) 43.7%,
+        transparent 44%,
+        transparent 61.5%,
+        color-mix(in srgb, var(--color-cyan) 9%, transparent) 61.7%,
+        transparent 62%
+      ),
+    /* 1 — the galactic band */
+    linear-gradient(
+        104deg,
+        transparent 30%,
+        color-mix(in srgb, var(--color-violet) 7%, transparent) 42%,
+        color-mix(in srgb, var(--c-star-blue) 8%, transparent) 50%,
+        color-mix(in srgb, var(--color-cyan) 6%, transparent) 58%,
+        transparent 70%
+      );
 }
 
 /* Vignette — the falloff of a viewport looking into space. */
@@ -229,18 +258,20 @@ video {
   height: 60vh;
   pointer-events: none;
   z-index: -1;
+  /* A directional wash rather than two round blobs — light falling across
+     the frame, not spotlights sitting on it. */
   background:
-    radial-gradient(
-      45% 55% at 22% 30%,
-      color-mix(in srgb, var(--color-cyan) 24%, transparent),
-      transparent 70%
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--color-cyan) 14%, transparent) 0%,
+      transparent 45%
     ),
-    radial-gradient(
-      40% 50% at 78% 15%,
-      color-mix(in srgb, var(--color-violet) 20%, transparent),
-      transparent 70%
+    linear-gradient(
+      -12deg,
+      color-mix(in srgb, var(--color-violet) 12%, transparent) 0%,
+      transparent 40%
     );
-  filter: blur(18px);
+  filter: blur(28px);
 }
 
 /* Glow, applied only where the design system permits it. */

@@ -222,3 +222,41 @@ repulsion against real box sizes. Zero overlaps across all 30 elements.
 
 **Stated cost:** a scatter is harder to scan than a column. `/resume` keeps the
 plain grouped list so a scannable version always exists.
+
+## 3b.12 Constellation identity and celestial backdrop *(fifth review)*
+
+Requested: cluster names too alike, hovering a name should light its cluster,
+and the background's "random splotches of colour" looked funky.
+
+- [x] **Spectral-class palette for clusters**, deliberately separate from the
+      semantic accents — cyan/lime/violet/amber each mean one thing, and
+      spending them on skill categories would make them mean nothing. The
+      cluster hues follow stellar spectral classes (O/B blue, A white, F gold,
+      K orange, M rose), so the distinction has an astronomical rationale.
+- [x] All 30 spectral pairs verified to AA in both themes **before** the values
+      were written down. Light gold darkened twice: `#a16207` cleared `--c-bg`
+      but failed `--c-raised`.
+- [x] Labels gained a **catalog designation** (`NGC 1147`) and a member count,
+      so clusters differ by more than hue — necessary for anyone who cannot
+      separate them by colour
+- [x] Clusters nested into their own containers so a label hover can reach its
+      own stars; containers are pointer-transparent, children are not
+- [x] **Hovering a category name lights its whole constellation** and recedes
+      the others, via `:has()` — verified with a real pointer: dots
+      `scale(1.4)`, names in the spectral hue, other clusters at `0.3`
+- [x] **Backdrop reworked**: two round colour blobs replaced by a diagonal
+      galactic band, concentric orbital rings from an off-screen focus, and a
+      low horizon glow. The hero wash became directional rather than two
+      spotlights.
+- [x] Tests: distinct hue per cluster, designation and count present, the
+      label-hover rules survive the build, and the spectral palette is provably
+      disjoint from the semantic accents
+
+### Two test bugs found while writing those tests
+
+- A category check compared `Backend & infrastructure` against markup where it
+  is `&amp;` — the same escaping trap as earlier.
+- The contrast parser sliced hex by fixed offsets, but Lightning CSS minifies
+  `#ffffff` to `#fff`, so `--c-surface` parsed as NaN and **every ratio against
+  it was silently garbage**. Fixed in both copies of the parser, including the
+  older grid-contrast one where it had not yet caused a visible failure.

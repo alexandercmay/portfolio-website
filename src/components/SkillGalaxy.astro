@@ -162,6 +162,9 @@ const clusters = groups.map((group, gi) => {
   }
   return {
     category: group.category,
+    // A catalog designation, the way a real star cluster is labelled. Gives
+    // each constellation a distinct identity beyond its colour.
+    designation: `NGC ${(gi + 1) * 1147}`,
     label: { x: (label.x / W) * 100, y: (label.y / H) * 100 },
     hub,
     stars,
@@ -170,12 +173,17 @@ const clusters = groups.map((group, gi) => {
 ---
 
 <div class="galaxy-wrap">
-  {/* Desktop: the scatter. Decorative lines first, behind the stars. */}
+  {
+    /* Desktop: the scatter. Each cluster is its own container spanning the
+      canvas, so hovering a category name can light that constellation and
+      nothing else. Containers are pointer-transparent; their children are
+      not, so the overlapping full-size boxes never steal a hover. */
+  }
   <div class="galaxy" aria-hidden="true">
     <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none">
       {
-        clusters.map((c) => (
-          <g class="cluster-lines">
+        clusters.map((c, i) => (
+          <g class="cluster-lines" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
             {c.stars.map((s) => (
               <line x1={c.hub.x} y1={c.hub.y} x2={s.x} y2={s.y} />
             ))}
@@ -185,18 +193,21 @@ const clusters = groups.map((group, gi) => {
     </svg>
 
     {
-      clusters.map((c) => (
-        <>
+      clusters.map((c, i) => (
+        <div class="cluster" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
           <p class="cluster-label" style={`left:${c.label.x}%;top:${c.label.y}%`}>
-            {c.category}
+            <span class="desig">{c.designation}</span>
+            <span class="cname">{c.category}</span>
+            <span class="count">{c.stars.length}</span>
           </p>
+
           {c.stars.map((s) => (
             <span class="star" style={`left:${s.x}%;top:${s.y}%`}>
               <span class="dot" style={`--r:${s.r.toFixed(2)}px`} />
               <span class="name">{s.label}</span>
             </span>
           ))}
-        </>
+        </div>
       ))
     }
   </div>
@@ -207,8 +218,8 @@ const clusters = groups.map((group, gi) => {
   }
   <div class="galaxy-list">
     {
-      groups.map((group) => (
-        <div class="list-group">
+      groups.map((group, i) => (
+        <div class="list-group" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
           <h3>{group.category}</h3>
           <ul>
             {group.items.map((key) => (
@@ -240,6 +251,15 @@ const clusters = groups.map((group, gi) => {
     }
   }
 
+  /* Each cluster spans the canvas so its label can reach its own stars. The
+     container is pointer-transparent; its children re-enable pointers, so the
+     overlapping boxes never steal a hover from each other. */
+  .cluster {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
   .lines {
     position: absolute;
     inset: 0;
@@ -249,25 +269,57 @@ const clusters = groups.map((group, gi) => {
   }
 
   .lines line {
-    stroke: var(--color-cyan);
+    stroke: var(--spec);
     stroke-width: 0.12;
-    opacity: 0.16;
+    opacity: 0.2;
     transition: opacity var(--duration-state) var(--ease-out);
   }
 
+  /* ── Cluster label ─────────────────────────────────────────────────── */
   .cluster-label {
     position: absolute;
     transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
     margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    letter-spacing: var(--tracking-wide);
-    text-transform: uppercase;
-    color: var(--color-text-subtle);
+    padding: 0.4rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--spec) 30%, transparent);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
     white-space: nowrap;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: default;
+    transition:
+      border-color var(--duration-state) var(--ease-out),
+      box-shadow var(--duration-state) var(--ease-out);
   }
 
+  .desig {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-subtle);
+  }
+
+  .cname {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--spec);
+    text-shadow: 0 0 14px color-mix(in srgb, var(--spec) 45%, transparent);
+  }
+
+  .count {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--color-text-subtle);
+  }
+
+  /* ── Stars ─────────────────────────────────────────────────────────── */
   .star {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -277,9 +329,11 @@ const clusters = groups.map((group, gi) => {
     padding: 0.25rem 0.5rem;
     border-radius: var(--radius-full);
     white-space: nowrap;
+    pointer-events: auto;
     cursor: default;
     transition:
       transform var(--duration-state) var(--ease-out),
+      opacity var(--duration-state) var(--ease-out),
       background-color var(--duration-state) var(--ease-out);
   }
 
@@ -287,8 +341,8 @@ const clusters = groups.map((group, gi) => {
     width: calc(var(--r) * 2);
     height: calc(var(--r) * 2);
     border-radius: var(--radius-full);
-    background: var(--color-cyan);
-    box-shadow: var(--glow-cyan);
+    background: var(--spec);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--spec) 55%, transparent);
     flex-shrink: 0;
     transition:
       box-shadow var(--duration-state) var(--ease-out),
@@ -305,38 +359,58 @@ const clusters = groups.map((group, gi) => {
   /* ── Hover: emphasis only, never information ───────────────────────── */
   .star:hover {
     transform: translate(-50%, -50%) scale(1.12);
-    background: color-mix(in srgb, var(--color-cyan) 10%, transparent);
+    background: color-mix(in srgb, var(--spec) 12%, transparent);
   }
 
   .star:hover .dot {
     transform: scale(1.5);
-    box-shadow:
-      var(--glow-cyan-lg),
-      0 0 0 3px color-mix(in srgb, var(--color-cyan) 20%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--spec) 70%, transparent);
   }
 
   .star:hover .name {
-    color: var(--color-cyan);
-    text-shadow: var(--glow-cyan);
+    color: var(--spec);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--spec) 50%, transparent);
   }
 
-  /* Everything else recedes, so the hovered star reads as the focus. */
-  .galaxy:has(.star:hover) .star:not(:hover) {
+  /* Hovering the category name lights its whole constellation. */
+  .cluster:has(.cluster-label:hover) .star .dot {
+    transform: scale(1.4);
+    box-shadow: 0 0 22px color-mix(in srgb, var(--spec) 70%, transparent);
+  }
+
+  .cluster:has(.cluster-label:hover) .star .name {
+    color: var(--spec);
+  }
+
+  .cluster-label:hover {
+    border-color: color-mix(in srgb, var(--spec) 70%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--spec) 30%, transparent);
+  }
+
+  /* Everything outside the hovered thing recedes. */
+  .galaxy:has(.star:hover) .star:not(:hover),
+  .galaxy:has(.cluster-label:hover) .cluster:not(:has(.cluster-label:hover)) .star {
+    opacity: 0.3;
+  }
+
+  .galaxy:has(.star:hover) .cluster-label,
+  .galaxy:has(.cluster-label:hover)
+    .cluster:not(:has(.cluster-label:hover))
+    .cluster-label {
     opacity: 0.35;
   }
 
-  .galaxy:has(.star:hover) .cluster-label {
-    opacity: 0.4;
-  }
-
-  .galaxy:has(.star:hover) .lines line {
+  .galaxy:has(.star:hover) .lines line,
+  .galaxy:has(.cluster-label:hover) .lines line {
     opacity: 0.08;
   }
 
-  .star,
-  .cluster-label,
-  .lines line {
-    transition-property: opacity, transform, color, background-color, box-shadow;
+  .galaxy:has(.cluster-label:hover) .cluster-lines:hover line {
+    opacity: 0.45;
+  }
+
+  .cluster-label {
+    transition-property: opacity, border-color, box-shadow;
     transition-duration: var(--duration-state);
     transition-timing-function: var(--ease-out);
   }
@@ -349,7 +423,7 @@ const clusters = groups.map((group, gi) => {
   }
 
   .list-group {
-    border-left: 1px solid var(--color-border);
+    border-left: 2px solid color-mix(in srgb, var(--spec) 55%, transparent);
     padding-left: 1rem;
   }
 
@@ -359,7 +433,7 @@ const clusters = groups.map((group, gi) => {
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--color-cyan);
+    color: var(--spec);
     margin: 0 0 0.7rem;
   }
 

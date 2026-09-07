@@ -215,8 +215,18 @@ temperature and a uniform grey field looks like noise.
 
 Layers sit at three tile pitches (620 / 370 / 230px) for depth, without
 `background-attachment: fixed`, which forces a full repaint every scroll
-frame. A **nebula wash** in violet and cyan sits fixed behind
-everything, and a **vignette** darkens the page edges like the falloff of a
+frame. Behind everything sits a **celestial backdrop** — three structured forms
+rather than the two large round colour blobs it replaced, which read as random
+splotches instead of as sky:
+
+1. A **galactic band** on a diagonal, softly multi-hued, the way a galactic
+   plane actually crosses a frame.
+2. Faint concentric **orbital rings** from an off-screen focus, drawn as
+   hairline stops in a radial gradient.
+3. A low **horizon glow** at the bottom edge — the limb of something lit.
+
+The hero's ambient light is likewise a **directional wash** rather than two
+spotlights. A **vignette** darkens the page edges like the falloff of a
 viewport.
 
 One faint coordinate grid survives at a large 128px pitch — a hint of
@@ -239,6 +249,33 @@ so the layers render nothing. Dark specks on white read as dirt, not as space.
 Skills render as **star clusters — one constellation per category** — with
 constellation spokes from each cluster's centroid and hover emphasis on each
 star.
+
+**Each cluster is a spectral class.** Constellations are distinguished by a
+palette that is deliberately **separate from the semantic accents** — cyan,
+lime, violet and amber each mean one thing (interactive, live, secondary,
+degraded), and spending them on skill categories would make them mean nothing.
+
+The cluster hues follow **stellar spectral classes**, which are colour-coded in
+real star charts, so the distinction has an astronomical rationale rather than
+being five arbitrary colours:
+
+| Token | Class | Dark | Light |
+| --- | --- | --- | --- |
+| `--c-spec-1` | O/B blue | `#9ecbff` | `#1d4ed8` |
+| `--c-spec-2` | A white | `#dbeafe` | `#334155` |
+| `--c-spec-3` | F gold | `#fcd34d` | `#9b5c01` |
+| `--c-spec-4` | K orange | `#fdba74` | `#9a3412` |
+| `--c-spec-5` | M rose | `#fda4af` | `#9f1239` |
+
+All thirty pairs verified to AA before being written here; the light gold
+needed darkening twice, having cleared `--c-bg` while failing `--c-raised`.
+
+Each label carries a **catalog designation** (`NGC 1147`) and a member count,
+so clusters are distinguishable by more than hue alone — which matters for
+anyone who cannot separate them by colour.
+
+**Hovering a category name lights its entire constellation** and recedes the
+others, via `:has()`. Hovering a single star does the same at star scale.
 
 **Positions are solved at build time**, in pixels, then converted to
 percentages. Placement is a jittered ring per cluster followed by ~90

@@ -25,6 +25,9 @@ function allCss(): string {
 }
 const page = (p: string) => readFileSync(join(DIST, p), 'utf8')
 
+/** Every built stylesheet, concatenated. */
+const css = allCss()
+
 describe('projects render from the collection', () => {
   const slugs = ['chalk-talk', 'networked-game-engine']
 
@@ -319,7 +322,10 @@ describe('the background grid is decorative, not costly', () => {
       return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
     }
     const lum = (h: string) => {
-      const v = h.replace('#', '')
+      let v = h.replace('#', '')
+      // Lightning CSS minifies #ffffff to #fff. This block's tokens happen to
+      // be 6-digit, but the same parser elsewhere silently produced NaN.
+      if (v.length === 3) v = v[0] + v[0] + v[1] + v[1] + v[2] + v[2]
       return (
         0.2126 * lin(parseInt(v.slice(0, 2), 16)) +
         0.7152 * lin(parseInt(v.slice(2, 4), 16)) +
@@ -468,4 +474,100 @@ describe('the skill galaxy', () => {
     // The scatter is decorative duplication, so it is hidden from AT.
     expect(html).toMatch(/class="galaxy"[^>]*aria-hidden="true"/)
   })
+})
+
+describe('constellation identity', () => {
+  const html = page('index.html')
+
+  it('gives every cluster a distinct spectral hue', () => {
+    const specs = [
+      ...html.matchAll(/class="cluster"[^>]*style="--spec: var\((--c-spec-\d)\)"/g),
+    ].map((m) => m[1])
+    expect(specs.length).toBe(resume.skills.length)
+    expect(new Set(specs).size).toBe(specs.length)
+  })
+
+  it('labels each cluster with a catalog designation and a count', () => {
+    for (const group of resume.skills) {
+      expect(html).toContain(group.category.replace(/&/g, '&amp;'))
+    }
+    expect(html).toMatch(/class="desig"[^>]*>NGC \d+</)
+    expect(html).toMatch(/class="count"/)
+  })
+
+  it('lights a whole constellation when its label is hovered', () => {
+    // The interaction is pure CSS; assert the rules survived the build.
+    expect(css).toMatch(/\.cluster[^{]*:has\(\.cluster-label:hover\)[^{]*\.dot[^{]*\{/)
+    expect(css).toMatch(/\.cluster[^{]*:has\(\.cluster-label:hover\)[^{]*\.name[^{]*\{/)
+  })
+
+  it('recedes the other constellations while one is hovered', () => {
+    expect(css).toMatch(
+      /:has\(\.cluster-label:hover\) \.cluster[^{]*:not\(:has\(\.cluster-label:hover\)\)/,
+    )
+  })
+
+  it('keeps the spectral palette separate from the semantic accents', () => {
+    // cyan / lime / violet / amber each mean one thing (interactive, live,
+    // secondary, degraded). Spending them on skill categories would make them
+    // mean nothing, so clusters get their own hues.
+    const specBlock = css.match(/--c-spec-1:\s*(#[0-9a-f]{3,6})/i)?.[1]
+    expect(specBlock).toBeTruthy()
+    const accents = ['--c-cyan', '--c-lime', '--c-violet', '--c-amber']
+      .map((n) => css.match(new RegExp(`${n}:\\s*(#[0-9a-f]{3,6})`, 'i'))?.[1])
+      .filter(Boolean)
+    expect(accents).not.toContain(specBlock)
+  })
+})
+
+describe('spectral hues meet AA in both themes', () => {
+  function ratio(fg: string, bg: string): number {
+    const lin = (c: number) => {
+      c /= 255
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    }
+    const lum = (h: string) => {
+      let v = h.replace('#', '')
+      // Lightning CSS minifies #ffffff to #fff; expand before parsing or the
+      // slices produce NaN and every ratio silently becomes garbage.
+      if (v.length === 3) v = v[0] + v[0] + v[1] + v[1] + v[2] + v[2]
+      return (
+        0.2126 * lin(parseInt(v.slice(0, 2), 16)) +
+        0.7152 * lin(parseInt(v.slice(2, 4), 16)) +
+        0.0722 * lin(parseInt(v.slice(4, 6), 16))
+      )
+    }
+    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x)
+    return (a + 0.05) / (b + 0.05)
+  }
+
+  function block(scope: RegExp): Record<string, string> {
+    const b = css.match(scope)?.[0] ?? ''
+    const out: Record<string, string> = {}
+    for (const m of b.matchAll(/(--c-[\w-]+):\s*(#[0-9a-f]{3,6})/gi)) out[m[1]] = m[2]
+    return out
+  }
+
+  const themes: [string, RegExp][] = [
+    ['dark', /:root\{[^}]*--c-bg:#060910[^}]*\}/i],
+    ['light', /\[data-theme=light\]\{[^}]*\}/i],
+  ]
+
+  it.each(themes)(
+    '%s: every spectral hue clears 4.5:1 on every ground',
+    (_name, scope) => {
+      const vars = block(scope)
+      const grounds = ['--c-bg', '--c-surface', '--c-raised']
+        .map((g) => vars[g])
+        .filter(Boolean)
+      expect(grounds.length).toBe(3)
+      for (let i = 1; i <= 5; i++) {
+        const hue = vars[`--c-spec-${i}`]
+        expect(hue, `--c-spec-${i} missing`).toBeTruthy()
+        for (const g of grounds) {
+          expect(ratio(hue, g), `--c-spec-${i} on ${g}`).toBeGreaterThanOrEqual(4.5)
+        }
+      }
+    },
+  )
 })
