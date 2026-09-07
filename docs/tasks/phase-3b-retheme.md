@@ -132,3 +132,30 @@ Requested: more physics-lab feel, more glow, more scroll animation.
 - [x] Rewrite `basics.summary` to lead with what he builds and wants, not where
       he built it. The previous version opened with "I spent two years at Dell"
       — the first thing a reader saw was an employer, not a capability.
+
+## 3b.9 Deep space and section restructure *(added after second review)*
+
+Requested: less grid, more space/NASA; sections looked dull and awkwardly
+formatted on their own.
+
+- [x] Replace the 32px graph grid with a **three-layer starfield** at
+      520/340/210px pitches
+- [x] Fixed **nebula wash** in violet and cyan behind everything
+- [x] Deeper, bluer ground (`#0a0d12` → `#060910`)
+- [x] Keep one faint coordinate grid at 128px — a hint of measurement, not a
+      technical drawing
+- [x] **Light mode has no starfield** — star tokens resolve to `transparent`,
+      because dark specks on white read as dirt, not space
+- [x] **Re-verify contrast against the new ground** — all 56 pairs AA, floor
+      4.68; test regex updated to track the changed `--c-bg`
+- [x] Measure the star worst case: small text on the brightest star is
+      **1.11:1**, so sustained reading moved onto opaque surfaces
+- [x] `.reading-surface` on project bodies, about, and the resume
+- [x] `.module` console panels — titled header bar over a body
+- [x] **Merge Skills and Education into one two-column module band.** A single
+      degree in a full-width section read as lonely; paired it reads as an
+      instrument panel.
+- [x] Renumber sections consecutively after the merge (01–04)
+- [x] Verify landmarks survived the restructure — all pages: one `<header>`,
+      one `<h1>`, zero unnamed sections, skip link present
+- [x] Scan test still passes at 375px with the longer summary

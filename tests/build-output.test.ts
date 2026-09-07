@@ -344,7 +344,7 @@ describe('the background grid is decorative, not costly', () => {
     return block.match(new RegExp(`${name}:\\s*(#[0-9a-f]{3,6})`, 'i'))?.[1] ?? ''
   }
 
-  const darkBlock = /:root\{[^}]*--c-bg:#0a0d12[^}]*\}/i
+  const darkBlock = /:root\{[^}]*--c-bg:#060910[^}]*\}/i
   const lightBlock = /\[data-theme=light\]\{[^}]*\}/i
 
   it('dark: body text clears AA over a grid line', () => {

@@ -61,12 +61,12 @@ const jsonLd = {
     </div>
   </div>
 
-  <section class="band" aria-labelledby="experience">
+  <section class="band reading-surface" aria-labelledby="experience">
     <h2 id="experience">Experience</h2>
     {sorted.map((role) => <ExperienceEntry role={role} variant="full" />)}
   </section>
 
-  <section class="band" aria-labelledby="education">
+  <section class="band reading-surface" aria-labelledby="education">
     <h2 id="education">Education</h2>
     {
       education.map((e) => (
@@ -90,7 +90,7 @@ const jsonLd = {
     }
   </section>
 
-  <section class="band" aria-labelledby="skills">
+  <section class="band reading-surface" aria-labelledby="skills">
     <h2 id="skills">Skills</h2>
     <SkillsComposition groups={skills} />
   </section>
@@ -131,8 +131,11 @@ const jsonLd = {
   }
 
   .band {
-    padding: 2rem 0;
-    border-top: 1px solid var(--color-border);
+    margin-bottom: 1.25rem;
+  }
+
+  .band + .band {
+    margin-top: 0;
   }
 
   .band:last-child {

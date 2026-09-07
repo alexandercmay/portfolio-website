@@ -97,11 +97,18 @@
    Every pair below verified against all three grounds before being written
    here. Ratios are against --c-bg; the floor across all 42 pairs is 4.76. */
 :root {
-  --c-bg: #0a0d12;
-  --c-surface: #11161d;
-  --c-raised: #171d26;
-  --c-border: #232b36;
-  --c-grid: #141a23;
+  --c-bg: #060910;
+  --c-surface: #0e131c;
+  --c-raised: #141a26;
+  --c-border: #212a38;
+  --c-grid: #10151f;
+
+  /* Starfield. Deliberately dim: stars are high-contrast POINTS, unlike a
+     uniform grid, so they cost more readability per unit of brightness. */
+  --c-star-near: #cfe3f5;
+  --c-star-mid: #8fa6c0;
+  --c-star-far: #55677f;
+  --c-star-cyan: #7fe6f7;
 
   --c-text: #e6edf3; /* 16.47:1 */
   --c-text-muted: #9aa7b4; /*  7.93:1 */
@@ -128,6 +135,13 @@
     --c-border: #d5dde5;
     --c-grid: #ecf0f4;
 
+    /* Light mode has no starfield — dark specks on white read as dirt, not
+       as space. These resolve to transparent so the layers render nothing. */
+    --c-star-near: transparent;
+    --c-star-mid: transparent;
+    --c-star-far: transparent;
+    --c-star-cyan: transparent;
+
     --c-text: #0d1117;
     --c-text-muted: #4a5763;
     --c-text-subtle: #5c6b7a;
@@ -147,6 +161,11 @@
   --c-raised: #eef2f6;
   --c-border: #d5dde5;
   --c-grid: #ecf0f4;
+
+  --c-star-near: transparent;
+  --c-star-mid: transparent;
+  --c-star-far: transparent;
+  --c-star-cyan: transparent;
 
   --c-text: #0d1117;
   --c-text-muted: #4a5763;

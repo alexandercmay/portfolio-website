@@ -112,18 +112,18 @@ padded ones.
 Three cards: cover image if present, title, tagline, stack, status, `updated`
 date. Must look right with no cover image. Links to `/projects`.
 
-### 5. Skills
+### 5. Systems & credentials
 
-Grouped by category, set as a typographic composition rather than a row of
-uniform pills.
+Skills and Education as a **two-column band of console modules**, not two
+separate full-width sections.
 
-No proficiency bars, percentages, or star ratings. Nobody believes them, and
-"React 90%" invites a question you can't answer.
+Education alone is a single degree; as its own band it read as lonely and
+under-filled. Paired with Skills in a titled module it reads as an instrument
+panel with two readouts.
 
-### 6. Education
-
-Compact. Institution, degree, field, dates, one or two highlights. Quiet
-treatment — expected content, not a selling point, unless it genuinely is.
+- **Skills** (wider column): grouped by category, mono, no proficiency bars —
+  nobody believes them, and "React 90%" invites a question you can't answer.
+- **Education** (narrow column): institution, degree, period, highlights.
 
 ### 7. Contact
 

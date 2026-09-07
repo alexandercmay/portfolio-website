@@ -18,32 +18,71 @@ body {
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
 
-  /* The measured grid — the strongest carrier of the instrument feel, for
-     the cost of two gradients. It must stay BARELY visible: if you notice it
-     as a grid rather than as texture, it is too strong. Decorative only, and
-     it must not cost a single AA contrast pair. */
+  /* ── Deep space ───────────────────────────────────────────────────────
+     Three star layers at different tile sizes give depth without
+     `background-attachment: fixed` (a full repaint per scroll frame), plus
+     one very faint coordinate grid at a large pitch — a hint of measurement
+     rather than graph paper.
+
+     Stars are HIGH-CONTRAST POINTS, unlike a uniform grid, so they are kept
+     dim and long-form reading sits on panels. Contrast over the brightest
+     star is verified by tests.
+     ─────────────────────────────────────────────────────────────────── */
   background-image:
-    /* Lit intersection nodes — the measurement points on graph paper. */
-    radial-gradient(
-      circle at 0 0,
-      color-mix(in srgb, var(--color-cyan) 22%, transparent) 1px,
-      transparent 1.6px
-    ),
+    /* near field — brighter, sparse */
+    radial-gradient(1.4px 1.4px at 18% 24%, var(--c-star-near), transparent),
+    radial-gradient(1.2px 1.2px at 74% 62%, var(--c-star-near), transparent),
+    radial-gradient(1.3px 1.3px at 43% 81%, var(--c-star-cyan), transparent),
+    /* mid field */ radial-gradient(1px 1px at 62% 16%, var(--c-star-mid), transparent),
+    radial-gradient(1px 1px at 12% 68%, var(--c-star-mid), transparent),
+    radial-gradient(1px 1px at 88% 39%, var(--c-star-mid), transparent),
+    radial-gradient(1px 1px at 33% 47%, var(--c-star-mid), transparent),
+    /* far field — dust */
+    radial-gradient(0.7px 0.7px at 27% 12%, var(--c-star-far), transparent),
+    radial-gradient(0.7px 0.7px at 55% 88%, var(--c-star-far), transparent),
+    radial-gradient(0.7px 0.7px at 81% 71%, var(--c-star-far), transparent),
+    radial-gradient(0.7px 0.7px at 6% 43%, var(--c-star-far), transparent),
+    /* coordinate overlay — large pitch, barely there */
     linear-gradient(var(--color-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
   background-size:
+    520px 520px,
+    520px 520px,
+    520px 520px,
+    340px 340px,
+    340px 340px,
+    340px 340px,
+    340px 340px,
+    210px 210px,
+    210px 210px,
+    210px 210px,
+    210px 210px,
     128px 128px,
-    32px 32px,
-    32px 32px;
-  background-position: center top;
-  /* All layers scroll with the page. `background-attachment: fixed` gave a
-     nice depth cue but forces a full repaint on every scroll frame and is a
-     known jank source on mobile Safari — not worth it against the perf
-     budget. */
+    128px 128px;
 }
 
-/* Vignette — the darkened edge of an instrument screen. Fixed, decorative,
-   and pointer-events:none so it can never intercept a click. */
+/* A nebula wash — the galaxy the lab is orbiting in. Fixed, decorative, and
+   behind everything. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 45% at 78% 8%,
+      color-mix(in srgb, var(--color-violet) 12%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      55% 40% at 8% 72%,
+      color-mix(in srgb, var(--color-cyan) 9%, transparent),
+      transparent 65%
+    );
+}
+
+/* Vignette — the falloff of a viewport looking into space. */
 body::after {
   content: '';
   position: fixed;
@@ -51,9 +90,9 @@ body::after {
   pointer-events: none;
   z-index: 80;
   background: radial-gradient(
-    120% 90% at 50% 40%,
-    transparent 55%,
-    color-mix(in srgb, var(--color-bg) 65%, transparent) 100%
+    125% 95% at 50% 35%,
+    transparent 50%,
+    color-mix(in srgb, var(--color-bg) 78%, transparent) 100%
   );
 }
 
@@ -188,9 +227,46 @@ video {
   text-shadow: var(--glow-cyan);
 }
 
-/* Containers sit on solid ground so the grid never competes with reading. */
-.grid-mask {
-  background: var(--color-bg);
+/* Sustained reading sits on an opaque surface so the starfield never shows
+   through it. Stars are high-contrast points — text directly over a bright
+   one measures 1.11:1 — so anything longer than a line or two gets a ground
+   of its own. Decorative space stays in the margins where it belongs. */
+.reading-surface {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+/* A console module: a titled panel with a header bar, the way a telemetry
+   readout is framed. This is what stops sections reading as an
+   undifferentiated stack of headings. */
+.module {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.module > header,
+.module > .module-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-raised);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.module > .module-body {
+  padding: clamp(1.1rem, 2.5vw, 1.6rem);
 }
 
 /* ── Scroll-driven motion ────────────────────────────────────────────────

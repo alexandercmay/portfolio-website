@@ -201,32 +201,46 @@ instrument screen. `pointer-events: none`, so it can never intercept a click.
 **Registration marks.** Corner ticks on cards, in cyan at low opacity, like the
 alignment marks on a measurement plate. Pure pseudo-elements.
 
-### The measured grid
+### Deep space
 
-A faint grid sits behind the page — the single strongest carrier of the
-instrument feel, for almost nothing:
+The background is a starfield, not graph paper.
 
-```css
-background-image:
-  linear-gradient(var(--color-grid) 1px, transparent 1px),
-  linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
-background-size: 32px 32px;
-```
+Three star layers on different tile pitches (520 / 340 / 210px) give depth
+without `background-attachment: fixed`, which forces a full repaint every
+scroll frame. A **nebula wash** in violet and cyan sits fixed behind
+everything, and a **vignette** darkens the page edges like the falloff of a
+viewport.
 
-Plus **lit intersection nodes** on a coarser 128px pitch — small cyan dots at
-the measurement points, the detail that makes it read as graph paper rather
-than as a generic dark grid.
+One faint coordinate grid survives at a large 128px pitch — a hint of
+measurement rather than a technical drawing.
 
-It must stay **barely visible** — if you notice it as a grid rather than as
-texture, it is too strong.
+**Stars are high-contrast points, and that is a readability problem a uniform
+grid does not have.** Small text sitting directly on the brightest star
+measures **1.11:1**. Two mitigations, both required:
 
-All layers use the default `background-attachment: scroll`. A `fixed` node
-layer gave a nice depth cue but forces a full repaint every scroll frame and is
-a known jank source on mobile Safari — not worth it against the budget.
+1. Stars are kept dim and sparse.
+2. **Sustained reading sits on an opaque surface.** Project bodies, the about
+   page, and the resume use `.reading-surface`; the landing page's dense
+   sections use `.module`. Decorative space stays in the margins.
 
-**Contrast over the grid is verified separately and enforced by tests.** The
-palette's AA check was done against the flat page background; text also sits on
-grid lines, which is a ground that check never looked at.
+Light mode has **no starfield** — the star tokens resolve to `transparent`,
+so the layers render nothing. Dark specks on white read as dirt, not as space.
+
+### Panels and modules
+
+The structural answer to "the sections look dull on their own": a stack of
+identical heading-plus-content blocks reads as undifferentiated, and thin
+sections (a single degree in a full-width band) look lonely.
+
+- **`.reading-surface`** — opaque, bordered, rounded. Long-form reading.
+- **`.module`** — a console readout: a titled header bar over a body. This is
+  what gives sections visual containment instead of flat stacking.
+- **`.marks`** — corner registration ticks in cyan, like the alignment marks
+  on a measurement plate.
+
+Skills and Education are one two-column module band rather than two separate
+full-width sections. Education alone was a single degree occupying a whole
+band; paired with Skills it reads as an instrument panel with two readouts.
 
 ## Motion
 

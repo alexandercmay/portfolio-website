@@ -104,34 +104,53 @@ const featuredProjects = await getFeaturedProjects(3)
 
     <Rule />
 
-    <section class="band reveal" aria-labelledby="skills">
-      <SectionHeader index="03" id="skills" title="Skills" />
-      <div class="reveal-stagger"><SkillsComposition groups={skills} /></div>
-    </section>
+    <section class="band systems" aria-labelledby="systems">
+      <SectionHeader index="03" id="systems" title="Systems & credentials" />
 
-    <Rule />
-
-    <section class="band reveal-x" aria-labelledby="education">
-      <SectionHeader index="04" id="education" title="Education" />
-      {
-        education.map((e) => (
-          <div class="education">
-            <p class="period">{formatPeriod(e.start, e.end)}</p>
-            <div>
-              <p class="institution">{e.institution}</p>
-              <p class="degree">
-                {e.degree} {e.field}
-              </p>
-            </div>
+      <div class="systems-grid reveal-stagger">
+        <div class="module marks">
+          <div class="module-head">
+            <span class="head-dot" aria-hidden="true"></span>
+            Skills
           </div>
-        ))
-      }
+          <div class="module-body">
+            <SkillsComposition groups={skills} />
+          </div>
+        </div>
+
+        <div class="module marks">
+          <div class="module-head">
+            <span class="head-dot" aria-hidden="true"></span>
+            Education
+          </div>
+          <div class="module-body">
+            {
+              education.map((e) => (
+                <div class="edu">
+                  <p class="edu-inst">{e.institution}</p>
+                  <p class="edu-degree">
+                    {e.degree} {e.field}
+                  </p>
+                  <p class="edu-period">{formatPeriod(e.start, e.end)}</p>
+                  {e.highlights.length > 0 && (
+                    <ul class="edu-highlights">
+                      {e.highlights.map((h) => (
+                        <li>{h}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
     </section>
 
     <Rule />
 
-    <section class="band reveal contact" aria-labelledby="contact">
-      <SectionHeader index="05" id="contact" title="Get in touch" />
+    <section class="band contact" aria-labelledby="contact">
+      <SectionHeader index="04" id="contact" title="Get in touch" />
       <p class="lead">
         I'm looking for full-stack and AI engineering roles. The fastest way to reach me
         is email.
@@ -356,10 +375,80 @@ const featuredProjects = await getFeaturedProjects(3)
     }
   }
 
+  /* ── Systems & credentials ────────────────────────────────────────── */
+  .systems-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  @media (max-width: 52rem) {
+    .systems-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .head-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: var(--radius-full);
+    background: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
+    flex-shrink: 0;
+  }
+
+  .edu p {
+    margin: 0;
+  }
+
+  .edu-inst {
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    color: var(--color-text);
+    line-height: 1.4;
+  }
+
+  .edu-degree {
+    margin-top: 0.35rem !important;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .edu-period {
+    margin-top: 0.6rem !important;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-cyan);
+  }
+
+  .edu-highlights {
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .edu-highlights li::before {
+    content: '· ';
+    color: var(--color-cyan);
+  }
+
   /* ── Contact ──────────────────────────────────────────────────────── */
   .contact .lead {
     max-width: 52ch;
     color: var(--color-text-muted);
     margin: 0 0 1.5rem;
+  }
+
+  .contact-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
   }
 </style>

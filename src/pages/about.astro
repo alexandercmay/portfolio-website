@@ -15,9 +15,11 @@ import About, { frontmatter } from '../../content/about.mdx'
   description={frontmatter.description}
 >
   <h1>{frontmatter.title}</h1>
-  <Prose>
-    <About components={mdxComponents} />
-  </Prose>
+  <div class="reading-surface marks">
+    <Prose>
+      <About components={mdxComponents} />
+    </Prose>
+  </div>
 </BaseLayout>
 
 <style>

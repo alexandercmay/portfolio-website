@@ -41,9 +41,15 @@ const d = project.data
       </ul>
     </div>
 
-    <Prose>
-      <Content components={mdxComponents} />
-    </Prose>
+    {
+      /* Opaque surface: the starfield must not sit behind sustained reading.
+        Text over a bright star measures 1.11:1. */
+    }
+    <div class="reading-surface marks">
+      <Prose>
+        <Content components={mdxComponents} />
+      </Prose>
+    </div>
   </article>
 </BaseLayout>
 
