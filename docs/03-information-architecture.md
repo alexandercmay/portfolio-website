@@ -81,7 +81,7 @@ below can be as expressive as it wants.
 
 No animation gating the hero. Full opacity on first paint.
 
-### 2. Selected experience
+### 2. Experience
 
 The heart of the page, and where the editorial treatment earns its keep.
 
@@ -99,31 +99,29 @@ visible career line. Pure CSS, progressively enhanced.
 
 Ends with: **Full work history →** `/resume`.
 
-### 3. Metrics band *(only if you have real numbers)*
+*(A metrics band — 1M+, <7s, 50+ — was removed. Standing alone with no
+surrounding explanation the figures read as out of place: a number with no
+context is not evidence. The same numbers do real work inside the experience
+highlights, where the sentence around them supplies the meaning.)*
 
-Two to four figures in large display type. Editorial design uses numbers as
-graphic elements, and this is the highest-impact-per-pixel section on the page.
-
-**Omitted entirely when `resume.metrics` is absent.** Better no metrics than
-padded ones.
-
-### 4. Featured projects
+### 3. Projects
 
 Three cards: cover image if present, title, tagline, stack, status, `updated`
 date. Must look right with no cover image. Links to `/projects`.
 
-### 5. Systems & credentials
+### 4. Skills
 
-Skills and Education as a **two-column band of console modules**, not two
-separate full-width sections.
+Grouped by category, mono, no proficiency bars — nobody believes them, and
+"React 90%" invites a question you can't answer.
 
-Education alone is a single degree; as its own band it read as lonely and
-under-filled. Paired with Skills in a titled module it reads as an instrument
-panel with two readouts.
+### 5. Education
 
-- **Skills** (wider column): grouped by category, mono, no proficiency bars —
-  nobody believes them, and "React 90%" invites a question you can't answer.
-- **Education** (narrow column): institution, degree, period, highlights.
+Its own section, as a console module: institution, degree, period, highlights,
+and a **relevant coursework grid**.
+
+Previously paired with Skills in a combined "Systems & credentials" band. Split
+out because education deserves clean, dedicated formatting rather than being a
+narrow column beside a wider one.
 
 ### 7. Contact
 

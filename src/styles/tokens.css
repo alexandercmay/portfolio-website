@@ -103,12 +103,27 @@
   --c-border: #212a38;
   --c-grid: #10151f;
 
-  /* Starfield. Deliberately dim: stars are high-contrast POINTS, unlike a
+  /* Starfield.
+     Real stars have colour temperature, so these span blue-white through
+     gold rather than being one grey. Each bright star is drawn as a CORE
+     plus a soft HALO — a bare dot at this size reads as dust, which is
+     exactly what the single-gradient version looked like.
+
+     Still deliberately restrained: stars are high-contrast POINTS, unlike a
      uniform grid, so they cost more readability per unit of brightness. */
-  --c-star-near: #cfe3f5;
-  --c-star-mid: #8fa6c0;
-  --c-star-far: #55677f;
+  --c-star-core: #ffffff;
+  --c-star-blue: #a8d8ff;
   --c-star-cyan: #7fe6f7;
+  --c-star-violet: #cbb6ff;
+  --c-star-gold: #ffd9a0;
+  --c-star-mid: #93a9c4;
+  --c-star-far: #4d5f77;
+
+  /* Halos — the same hues at low alpha, drawn 5-7x the core radius. */
+  --c-halo-blue: rgb(168 216 255 / 22%);
+  --c-halo-cyan: rgb(127 230 247 / 24%);
+  --c-halo-violet: rgb(203 182 255 / 20%);
+  --c-halo-gold: rgb(255 217 160 / 20%);
 
   --c-text: #e6edf3; /* 16.47:1 */
   --c-text-muted: #9aa7b4; /*  7.93:1 */
@@ -136,11 +151,19 @@
     --c-grid: #ecf0f4;
 
     /* Light mode has no starfield — dark specks on white read as dirt, not
-       as space. These resolve to transparent so the layers render nothing. */
-    --c-star-near: transparent;
+     as space. Every star token resolves to transparent, so the gradient
+     layers render nothing at all. */
+    --c-star-core: transparent;
+    --c-star-blue: transparent;
+    --c-star-cyan: transparent;
+    --c-star-violet: transparent;
+    --c-star-gold: transparent;
     --c-star-mid: transparent;
     --c-star-far: transparent;
-    --c-star-cyan: transparent;
+    --c-halo-blue: transparent;
+    --c-halo-cyan: transparent;
+    --c-halo-violet: transparent;
+    --c-halo-gold: transparent;
 
     --c-text: #0d1117;
     --c-text-muted: #4a5763;
@@ -162,10 +185,20 @@
   --c-border: #d5dde5;
   --c-grid: #ecf0f4;
 
-  --c-star-near: transparent;
+  /* Light mode has no starfield — dark specks on white read as dirt, not
+     as space. Every star token resolves to transparent, so the gradient
+     layers render nothing at all. */
+  --c-star-core: transparent;
+  --c-star-blue: transparent;
+  --c-star-cyan: transparent;
+  --c-star-violet: transparent;
+  --c-star-gold: transparent;
   --c-star-mid: transparent;
   --c-star-far: transparent;
-  --c-star-cyan: transparent;
+  --c-halo-blue: transparent;
+  --c-halo-cyan: transparent;
+  --c-halo-violet: transparent;
+  --c-halo-gold: transparent;
 
   --c-text: #0d1117;
   --c-text-muted: #4a5763;

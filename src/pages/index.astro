@@ -5,13 +5,12 @@ import Rule from '@/components/Rule.astro'
 import SectionHeader from '@/components/SectionHeader.astro'
 import Label from '@/components/Label.astro'
 import ExperienceEntry from '@/components/ExperienceEntry.astro'
-import MetricFigure from '@/components/MetricFigure.astro'
 import ProjectCard from '@/components/ProjectCard.astro'
 import SkillsComposition from '@/components/SkillsComposition.astro'
 import { getFeaturedProjects, formatPeriod } from '@/lib/content'
 import { resume } from '../../content/resume'
 
-const { basics, work, education, skills, metrics } = resume
+const { basics, work, education, skills } = resume
 
 const featuredRoles = work
   .filter((r) => r.featured)
@@ -58,42 +57,28 @@ const featuredProjects = await getFeaturedProjects(3)
 
     {/* SELECTED EXPERIENCE — the heart of the page. */}
     <section class="band" aria-labelledby="experience">
-      <SectionHeader
-        index="01"
-        id="experience"
-        title="Selected experience"
-        href="/resume"
-        linkLabel="Full work history"
-      />
+      <SectionHeader index="01" id="experience" title="Experience" />
       <div class="timeline reveal-stagger">
         {featuredRoles.map((role) => <ExperienceEntry role={role} />)}
       </div>
+
+      <a class="timeline-more" href="/resume">
+        <span class="tm-icon" aria-hidden="true"></span>
+        View the full detailed timeline
+      </a>
     </section>
 
     {
       /* METRICS — renders nothing at all when there are no real numbers.
         Three invented-sounding figures do more damage than none. */
     }
-    {
-      metrics && metrics.length > 0 && (
-        <>
-          <Rule />
-          <section class="band metrics reveal-stagger" aria-label="Key numbers">
-            {metrics.map((m) => (
-              <MetricFigure value={m.value} label={m.label} />
-            ))}
-          </section>
-        </>
-      )
-    }
-
     <Rule />
 
     <section class="band reveal" aria-labelledby="work">
       <SectionHeader
         index="02"
         id="work"
-        title="Selected work"
+        title="Projects"
         href="/projects"
         linkLabel="All projects"
       />
@@ -104,66 +89,81 @@ const featuredProjects = await getFeaturedProjects(3)
 
     <Rule />
 
-    <section class="band systems" aria-labelledby="systems">
-      <SectionHeader index="03" id="systems" title="Systems & credentials" />
-
-      <div class="systems-grid reveal-stagger">
-        <div class="module marks">
-          <div class="module-head">
-            <span class="head-dot" aria-hidden="true"></span>
-            Skills
-          </div>
-          <div class="module-body">
-            <SkillsComposition groups={skills} />
-          </div>
-        </div>
-
-        <div class="module marks">
-          <div class="module-head">
-            <span class="head-dot" aria-hidden="true"></span>
-            Education
-          </div>
-          <div class="module-body">
-            {
-              education.map((e) => (
-                <div class="edu">
-                  <p class="edu-inst">{e.institution}</p>
-                  <p class="edu-degree">
-                    {e.degree} {e.field}
-                  </p>
-                  <p class="edu-period">{formatPeriod(e.start, e.end)}</p>
-                  {e.highlights.length > 0 && (
-                    <ul class="edu-highlights">
-                      {e.highlights.map((h) => (
-                        <li>{h}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))
-            }
-          </div>
-        </div>
+    <section class="band" aria-labelledby="skills">
+      <SectionHeader index="03" id="skills" title="Skills" />
+      <div class="reveal-stagger">
+        <SkillsComposition groups={skills} />
       </div>
     </section>
 
     <Rule />
 
-    <section class="band contact" aria-labelledby="contact">
-      <SectionHeader index="04" id="contact" title="Get in touch" />
-      <p class="lead">
-        I'm looking for full-stack and AI engineering roles. The fastest way to reach me
-        is email.
-      </p>
-      <div class="actions">
-        <Button href={`mailto:${basics.email}`}>{basics.email}</Button>
-        {
-          basics.profiles.map((p) => (
-            <Button href={p.url} variant="secondary">
-              {p.network}
-            </Button>
-          ))
-        }
+    <section class="band" aria-labelledby="education">
+      <SectionHeader index="04" id="education" title="Education" />
+
+      {
+        education.map((e) => (
+          <div class="module marks edu-module reveal">
+            <div class="module-head">
+              <span class="head-dot" aria-hidden="true" />
+              {e.institution}
+            </div>
+
+            <div class="module-body">
+              <div class="edu-top">
+                <div>
+                  <p class="edu-degree">
+                    {e.degree} {e.field}
+                  </p>
+                  {e.highlights.length > 0 && (
+                    <p class="edu-highlights">{e.highlights.join(' · ')}</p>
+                  )}
+                </div>
+                <p class="edu-period">{formatPeriod(e.start, e.end)}</p>
+              </div>
+
+              {e.coursework && e.coursework.length > 0 && (
+                <div class="coursework">
+                  <p class="coursework-label">Relevant coursework</p>
+                  <ul>
+                    {e.coursework.map((c) => (
+                      <li>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        ))
+      }
+    </section>
+
+    <Rule />
+
+    <section class="band" aria-labelledby="contact">
+      <SectionHeader index="05" id="contact" title="Get in touch" />
+
+      <div class="module marks reveal">
+        <div class="module-head">
+          <span class="head-dot" aria-hidden="true"></span>
+          Contact
+        </div>
+        <div class="module-body contact-panel">
+          <p class="lead">
+            I'm looking for full-stack and AI engineering roles. The fastest way to reach
+            me is email.
+          </p>
+          <div class="actions">
+            <Button href={`mailto:${basics.email}`}>{basics.email}</Button>
+            {
+              basics.profiles.map((profile) => (
+                <Button href={profile.url} variant="secondary">
+                  {profile.network}
+                </Button>
+              ))
+            }
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -437,18 +437,143 @@ const featuredProjects = await getFeaturedProjects(3)
     color: var(--color-cyan);
   }
 
-  /* ── Contact ──────────────────────────────────────────────────────── */
-  .contact .lead {
-    max-width: 52ch;
+  /* ── Full timeline link ───────────────────────────────────────────── */
+  .timeline-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-left: 1.75rem;
+    padding: 0.65em 1.1em;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
-    margin: 0 0 1.5rem;
+    text-decoration: none;
+    transition:
+      color var(--duration-state) var(--ease-out),
+      border-color var(--duration-state) var(--ease-out),
+      box-shadow var(--duration-state) var(--ease-out);
   }
 
+  .timeline-more:hover {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+
+  .tm-icon {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: var(--radius-full);
+    background: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+
+  @media (max-width: 46rem) {
+    .timeline-more {
+      margin-left: 1rem;
+    }
+  }
+
+  /* ── Education ────────────────────────────────────────────────────── */
+  .head-dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: var(--radius-full);
+    background: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
+    flex-shrink: 0;
+  }
+
+  .edu-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .edu-top p {
+    margin: 0;
+  }
+
+  .edu-degree {
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    color: var(--color-text);
+  }
+
+  .edu-highlights {
+    margin-top: 0.4rem !important;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .edu-period {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-cyan);
+    white-space: nowrap;
+  }
+
+  .coursework {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .coursework-label {
+    margin: 0 0 0.85rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  .coursework ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.5rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .coursework li {
+    position: relative;
+    padding-left: 1rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .coursework li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 0.4rem;
+    height: 1px;
+    background: var(--color-cyan);
+    opacity: 0.8;
+  }
+
+  /* ── Contact ──────────────────────────────────────────────────────── */
   .contact-panel {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
+  }
+
+  .contact-panel .lead {
+    max-width: 40ch;
+    color: var(--color-text-muted);
+    margin: 0;
   }
 </style>

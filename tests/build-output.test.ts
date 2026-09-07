@@ -205,32 +205,23 @@ describe('the resume page', () => {
   })
 })
 
-describe('the metrics band', () => {
-  it('renders when resume.metrics has real figures', () => {
-    expect(resume.metrics?.length).toBeGreaterThan(0)
-    expect(page('index.html')).toMatch(/class="[^"]*metrics/)
-  })
-
-  it('shows every metric value', () => {
-    // Readouts split a trailing unit into its own span, so the value is not
-    // contiguous in the markup. Strip tags before comparing.
-    const esc = (s: string) =>
-      s.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const text = page('index.html')
-      .replace(/<[^>]+>/g, '')
-      .replace(/\s+/g, '')
-    for (const m of resume.metrics ?? []) {
-      expect(text).toContain(esc(m.value).replace(/\s+/g, ''))
+describe('the education section', () => {
+  it('lists relevant coursework', () => {
+    const html = page('index.html')
+    expect(html).toMatch(/Relevant coursework/)
+    for (const c of resume.education[0].coursework ?? []) {
+      expect(html).toContain(c.replace(/&/g, '&amp;'))
     }
   })
 
-  it('never hides a magnitude suffix in the unit span', () => {
-    // "1M+" split as a huge "1" and a tiny "M+" misstated the figure by six
-    // orders of magnitude. Only real measurement units may be split off.
-    const units = page('index.html').match(/class="unit[^"]*"[^>]*>([^<]*)</g) ?? []
-    for (const u of units) {
-      expect(u).not.toMatch(/[MKB]\+?</)
-    }
+  it('offers the full timeline at the end of Experience', () => {
+    expect(page('index.html')).toMatch(/View the full detailed timeline/)
+  })
+
+  it('no longer renders a context-free metrics band', () => {
+    // The figures (1M+, <7s, 50+) read as out of place with no surrounding
+    // explanation, so the band and its data were removed outright.
+    expect(page('index.html')).not.toMatch(/class="[^"]*\bmetric\b/)
   })
 })
 
@@ -365,5 +356,37 @@ describe('the background grid is decorative, not costly', () => {
     const subtle = token('--c-text-subtle', lightBlock)
     expect(grid).toBeTruthy()
     expect(ratio(subtle, grid)).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe('the landing page has every expected section', () => {
+  /**
+   * A structural edit silently deleted the entire Contact section — the build
+   * passed, types passed, and 125 tests passed, because nothing asserted the
+   * page's shape. Only a manual DOM check caught it.
+   *
+   * This asserts the sections exist, in order, with consecutive indexes.
+   */
+  const EXPECTED = ['Experience', 'Projects', 'Skills', 'Education', 'Get in touch']
+
+  const headings = [...page('index.html').matchAll(/<h2[^>]*>(.*?)<\/h2>/gs)].map((m) =>
+    m[1].replace(/<[^>]+>/g, '').trim(),
+  )
+
+  it.each(EXPECTED)('has a "%s" section', (name) => {
+    expect(headings.some((h) => h.endsWith(name))).toBe(true)
+  })
+
+  it('orders them as written', () => {
+    expect(headings.map((h) => h.replace(/^\d+/, ''))).toEqual(EXPECTED)
+  })
+
+  it('numbers them consecutively from 01', () => {
+    const indexes = headings.map((h) => h.match(/^(\d+)/)?.[1])
+    expect(indexes).toEqual(['01', '02', '03', '04', '05'])
+  })
+
+  it('still reaches contact — the section deleted by that edit', () => {
+    expect(page('index.html')).toContain('mailto:')
   })
 })

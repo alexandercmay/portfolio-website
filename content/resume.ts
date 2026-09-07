@@ -43,6 +43,8 @@ export interface EducationEntry {
   start: Date
   end?: Date
   highlights: string[]
+  /** Relevant coursework, shown as a grid on the Education section. */
+  coursework?: string[]
 }
 
 export interface Resume {
@@ -58,12 +60,6 @@ export interface Resume {
   work: WorkEntry[]
   education: EducationEntry[]
   skills: { category: string; items: readonly TechKey[] }[]
-  /**
-   * Optional. The homepage metrics band renders nothing when this is absent.
-   * Omit rather than pad — three invented-sounding figures do more damage
-   * than none.
-   */
-  metrics?: { value: string; label: string }[]
 }
 
 export const resume: Resume = {
@@ -158,6 +154,18 @@ export const resume: Resume = {
       start: new Date('2020-08-01'),
       end: new Date('2024-05-01'),
       highlights: ['GPA 3.98'],
+      // PLACEHOLDER COURSEWORK — replace with what you actually took. These
+      // are plausible NC State CSC titles, not a transcript.
+      coursework: [
+        'Game Engine Foundations',
+        'Artificial Intelligence',
+        'Operating Systems',
+        'Database Management Systems',
+        'Computer Networks',
+        'Software Engineering',
+        'Automata & Formal Languages',
+        'Data Structures & Algorithms',
+      ],
     },
   ],
 
@@ -184,14 +192,5 @@ export const resume: Resume = {
     },
     { category: 'Frontend', items: ['react'] },
     { category: 'Security', items: ['stride', 'cvss', 'vault', 'rbac', 'oauth'] },
-  ],
-
-  metrics: [
-    { value: '1M+', label: 'AMQP messages ingested daily by the pipeline I architected' },
-    { value: '<7s', label: 'Natural-language query to computed storage answer' },
-    {
-      value: '50+',
-      label: 'Microservices replicated for the first pen-test environment',
-    },
   ],
 }

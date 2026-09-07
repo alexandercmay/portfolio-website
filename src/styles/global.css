@@ -19,44 +19,65 @@ body {
   -webkit-font-smoothing: antialiased;
 
   /* ── Deep space ───────────────────────────────────────────────────────
-     Three star layers at different tile sizes give depth without
-     `background-attachment: fixed` (a full repaint per scroll frame), plus
-     one very faint coordinate grid at a large pitch — a hint of measurement
-     rather than graph paper.
+     Each bright star is a CORE plus a HALO — two gradients at the same
+     position, the halo 5-7x the core radius at low alpha. A bare dot at this
+     size reads as dust, which is exactly what the first version looked like.
+     The glow is what makes it read as a star.
 
-     Stars are HIGH-CONTRAST POINTS, unlike a uniform grid, so they are kept
-     dim and long-form reading sits on panels. Contrast over the brightest
-     star is verified by tests.
-     ─────────────────────────────────────────────────────────────────── */
+     Colours span blue-white through gold, because real stars have colour
+     temperature and a uniform grey field looks like noise.
+
+     Layers scroll with the page: `background-attachment: fixed` forces a full
+     repaint every scroll frame and is a known jank source on mobile Safari.
+
+     Stars are HIGH-CONTRAST POINTS, unlike a uniform grid — small text over
+     the brightest one measures 1.11:1 — so they stay sparse and all sustained
+     reading sits on an opaque `.reading-surface` or `.module`.
+     ─────────────────────────────────────────────────────────────────────── */
   background-image:
-    /* near field — brighter, sparse */
-    radial-gradient(1.4px 1.4px at 18% 24%, var(--c-star-near), transparent),
-    radial-gradient(1.2px 1.2px at 74% 62%, var(--c-star-near), transparent),
-    radial-gradient(1.3px 1.3px at 43% 81%, var(--c-star-cyan), transparent),
-    /* mid field */ radial-gradient(1px 1px at 62% 16%, var(--c-star-mid), transparent),
+    /* ── bright stars: halo, then core ── */
+    radial-gradient(9px 9px at 18% 24%, var(--c-halo-blue), transparent 70%),
+    radial-gradient(1.6px 1.6px at 18% 24%, var(--c-star-core), transparent),
+    radial-gradient(11px 11px at 74% 62%, var(--c-halo-cyan), transparent 70%),
+    radial-gradient(1.5px 1.5px at 74% 62%, var(--c-star-cyan), transparent),
+    radial-gradient(9px 9px at 43% 81%, var(--c-halo-violet), transparent 70%),
+    radial-gradient(1.4px 1.4px at 43% 81%, var(--c-star-violet), transparent),
+    radial-gradient(8px 8px at 88% 14%, var(--c-halo-gold), transparent 70%),
+    radial-gradient(1.3px 1.3px at 88% 14%, var(--c-star-gold), transparent),
+    /* ── mid field ── */
+    radial-gradient(1.1px 1.1px at 62% 16%, var(--c-star-blue), transparent),
     radial-gradient(1px 1px at 12% 68%, var(--c-star-mid), transparent),
-    radial-gradient(1px 1px at 88% 39%, var(--c-star-mid), transparent),
-    radial-gradient(1px 1px at 33% 47%, var(--c-star-mid), transparent),
-    /* far field — dust */
+    radial-gradient(1.1px 1.1px at 88% 39%, var(--c-star-mid), transparent),
+    radial-gradient(1px 1px at 33% 47%, var(--c-star-blue), transparent),
+    radial-gradient(1px 1px at 52% 34%, var(--c-star-mid), transparent),
+    /* ── far field: dust ── */
     radial-gradient(0.7px 0.7px at 27% 12%, var(--c-star-far), transparent),
     radial-gradient(0.7px 0.7px at 55% 88%, var(--c-star-far), transparent),
     radial-gradient(0.7px 0.7px at 81% 71%, var(--c-star-far), transparent),
     radial-gradient(0.7px 0.7px at 6% 43%, var(--c-star-far), transparent),
-    /* coordinate overlay — large pitch, barely there */
+    radial-gradient(0.6px 0.6px at 39% 61%, var(--c-star-far), transparent),
+    /* ── coordinate overlay, barely there ── */
     linear-gradient(var(--color-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
   background-size:
-    520px 520px,
-    520px 520px,
-    520px 520px,
-    340px 340px,
-    340px 340px,
-    340px 340px,
-    340px 340px,
-    210px 210px,
-    210px 210px,
-    210px 210px,
-    210px 210px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    620px 620px,
+    370px 370px,
+    370px 370px,
+    370px 370px,
+    370px 370px,
+    370px 370px,
+    230px 230px,
+    230px 230px,
+    230px 230px,
+    230px 230px,
+    230px 230px,
     128px 128px,
     128px 128px;
 }

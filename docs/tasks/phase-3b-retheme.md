@@ -159,3 +159,35 @@ formatted on their own.
 - [x] Verify landmarks survived the restructure — all pages: one `<header>`,
       one `<h1>`, zero unnamed sections, skip link present
 - [x] Scan test still passes at 375px with the longer summary
+
+## 3b.10 Cosmic starfield and content restructure *(third review)*
+
+- [x] **Starfield read as dust.** Every bright star is now a core plus a halo
+      (5–7× the core radius, low alpha) with real stellar colour — blue-white,
+      cyan, violet, gold. The glow is what makes a 1.4px dot read as a star
+      rather than a speck.
+- [x] **Remove the metrics band.** 1M+ / <7s / 50+ standing alone had no
+      surrounding explanation; a number without context is not evidence. The
+      same figures still do work inside the experience highlights, where the
+      sentence supplies the meaning. `metrics` removed from the model and
+      `MetricFigure` deleted rather than left as dead code.
+- [x] "Selected experience" → **Experience**
+- [x] "Selected work" → **Projects**
+- [x] Full-timeline link moved to the END of Experience and relabelled
+      "View the full detailed timeline" — it targets `/resume`, which already
+      lists every role in reverse-chronological order with full highlights
+- [x] **Education split into its own section** with a relevant-coursework grid,
+      rather than a narrow column in a combined "Systems & credentials" band
+- [x] Placeholder coursework added and flagged as placeholder in
+      `content/resume.ts`
+- [x] Sections renumbered 01–05
+
+### A bug worth recording
+
+The edit that split Education **silently deleted the entire Contact section**.
+The build passed, types passed, and all 125 tests passed — nothing asserted the
+page's shape, so a whole section vanished without a single failure. Only a
+manual DOM check caught it.
+
+- [x] Added a structure test asserting all five sections exist, in order, with
+      consecutive indexes, and that the page still reaches a `mailto:` link

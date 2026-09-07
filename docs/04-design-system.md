@@ -205,9 +205,17 @@ alignment marks on a measurement plate. Pure pseudo-elements.
 
 The background is a starfield, not graph paper.
 
-Three star layers on different tile pitches (520 / 340 / 210px) give depth
-without `background-attachment: fixed`, which forces a full repaint every
-scroll frame. A **nebula wash** in violet and cyan sits fixed behind
+Each bright star is a **core plus a halo** — two gradients at the same
+position, the halo 5–7× the core radius at low alpha. A bare dot at this size
+reads as *dust*, which is exactly what the first version looked like. The glow
+is what makes it read as a star.
+
+Colours span blue-white through gold, because real stars have colour
+temperature and a uniform grey field looks like noise.
+
+Layers sit at three tile pitches (620 / 370 / 230px) for depth, without
+`background-attachment: fixed`, which forces a full repaint every scroll
+frame. A **nebula wash** in violet and cyan sits fixed behind
 everything, and a **vignette** darkens the page edges like the falloff of a
 viewport.
 
