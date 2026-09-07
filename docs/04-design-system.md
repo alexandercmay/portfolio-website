@@ -172,6 +172,35 @@ Paired with **1px hard borders, no soft shadows.** Rounded plus a crisp border
 reads as a hardware panel; rounded plus a blurred drop shadow reads as a
 consumer app, which is the wrong register.
 
+### Glow
+
+Instrument light. The single rule that keeps this from becoming unreadable:
+
+> **Glow never goes on body text.** Accents, borders, and large display type
+> only. A text-shadow on running copy destroys legibility and is the fastest
+> way this aesthetic tips into a novelty.
+
+```
+--glow-cyan     0 0 12px  cyan @ 45%   /* borders, chips, ticks, indexes */
+--glow-cyan-lg  0 0 28px  cyan @ 35%   /* primary button hover */
+--glow-lime     0 0 10px  lime @ 55%   /* live status LED */
+--glow-violet   0 0 18px  violet @ 40% /* secondary rail */
+```
+
+Applied to: primary button (resting and hover), card and chip hover borders,
+status LEDs, the scroll rail, metric tick marks and unit spans, section index
+numbers, and the hero name. Nothing else.
+
+**Ambient light.** A large, very soft radial wash in cyan and violet sits
+behind the hero at `z-index: -1`. It is the biggest single contributor to the
+"powered on" feel and costs one gradient on one element.
+
+**Vignette.** A fixed radial darkening at the page edges — the falloff of an
+instrument screen. `pointer-events: none`, so it can never intercept a click.
+
+**Registration marks.** Corner ticks on cards, in cyan at low opacity, like the
+alignment marks on a measurement plate. Pure pseudo-elements.
+
 ### The measured grid
 
 A faint grid sits behind the page — the single strongest carrier of the
@@ -184,9 +213,20 @@ background-image:
 background-size: 32px 32px;
 ```
 
+Plus **lit intersection nodes** on a coarser 128px pitch — small cyan dots at
+the measurement points, the detail that makes it read as graph paper rather
+than as a generic dark grid.
+
 It must stay **barely visible** — if you notice it as a grid rather than as
-texture, it is too strong. It is masked out behind text containers so it never
-competes with reading.
+texture, it is too strong.
+
+All layers use the default `background-attachment: scroll`. A `fixed` node
+layer gave a nice depth cue but forces a full repaint every scroll frame and is
+a known jank source on mobile Safari — not worth it against the budget.
+
+**Contrast over the grid is verified separately and enforced by tests.** The
+palette's AA check was done against the flat page background; text also sits on
+grid lines, which is a ground that check never looked at.
 
 ## Motion
 
@@ -220,13 +260,29 @@ verified to actually catch the inversion.
 
 Motion vocabulary:
 
-- **`.reveal`** — fade and rise, on entry
-- **`.reveal-stagger`** — children enter in sequence via `animation-delay`
-- **Scroll progress rail** — a scroll-linked accent line down the experience
-  section, drawn with `scroll()`
-- **Readout count-in** — metric figures scale up slightly on entry, like a gauge
-  settling
-- **Hover** — 150ms border and glow transitions only
+| Utility | Does | Applied to |
+| --- | --- | --- |
+| `.reveal` | fade and rise on entry | sections |
+| `.reveal-stagger` | children enter in sequence | metrics, projects, experience, skills |
+| `.reveal-x` | slides in from the measurement axis | metadata columns |
+| `.settle` | scales in like a gauge settling | metric readouts |
+| `.charge` | dim and unlit, then lit with a glow | section headers |
+| `.draw-x` | draws across like a plotter pen | section rules |
+| `.scroll-progress` | page progress trace, `scroll()` timeline | fixed, every page |
+| experience rail | scroll-linked cyan→violet line | experience section |
+
+**Every utility that applies to content is visible by default**, and tests
+assert it for each one by name — verified by inverting each and watching the
+suite fail.
+
+`.scroll-progress` is the one deliberate exception: it is decorative chrome,
+and a progress bar rendering full-width without a scroll timeline would be
+actively misleading. Hidden-by-default is correct there and only there.
+
+`.draw-x` is transform-only, so the opacity guard does not cover it; a separate
+test asserts it is never collapsed to `scaleX(0)` in a base rule.
+
+Hover: 150ms border, colour, and glow transitions only.
 
 Never on the hero. Name, headline, and contact render at full opacity on first
 paint, always. Durations 150ms (state) / 300ms (entry). `transform` and `opacity`

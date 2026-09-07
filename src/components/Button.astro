@@ -54,8 +54,14 @@ const Tag = href ? 'a' : 'button'
     color: var(--color-bg);
   }
 
+  .primary {
+    box-shadow: var(--glow-cyan);
+  }
+
   .primary:hover {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-cyan) 22%, transparent);
+    box-shadow:
+      var(--glow-cyan-lg),
+      0 0 0 3px color-mix(in srgb, var(--color-cyan) 22%, transparent);
   }
 
   .secondary {
@@ -67,5 +73,6 @@ const Tag = href ? 'a' : 'button'
   .secondary:hover {
     border-color: var(--color-cyan);
     color: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
   }
 </style>

@@ -48,6 +48,12 @@ const { title, description, image, noindex, wide, jsonLd } = Astro.props
   </head>
 
   <body>
+    {
+      /* Plotter trace across the top, driven by the document scroll timeline.
+        Pure CSS — no JavaScript, and pointer-events:none so it can never
+        intercept a click. */
+    }
+    <div class="scroll-progress" aria-hidden="true"></div>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header />
     <main id="main" class:list={[!wide && 'container']}>

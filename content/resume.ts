@@ -85,7 +85,7 @@ export const resume: Resume = {
       },
     ],
     summary:
-      'I spent two years at Dell building AI-powered infrastructure tooling — LLM tool layers over production storage systems, event-driven pipelines moving a million messages a day, and the security work that kept it all shippable. I am looking for my next full-stack or AI engineering role.',
+      'I build AI systems that do real work — tool layers, agent orchestration, and the event-driven services underneath them — and I work across the whole stack to ship them. I am most useful where the AI is a real system rather than a wrapper, and where correctness and security are design inputs rather than a final gate.',
   },
 
   work: [

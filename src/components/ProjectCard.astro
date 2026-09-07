@@ -21,7 +21,7 @@ const d = project.data
   overlay so they stay independently clickable.
 */
 }
-<article class="card panel">
+<article class="card panel marks">
   {
     d.cover && (
       <div class="cover">
@@ -60,6 +60,7 @@ const d = project.data
   .card:hover {
     border-color: var(--color-cyan);
     background: var(--color-raised);
+    box-shadow: var(--glow-cyan);
   }
 
   /* No cover image is the normal case, not a broken one — the layout must not

@@ -55,6 +55,15 @@
   --radius-xl: 20px;
   --radius-full: 999px;
 
+  /* Glow ------------------------------------------------------------------
+     Instrument light. Applied to accents, borders, and large display type
+     ONLY — glow on running copy destroys legibility and is the fastest way
+     this aesthetic tips into unreadable. */
+  --glow-cyan: 0 0 12px color-mix(in srgb, var(--color-cyan) 45%, transparent);
+  --glow-cyan-lg: 0 0 28px color-mix(in srgb, var(--color-cyan) 35%, transparent);
+  --glow-lime: 0 0 10px color-mix(in srgb, var(--color-lime) 55%, transparent);
+  --glow-violet: 0 0 18px color-mix(in srgb, var(--color-violet) 40%, transparent);
+
   /* Motion ---------------------------------------------------------------- */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --duration-state: 150ms;

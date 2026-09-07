@@ -26,7 +26,9 @@ const { status } = Astro.props
 
   .active {
     background: var(--color-lime);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+    box-shadow:
+      var(--glow-lime),
+      0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
   }
 
   .shipped {
@@ -36,6 +38,7 @@ const { status } = Astro.props
   .archived,
   .exploration {
     background: var(--color-amber);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--color-amber) 45%, transparent);
   }
 
   /* The one pulse on the site, and only on a live project. */
@@ -48,10 +51,14 @@ const { status } = Astro.props
   @keyframes pulse {
     0%,
     100% {
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+      box-shadow:
+        var(--glow-lime),
+        0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
     }
     50% {
-      box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-lime) 8%, transparent);
+      box-shadow:
+        0 0 16px color-mix(in srgb, var(--color-lime) 70%, transparent),
+        0 0 0 5px color-mix(in srgb, var(--color-lime) 10%, transparent);
     }
   }
 </style>

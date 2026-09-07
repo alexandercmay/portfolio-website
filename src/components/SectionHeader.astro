@@ -11,7 +11,7 @@ interface Props {
 const { title, href, linkLabel, index, id } = Astro.props
 ---
 
-<div class="header">
+<div class="header charge">
   <h2 id={id}>
     {
       index && (
@@ -55,6 +55,7 @@ const { title, href, linkLabel, index, id } = Astro.props
     font-weight: 600;
     color: var(--color-cyan);
     letter-spacing: var(--tracking-wide);
+    text-shadow: var(--glow-cyan);
   }
 
   .more {

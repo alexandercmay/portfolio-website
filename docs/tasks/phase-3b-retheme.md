@@ -102,3 +102,33 @@ Restyle, do not rewrite. Structure and accessibility work from Phases 1–2 stay
 
 **Exit criteria:** the site reads as an instrument panel, every AA pair verified
 in both themes, zero JavaScript, and the scan test still passes at 375px.
+
+---
+
+## 3b.7 Glow and lab atmosphere *(added after first review)*
+
+Requested: more physics-lab feel, more glow, more scroll animation.
+
+- [x] Glow tokens — cyan / cyan-lg / lime / violet
+- [x] **Glow never on body text** — accents, borders, large display type only
+- [x] Ambient radial wash behind the hero, `z-index: -1`
+- [x] Vignette at the page edges, `pointer-events: none`
+- [x] Lit grid intersection nodes on a coarser pitch
+- [x] Registration marks on cards
+- [x] Glow on: primary button, card/chip hover, status LEDs, scroll rail,
+      metric ticks and units, section indexes, hero name
+- [x] `.reveal-x`, `.charge`, `.draw-x` motion utilities
+- [x] Page scroll-progress trace via `scroll()` timeline
+- [x] Stagger extended past four children
+- [x] **Every content motion utility added to the opt-in guard**, each verified
+      by inverting it and watching the suite fail
+- [x] `.draw-x` given its own `scaleX(0)` guard, since it is transform-only
+- [x] Removed `background-attachment: fixed` — full repaint per scroll frame,
+      known jank on mobile Safari, not worth it against the budget
+- [x] Verified no animated element is hidden while in view (25 tracked, 0 hidden)
+
+## 3b.8 Hero copy *(added after first review)*
+
+- [x] Rewrite `basics.summary` to lead with what he builds and wants, not where
+      he built it. The previous version opened with "I spent two years at Dell"
+      — the first thing a reader saw was an employer, not a capability.

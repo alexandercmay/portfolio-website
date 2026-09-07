@@ -93,18 +93,40 @@ describe('the scroll-reveal utility is opt-in, not opt-out', () => {
   // missed tokens as soon as the build emitted more than one file.
   const css = allCss()
 
-  // Every rule whose selector mentions .reveal — the base rule now groups
-  // `.reveal` with `.reveal-stagger > *`, so matching only `.reveal{` misses it.
-  const revealRules = css.match(/[^{}]*\.reveal[^{}]*\{[^}]*\}/g) ?? []
+  /**
+   * Every motion utility that can be applied to CONTENT must be visible by
+   * default. `.reveal` was the original; `.reveal-x`, `.settle` and `.charge`
+   * were added with the glow pass and apply to metric readouts, section
+   * headers and metadata columns — all real content.
+   *
+   * `.scroll-progress` is deliberately NOT in this list: it is decorative
+   * chrome, and a progress bar that renders full-width without a scroll
+   * timeline would be actively misleading. Hidden-by-default is correct there
+   * and only there.
+   */
+  const MOTION_UTILITIES = ['reveal', 'reveal-x', 'settle', 'charge']
 
-  it('declares the reveal targets visible in a base rule', () => {
-    expect(revealRules.some((r) => /opacity:1/.test(r))).toBe(true)
+  it.each(MOTION_UTILITIES)('.%s targets are visible in a base rule', (name) => {
+    const rules = css.match(new RegExp(`[^{}]*\\.${name}[^{}]*\\{[^}]*\\}`, 'g')) ?? []
+    expect(rules.length, `no rule found for .${name}`).toBeGreaterThan(0)
+    expect(rules.some((r) => /opacity:1/.test(r))).toBe(true)
   })
 
-  it('never sets a reveal target to opacity:0 outside the keyframes', () => {
-    expect(revealRules.length).toBeGreaterThan(0)
-    for (const rule of revealRules) {
+  it.each(MOTION_UTILITIES)('.%s is never set to opacity:0 outside keyframes', (name) => {
+    const rules = css.match(new RegExp(`[^{}]*\\.${name}[^{}]*\\{[^}]*\\}`, 'g')) ?? []
+    for (const rule of rules) {
       expect(rule, rule).not.toMatch(/opacity:0(?![.\d])/)
+    }
+  })
+
+  it('.draw-x is never collapsed to scaleX(0) in a base rule', () => {
+    // Transform-only, so the opacity guard above does not cover it — but a
+    // base scaleX(0) would hide every section rule in any browser without
+    // animation-timeline, which is the same class of bug.
+    const rules = css.match(/[^{}]*\.draw-x[^{}]*\{[^}]*\}/g) ?? []
+    expect(rules.length).toBeGreaterThan(0)
+    for (const rule of rules) {
+      expect(rule, rule).not.toMatch(/scalex\(0\)/i)
     }
   })
 

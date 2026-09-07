@@ -23,10 +23,38 @@ body {
      as a grid rather than as texture, it is too strong. Decorative only, and
      it must not cost a single AA contrast pair. */
   background-image:
+    /* Lit intersection nodes — the measurement points on graph paper. */
+    radial-gradient(
+      circle at 0 0,
+      color-mix(in srgb, var(--color-cyan) 22%, transparent) 1px,
+      transparent 1.6px
+    ),
     linear-gradient(var(--color-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size:
+    128px 128px,
+    32px 32px,
+    32px 32px;
   background-position: center top;
+  /* All layers scroll with the page. `background-attachment: fixed` gave a
+     nice depth cue but forces a full repaint on every scroll frame and is a
+     known jank source on mobile Safari — not worth it against the perf
+     budget. */
+}
+
+/* Vignette — the darkened edge of an instrument screen. Fixed, decorative,
+   and pointer-events:none so it can never intercept a click. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 55%,
+    color-mix(in srgb, var(--color-bg) 65%, transparent) 100%
+  );
 }
 
 /* Mono is the voice: headings, labels, metadata, every number. */
@@ -93,13 +121,71 @@ video {
   top: 0.5rem;
 }
 
-/* A panel: rounded with a hard 1px border and no soft shadow. Rounded plus a
-   crisp border reads as hardware; rounded plus a blur reads as a consumer
-   app. */
+/* A panel: rounded with a hard 1px border. Rounded plus a crisp border reads
+   as hardware; rounded plus a blurred drop shadow reads as a consumer app —
+   so the only shadow permitted is an accent GLOW, never a grey blur. */
 .panel {
+  position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+}
+
+/* Registration marks — the corner ticks on a measurement plate. Decorative,
+   so aria-hidden is unnecessary: they are pseudo-elements with no content. */
+.marks::before,
+.marks::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-color: var(--color-cyan);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.marks::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+  border-top-left-radius: var(--radius-lg);
+}
+
+.marks::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+/* Ambient instrument light. A large, very soft radial wash behind the hero —
+   the single biggest contributor to the "powered on" feel, and it costs one
+   gradient on one element. */
+.ambient {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 60vh;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(
+      45% 55% at 22% 30%,
+      color-mix(in srgb, var(--color-cyan) 24%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 50% at 78% 15%,
+      color-mix(in srgb, var(--color-violet) 20%, transparent),
+      transparent 70%
+    );
+  filter: blur(18px);
+}
+
+/* Glow, applied only where the design system permits it. */
+.glow-text {
+  text-shadow: var(--glow-cyan);
 }
 
 /* Containers sit on solid ground so the grid never competes with reading. */
@@ -123,6 +209,9 @@ video {
    See docs/04-design-system.md, Motion.
    ────────────────────────────────────────────────────────────────────── */
 .reveal,
+.reveal-x,
+.settle,
+.charge,
 .reveal-stagger > * {
   opacity: 1;
   transform: none;
@@ -154,6 +243,12 @@ video {
     .reveal-stagger > *:nth-child(4) {
       animation-range: entry 15% entry 75%;
     }
+    .reveal-stagger > *:nth-child(5) {
+      animation-range: entry 20% entry 80%;
+    }
+    .reveal-stagger > *:nth-child(n + 6) {
+      animation-range: entry 25% entry 85%;
+    }
 
     /* Gauge settling: a readout scales in slightly rather than sliding. */
     .settle {
@@ -161,6 +256,63 @@ video {
       animation-timeline: view();
       animation-range: entry 0% entry 55%;
     }
+
+    /* Slides in from the measurement axis — used on metadata columns. */
+    .reveal-x {
+      animation: reveal-x linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+
+    /* An element powering up: dim and unlit, then at full brightness with a
+       glow. Used on section indexes and status rails. */
+    .charge {
+      animation: charge linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 70%;
+    }
+
+    /* A separator drawing itself across the page, like a plotter pen.
+       Transform-only, so the rule is still fully present without support —
+       it simply appears already drawn. */
+    .draw-x {
+      transform-origin: 0 50%;
+      animation: draw-x linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+}
+
+/* Page scroll progress — a plotter trace across the top. Driven by the
+   document's own scroll timeline, so it needs no JavaScript. Fixed and
+   pointer-events:none so it can never intercept a click. */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-violet));
+  box-shadow: var(--glow-cyan);
+  pointer-events: none;
+  z-index: 90;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-progress {
+      animation: progress linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+
+@keyframes progress {
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -172,6 +324,37 @@ video {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes reveal-x {
+  from {
+    opacity: 0;
+    transform: translateX(-0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes charge {
+  from {
+    opacity: 0.25;
+    box-shadow: none;
+  }
+  to {
+    opacity: 1;
+    box-shadow: var(--glow-cyan);
   }
 }
 
