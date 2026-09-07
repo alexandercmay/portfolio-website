@@ -48,7 +48,7 @@ function hash(s: string): number {
  * pairwise repulsion.
  */
 const W = 1100
-const H = 760 // taller than 16/9: five clusters need vertical room to separate
+const H = 660
 const CHAR = 8.4 // --text-sm in JetBrains Mono, px per character
 const BOX_H = 28
 const PAD = 30 // dot + gap + horizontal padding
@@ -83,11 +83,11 @@ type Node = {
 
 /** Cluster centres in px. Hand-placed to keep the constellations apart. */
 const CENTRES = [
-  { x: W * 0.17, y: H * 0.24 },
-  { x: W * 0.72, y: H * 0.16 },
-  { x: W * 0.82, y: H * 0.62 },
-  { x: W * 0.2, y: H * 0.74 },
-  { x: W * 0.5, y: H * 0.46 },
+  { x: W * 0.26, y: H * 0.3 },
+  { x: W * 0.63, y: H * 0.22 },
+  { x: W * 0.72, y: H * 0.66 },
+  { x: W * 0.28, y: H * 0.7 },
+  { x: W * 0.48, y: H * 0.47 },
 ]
 
 const nodes: Node[] = []
@@ -95,10 +95,17 @@ const nodes: Node[] = []
 groups.forEach((group, gi) => {
   const c = CENTRES[gi % CENTRES.length]
   const n = group.items.length
-  // Tighter internally than before: a compact cluster reads as one object.
-  // The separation now comes from inter-cluster repulsion, not from each
-  // cluster sprawling.
-  const spread = n === 1 ? 0 : Math.min(52 + n * 9, 118)
+  // Tuned by measurement, twice, in opposite directions.
+  //
+  // First pass over-tightened: mean radius 46-57px with a 208px gap, which
+  // read as five cramped knots marooned far apart. Loosening the spread and
+  // weakening cohesion gives mean radius 78-108px with a 57px gap.
+  //
+  // Those two move against each other — in a fixed canvas, looser clusters
+  // necessarily sit closer. Clusters are now ADJACENT rather than isolated,
+  // and it is the spectral colour and the label that separate them, not
+  // distance.
+  const spread = n === 1 ? 0 : Math.min(100 + n * 14, 195)
 
   // The category label is part of the collision set, so stars cannot land on
   // top of it.
@@ -161,13 +168,13 @@ for (let iter = 0; iter < 140; iter++) {
   }
   // Cohesion: pull each node gently back toward its cluster centre.
   //
-  // This is what actually keeps constellations compact and apart. Measured
-  // with it disabled: mean cluster radius grows 57px -> 76px and the closest
-  // cross-cluster distance falls 208px -> 187px.
+  // This is the dial that controls how tight a constellation reads, more than
+  // any repulsion margin does. Measured across values: 0.012 gives mean radius
+  // 46-57px (too cramped), 0.003 gives 78-108px (right).
   for (const nd of nodes) {
     const c = CENTRES[nd.cluster % CENTRES.length]
-    nd.x += (c.x - nd.x) * 0.012
-    nd.y += (c.y - nd.y) * 0.012
+    nd.x += (c.x - nd.x) * 0.003
+    nd.y += (c.y - nd.y) * 0.003
   }
 
   // Keep everything inside the canvas.
@@ -277,7 +284,7 @@ const clusters = groups.map((group, gi) => {
     .galaxy {
       display: block;
       position: relative;
-      aspect-ratio: 1100 / 760;
+      aspect-ratio: 1100 / 660;
       width: 100%;
     }
 

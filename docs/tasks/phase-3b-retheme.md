@@ -294,3 +294,34 @@ safety net for when the skill list grows, and the comment now says so.
 This surfaced because a guard I wrote failed to fail — a test that cannot
 detect the thing it claims to protect is worse than no test, so it was worth
 chasing down rather than accepting the green run.
+
+## 3b.14 Cluster spacing, retuned *(seventh review)*
+
+Feedback: clusters too far apart, and crowded internally. Both true — the
+previous pass over-corrected in both directions at once.
+
+Tuned against measurement rather than guessed:
+
+| | radius | gap |
+| --- | --- | --- |
+| first pass | 46–57px | 208px |
+| **now** | **78–108px** | **57px** |
+
+- [x] Intra-cluster spread `52 + n*9` → `100 + n*14`
+- [x] Cohesion `0.012` → `0.003` — this is the dial that controls how tight a
+      constellation reads, more than any repulsion margin
+- [x] Cluster centres moved inward; canvas 760 → 660
+- [x] Regression thresholds rewritten for the new intent
+
+### The tradeoff, stated plainly
+
+Radius and gap **move against each other**. In a fixed canvas, looser clusters
+necessarily sit closer to their neighbours; there is no setting that makes
+clusters both roomier inside and further apart without enlarging the canvas,
+which is what made them feel marooned in the first place.
+
+So clusters are now **adjacent by design**, and what distinguishes them is the
+spectral colour and the label — not distance. The guard changed accordingly:
+"keep clusters far apart" was the wrong assertion. What matters is that a
+cluster does not sprawl across the canvas, that it is not squeezed into a knot,
+and that no two labels collide (asserted separately in the overlap test).

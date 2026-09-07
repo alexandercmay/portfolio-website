@@ -573,22 +573,26 @@ describe('spectral hues meet AA in both themes', () => {
   )
 })
 
-describe('constellations stay separated', () => {
+describe('constellation shape', () => {
   /**
-   * Crowding regression guard.
+   * Tuned twice, in opposite directions, and the thresholds here encode the
+   * SECOND intent — so read them as the current target, not as history.
    *
-   * A single repulsion margin let different clusters drift into each other and
-   * read as one crowded field. Nodes from different clusters now repel far
-   * harder than nodes within a cluster, plus a cohesion pull keeps each
-   * constellation compact.
+   *   first pass:  radius 46-57px, gap 208px  — five cramped knots, marooned
+   *   now:         radius 78-108px, gap 57px  — loose clusters sitting close
    *
-   * Measured after that change: mean cluster radius ~50px, closest
-   * cross-cluster pair 208px. The thresholds below sit well inside those.
+   * Those two measures move against each other: in a fixed canvas, looser
+   * clusters necessarily sit nearer their neighbours. Clusters are therefore
+   * ADJACENT by design, and it is the spectral colour and the label that make
+   * them distinct — not distance.
+   *
+   * So the meaningful guard is no longer "keep clusters far apart". It is:
+   * clusters must not sprawl across the whole canvas, and no two labels may
+   * collide (asserted separately, in the overlap test).
    */
   const html = page('index.html')
   const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
 
-  /** Stars grouped by the cluster they are rendered inside. */
   const clusters = [
     ...html.matchAll(
       /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
@@ -608,18 +612,35 @@ describe('constellations stay separated', () => {
     expect(clusters.length).toBe(resume.skills.length)
   })
 
-  it('keeps each constellation compact', () => {
+  it('keeps each constellation from sprawling across the canvas', () => {
     for (const [i, stars] of clusters.entries()) {
       if (stars.length < 2) continue
       const cx = stars.reduce((s, p) => s + p.x, 0) / stars.length
       const cy = stars.reduce((s, p) => s + p.y, 0) / stars.length
       const r =
         stars.reduce((s, p) => s + Math.hypot(p.x - cx, p.y - cy), 0) / stars.length
-      expect(r, `cluster ${i + 1} mean radius`).toBeLessThan(95)
+      expect(r, `cluster ${i + 1} mean radius`).toBeLessThan(135)
     }
   })
 
-  it('keeps different constellations apart', () => {
+  it('keeps constellations loose enough not to read as knots', () => {
+    // The failure this catches is over-tightening, which is what the first
+    // tuning pass actually shipped.
+    const radii = clusters
+      .filter((s) => s.length > 2)
+      .map((stars) => {
+        const cx = stars.reduce((s, p) => s + p.x, 0) / stars.length
+        const cy = stars.reduce((s, p) => s + p.y, 0) / stars.length
+        return (
+          stars.reduce((s, p) => s + Math.hypot(p.x - cx, p.y - cy), 0) / stars.length
+        )
+      })
+    for (const r of radii) expect(r).toBeGreaterThan(55)
+  })
+
+  it('does not let stars of different clusters land on the same point', () => {
+    // A low floor only. Clusters are adjacent by design; label collisions are
+    // the real constraint and are asserted in the overlap test.
     let closest = Infinity
     for (let i = 0; i < clusters.length; i++) {
       for (let j = i + 1; j < clusters.length; j++) {
@@ -630,7 +651,6 @@ describe('constellations stay separated', () => {
         }
       }
     }
-    // Comfortably more than a cluster's own radius, or they read as one field.
-    expect(closest).toBeGreaterThan(130)
+    expect(closest).toBeGreaterThan(30)
   })
 })
