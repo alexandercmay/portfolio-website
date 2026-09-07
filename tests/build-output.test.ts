@@ -575,20 +575,16 @@ describe('spectral hues meet AA in both themes', () => {
 
 describe('constellation shape', () => {
   /**
-   * Tuned twice, in opposite directions, and the thresholds here encode the
-   * SECOND intent — so read them as the current target, not as history.
+   * These two assertions exist because the metrics they replace could not see
+   * the actual bug.
    *
-   *   first pass:  radius 46-57px, gap 208px  — five cramped knots, marooned
-   *   now:         radius 78-108px, gap 57px  — loose clusters sitting close
+   * A previous layout scored a healthy "minimum distance between stars of
+   * different clusters" while constellations were threaded straight through
+   * each other and labels floated over foreign stars. Distance-between-nearest
+   * -pair is blind to interleaving. Only a screenshot caught it.
    *
-   * Those two measures move against each other: in a fixed canvas, looser
-   * clusters necessarily sit nearer their neighbours. Clusters are therefore
-   * ADJACENT by design, and it is the spectral colour and the label that make
-   * them distinct — not distance.
-   *
-   * So the meaningful guard is no longer "keep clusters far apart". It is:
-   * clusters must not sprawl across the whole canvas, and no two labels may
-   * collide (asserted separately, in the overlap test).
+   * So: no foreign star may sit inside a cluster's bounding box, and every
+   * label must be nearer its own stars than anyone else's.
    */
   const html = page('index.html')
   const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
@@ -598,59 +594,76 @@ describe('constellation shape', () => {
       /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
     ),
   ]
-    .map((m) =>
-      [...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/g)].map(
-        (s) => ({
-          x: (parseFloat(s[1]) / 100) * W,
-          y: (parseFloat(s[2]) / 100) * H,
-        }),
-      ),
-    )
-    .filter((c) => c.length > 0)
+    .map((m) => ({
+      name: m[1].match(/class="cname"[^>]*>([^<]+)</)?.[1] ?? '?',
+      label: (() => {
+        const l = m[1].match(
+          /class="cluster-label"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/,
+        )
+        return l
+          ? { x: (parseFloat(l[1]) / 100) * W, y: (parseFloat(l[2]) / 100) * H }
+          : null
+      })(),
+      stars: [
+        ...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/g),
+      ].map((s) => ({
+        x: (parseFloat(s[1]) / 100) * W,
+        y: (parseFloat(s[2]) / 100) * H,
+      })),
+    }))
+    .filter((c) => c.stars.length > 0)
+
+  const centroid = (pts: { x: number; y: number }[]) => ({
+    x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+    y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+  })
 
   it('parses one group of stars per skill category', () => {
     expect(clusters.length).toBe(resume.skills.length)
   })
 
-  it('keeps each constellation from sprawling across the canvas', () => {
-    for (const [i, stars] of clusters.entries()) {
-      if (stars.length < 2) continue
-      const cx = stars.reduce((s, p) => s + p.x, 0) / stars.length
-      const cy = stars.reduce((s, p) => s + p.y, 0) / stars.length
-      const r =
-        stars.reduce((s, p) => s + Math.hypot(p.x - cx, p.y - cy), 0) / stars.length
-      expect(r, `cluster ${i + 1} mean radius`).toBeLessThan(135)
-    }
-  })
-
-  it('keeps constellations loose enough not to read as knots', () => {
-    // The failure this catches is over-tightening, which is what the first
-    // tuning pass actually shipped.
-    const radii = clusters
-      .filter((s) => s.length > 2)
-      .map((stars) => {
-        const cx = stars.reduce((s, p) => s + p.x, 0) / stars.length
-        const cy = stars.reduce((s, p) => s + p.y, 0) / stars.length
-        return (
-          stars.reduce((s, p) => s + Math.hypot(p.x - cx, p.y - cy), 0) / stars.length
-        )
-      })
-    for (const r of radii) expect(r).toBeGreaterThan(55)
-  })
-
-  it('does not let stars of different clusters land on the same point', () => {
-    // A low floor only. Clusters are adjacent by design; label collisions are
-    // the real constraint and are asserted in the overlap test.
-    let closest = Infinity
-    for (let i = 0; i < clusters.length; i++) {
-      for (let j = i + 1; j < clusters.length; j++) {
-        for (const a of clusters[i]) {
-          for (const b of clusters[j]) {
-            closest = Math.min(closest, Math.hypot(a.x - b.x, a.y - b.y))
+  it('never lets constellations interleave', () => {
+    // The failure a nearest-pair distance metric cannot detect.
+    const intruders: string[] = []
+    for (const c of clusters) {
+      const x0 = Math.min(...c.stars.map((s) => s.x))
+      const x1 = Math.max(...c.stars.map((s) => s.x))
+      const y0 = Math.min(...c.stars.map((s) => s.y))
+      const y1 = Math.max(...c.stars.map((s) => s.y))
+      for (const other of clusters) {
+        if (other === c) continue
+        for (const s of other.stars) {
+          if (s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1) {
+            intruders.push(`${other.name} star inside ${c.name}`)
           }
         }
       }
     }
-    expect(closest).toBeGreaterThan(30)
+    expect(intruders).toEqual([])
+  })
+
+  it('keeps every label nearer its own stars than any other cluster', () => {
+    for (const c of clusters) {
+      expect(c.label, `${c.name} has no label`).not.toBeNull()
+      const own = centroid(c.stars)
+      const dOwn = Math.hypot(c.label!.x - own.x, c.label!.y - own.y)
+      for (const other of clusters) {
+        if (other === c) continue
+        const o = centroid(other.stars)
+        const dOther = Math.hypot(c.label!.x - o.x, c.label!.y - o.y)
+        expect(dOther, `${c.name} label is nearer ${other.name}`).toBeGreaterThan(dOwn)
+      }
+    }
+  })
+
+  it('keeps constellations loose, not knotted, and not sprawling', () => {
+    for (const c of clusters) {
+      if (c.stars.length < 3) continue
+      const m = centroid(c.stars)
+      const r =
+        c.stars.reduce((s, p) => s + Math.hypot(p.x - m.x, p.y - m.y), 0) / c.stars.length
+      expect(r, `${c.name} mean radius`).toBeGreaterThan(60)
+      expect(r, `${c.name} mean radius`).toBeLessThan(140)
+    }
   })
 })

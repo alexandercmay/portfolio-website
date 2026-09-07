@@ -41,175 +41,196 @@ function hash(s: string): number {
 /*
  * Layout is solved in PIXELS at build time, then converted to percentages.
  *
- * The first version scattered stars on a jittered ring and produced eleven
- * overlapping label pairs. Because the labels are monospace their widths are
- * exactly predictable, so the boxes can be laid out properly instead of hoped
- * at: place on a ring, then relax overlaps with a few dozen iterations of
- * pairwise repulsion.
+ * Three rewrites, and the first two failed in ways that measurement missed:
+ *
+ *  1. Jittered rings, no relaxation      -> 11 overlapping labels
+ *  2. Global relaxation + cohesion pull  -> clusters INTERLEAVED, and labels
+ *     drifted away from their own stars entirely
+ *
+ * The second failure is the instructive one. "Minimum distance between stars
+ * of different clusters" stayed healthy while constellations were threaded
+ * through each other, because that metric cannot see interleaving at all. A
+ * label sat over a foreign cluster's stars and the numbers looked fine.
+ *
+ * So the layout is now TERRITORIAL rather than emergent:
+ *
+ *   - cluster centres are placed far apart by hand, which is what actually
+ *     prevents interleaving (measured: removing the radius clamp below changes
+ *     nothing; moving the centres together produces 13 intruders immediately)
+ *   - a radius clamp caps how far a star may sit from its own centre. At the
+ *     current centre spacing it never binds — it is a bound on cluster GROWTH,
+ *     so one large category cannot sprawl into a neighbour if the skill list
+ *     expands
+ *   - labels are placed AFTER the stars settle, from each cluster's actual
+ *     bounding box, so a label can never drift away from its own stars
+ *   - only then are labels relaxed against the stars, with the stars pinned
  */
 const W = 1100
-const H = 660
+const H = 820
 const CHAR = 8.4 // --text-sm in JetBrains Mono, px per character
 const BOX_H = 28
 const PAD = 30 // dot + gap + horizontal padding
+const MARGIN = 16
 
-/*
- * Two margins: same-cluster pairs may sit close, different-cluster pairs are
- * pushed much further apart.
+/**
+ * How far a star may sit from its own cluster centre.
  *
- * MEASURED CAVEAT: as currently configured this second margin never actually
- * binds. Varying MARGIN_OTHER from 6 to 46 changes the closest cross-cluster
- * distance not at all (208px in every case), because the cohesion pull below
- * keeps nodes near their own centre long before a foreign node gets close.
- *
- * What genuinely separates the clusters is the combination of the cohesion
- * pull, the tighter intra-cluster spread, and centres placed further apart —
- * NOT this margin. It is kept as a safety net for when the skill list grows
- * and clusters get large enough for it to engage.
+ * A bound on cluster growth, not the thing preventing interleaving — measured,
+ * disabling it changes the layout not at all at the current centre spacing.
+ * It matters only if a category grows large enough to sprawl.
  */
-const MARGIN_SAME = 6
-const MARGIN_OTHER = 46
+const MAX_R = 152
 
 type Node = {
   key: string
   label: string
   cluster: number
-  isLabel: boolean
   x: number
   y: number
   w: number
   h: number
 }
 
-/** Cluster centres in px. Hand-placed to keep the constellations apart. */
+/**
+ * Cluster territories, in a 3-over-2 arrangement. Centres are >340px apart
+ * horizontally and >370px vertically, comfortably more than 2 * MAX_R, so the
+ * territories cannot touch.
+ */
 const CENTRES = [
-  { x: W * 0.26, y: H * 0.3 },
-  { x: W * 0.63, y: H * 0.22 },
-  { x: W * 0.72, y: H * 0.66 },
-  { x: W * 0.28, y: H * 0.7 },
-  { x: W * 0.48, y: H * 0.47 },
+  // These positions are load-bearing: they, not the radius clamp, are what
+  // keeps constellations from threading through each other.
+  { x: W * 0.17, y: H * 0.23 },
+  { x: W * 0.5, y: H * 0.21 },
+  { x: W * 0.84, y: H * 0.26 },
+  { x: W * 0.24, y: H * 0.73 },
+  { x: W * 0.63, y: H * 0.74 },
 ]
 
-const nodes: Node[] = []
+/** Deterministic hash → stable positions across builds. */
+function hash(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0) / 4294967295
+}
+
+const stars: Node[] = []
 
 groups.forEach((group, gi) => {
   const c = CENTRES[gi % CENTRES.length]
   const n = group.items.length
-  // Tuned by measurement, twice, in opposite directions.
-  //
-  // First pass over-tightened: mean radius 46-57px with a 208px gap, which
-  // read as five cramped knots marooned far apart. Loosening the spread and
-  // weakening cohesion gives mean radius 78-108px with a 57px gap.
-  //
-  // Those two move against each other — in a fixed canvas, looser clusters
-  // necessarily sit closer. Clusters are now ADJACENT rather than isolated,
-  // and it is the spectral colour and the label that separate them, not
-  // distance.
-  const spread = n === 1 ? 0 : Math.min(100 + n * 14, 195)
-
-  // The category label is part of the collision set, so stars cannot land on
-  // top of it.
-  nodes.push({
-    key: `label-${gi}`,
-    label: group.category,
-    cluster: gi,
-    isLabel: true,
-    x: c.x,
-    y: c.y - spread * 0.55 - 26,
-    w: group.category.length * 7 + 8,
-    h: 20,
-  })
+  // Fill the territory rather than hugging the centre — the previous pass
+  // read as a tight knot.
+  const spread = n === 1 ? 0 : Math.min(0.52 * MAX_R + n * 9, MAX_R * 0.82)
 
   group.items.forEach((key, i) => {
     const seed = hash(key)
-    const angle = (i / Math.max(n, 1)) * Math.PI * 2 + seed * 0.6
-    const rad = spread * (0.62 + seed * 0.38)
-    nodes.push({
+    const angle = (i / Math.max(n, 1)) * Math.PI * 2 + seed * 0.7
+    const rad = spread * (0.68 + seed * 0.32)
+    stars.push({
       key,
       label: TECH[key as TechKey].label,
       cluster: gi,
-      isLabel: false,
       x: c.x + Math.cos(angle) * rad,
-      y: c.y + Math.sin(angle) * rad * 0.66,
+      y: c.y + Math.sin(angle) * rad * 0.74,
       w: TECH[key as TechKey].label.length * CHAR + PAD,
       h: BOX_H,
     })
   })
 })
 
-// Relax overlaps: push each colliding pair apart along the axis of least
-// penetration. Deterministic, so the layout is stable across builds.
-// A pull back toward the cluster centre, applied each pass, keeps repulsion
-// from dissolving the constellations into an even scatter.
-for (let iter = 0; iter < 140; iter++) {
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const a = nodes[i]
-      const b = nodes[j]
-      const dx = b.x - a.x
-      const dy = b.y - a.y
-      const sameCluster = a.cluster === b.cluster
-      const mx = sameCluster ? MARGIN_SAME : MARGIN_OTHER
-      const my = sameCluster ? MARGIN_SAME : MARGIN_OTHER * 0.45
-      const ox = (a.w + b.w) / 2 + mx - Math.abs(dx)
-      const oy = (a.h + b.h) / 2 + my - Math.abs(dy)
-      if (ox <= 0 || oy <= 0) continue
-
-      if (ox < oy) {
-        const push = (ox / 2) * (dx < 0 ? -1 : 1)
-        a.x -= push
-        b.x += push
-      } else {
-        const push = (oy / 2) * (dy < 0 ? -1 : 1)
-        a.y -= push
-        b.y += push
+/** Push overlapping boxes apart along the axis of least penetration. */
+function separate(movable: Node[], fixed: Node[], passes: number, clamp = true) {
+  for (let iter = 0; iter < passes; iter++) {
+    for (let i = 0; i < movable.length; i++) {
+      for (let j = 0; j < movable.length + fixed.length; j++) {
+        const a = movable[i]
+        const b = j < movable.length ? movable[j] : fixed[j - movable.length]
+        if (a === b) continue
+        const dx = b.x - a.x
+        const dy = b.y - a.y
+        const ox = (a.w + b.w) / 2 + MARGIN - Math.abs(dx)
+        const oy = (a.h + b.h) / 2 + MARGIN - Math.abs(dy)
+        if (ox <= 0 || oy <= 0) continue
+        const bMovable = j < movable.length
+        if (ox < oy) {
+          const push = (ox / (bMovable ? 2 : 1)) * (dx < 0 ? -1 : 1)
+          a.x -= push
+          if (bMovable) b.x += push
+        } else {
+          const push = (oy / (bMovable ? 2 : 1)) * (dy < 0 ? -1 : 1)
+          a.y -= push
+          if (bMovable) b.y += push
+        }
       }
     }
-  }
-  // Cohesion: pull each node gently back toward its cluster centre.
-  //
-  // This is the dial that controls how tight a constellation reads, more than
-  // any repulsion margin does. Measured across values: 0.012 gives mean radius
-  // 46-57px (too cramped), 0.003 gives 78-108px (right).
-  for (const nd of nodes) {
-    const c = CENTRES[nd.cluster % CENTRES.length]
-    nd.x += (c.x - nd.x) * 0.003
-    nd.y += (c.y - nd.y) * 0.003
-  }
 
-  // Keep everything inside the canvas.
-  for (const nd of nodes) {
-    nd.x = Math.max(nd.w / 2 + 4, Math.min(W - nd.w / 2 - 4, nd.x))
-    nd.y = Math.max(nd.h / 2 + 4, Math.min(H - nd.h / 2 - 4, nd.y))
+    for (const nd of movable) {
+      if (clamp) {
+        // Caps cluster radius. Dormant at current centre spacing.
+        const c = CENTRES[nd.cluster % CENTRES.length]
+        const dx = nd.x - c.x
+        const dy = nd.y - c.y
+        const d = Math.hypot(dx, dy)
+        if (d > MAX_R) {
+          nd.x = c.x + (dx / d) * MAX_R
+          nd.y = c.y + (dy / d) * MAX_R
+        }
+      }
+      nd.x = Math.max(nd.w / 2 + 4, Math.min(W - nd.w / 2 - 4, nd.x))
+      nd.y = Math.max(nd.h / 2 + 4, Math.min(H - nd.h / 2 - 4, nd.y))
+    }
   }
 }
 
-const clusters = groups.map((group, gi) => {
-  const members = nodes.filter((nd) => nd.cluster === gi)
-  const label = members.find((nd) => nd.isLabel)!
-  const stars = members
-    .filter((nd) => !nd.isLabel)
-    .map((nd) => ({
-      key: nd.key,
-      label: nd.label,
-      x: (nd.x / W) * 100,
-      y: (nd.y / H) * 100,
-      r: 2 + hash(nd.key) * 1.7,
-    }))
-  // The constellation hub is the centroid of the stars actually placed, so
-  // the spokes stay tidy after relaxation moved things.
-  const hub = {
-    x: stars.reduce((s, n) => s + n.x, 0) / Math.max(stars.length, 1),
-    y: stars.reduce((s, n) => s + n.y, 0) / Math.max(stars.length, 1),
+separate(stars, [], 120)
+
+/*
+ * Labels last, derived from where the stars actually ended up. Placing them
+ * beforehand is what let a label drift away from its own constellation.
+ */
+const labels: Node[] = groups.map((group, gi) => {
+  const mine = stars.filter((s) => s.cluster === gi)
+  const minX = Math.min(...mine.map((s) => s.x - s.w / 2))
+  const maxX = Math.max(...mine.map((s) => s.x + s.w / 2))
+  const minY = Math.min(...mine.map((s) => s.y - s.h / 2))
+  return {
+    key: `label-${gi}`,
+    label: group.category,
+    cluster: gi,
+    x: (minX + maxX) / 2,
+    y: minY - 42,
+    w: Math.max(group.category.length * 8.2, 92) + 26,
+    h: 46,
   }
+})
+
+// Stars are pinned; only labels move.
+separate(labels, stars, 60, false)
+
+const clusters = groups.map((group, gi) => {
+  const mine = stars.filter((s) => s.cluster === gi)
+  const label = labels[gi]
   return {
     category: group.category,
-    // A catalog designation, the way a real star cluster is labelled. Gives
-    // each constellation a distinct identity beyond its colour.
+    // A catalog designation, the way a real star cluster is labelled.
     designation: `NGC ${(gi + 1) * 1147}`,
     label: { x: (label.x / W) * 100, y: (label.y / H) * 100 },
-    hub,
-    stars,
+    // Spokes radiate from the cluster's own centroid, so they never reach
+    // across the canvas into someone else's territory.
+    hub: {
+      x: (mine.reduce((s, n) => s + n.x, 0) / mine.length / W) * 100,
+      y: (mine.reduce((s, n) => s + n.y, 0) / mine.length / H) * 100,
+    },
+    stars: mine.map((s) => ({
+      key: s.key,
+      label: s.label,
+      x: (s.x / W) * 100,
+      y: (s.y / H) * 100,
+      r: 2 + hash(s.key) * 1.7,
+    })),
   }
 })
 ---
@@ -284,7 +305,7 @@ const clusters = groups.map((group, gi) => {
     .galaxy {
       display: block;
       position: relative;
-      aspect-ratio: 1100 / 660;
+      aspect-ratio: 1100 / 820;
       width: 100%;
     }
 
