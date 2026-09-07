@@ -215,19 +215,25 @@ temperature and a uniform grey field looks like noise.
 
 Layers sit at three tile pitches (620 / 370 / 230px) for depth, without
 `background-attachment: fixed`, which forces a full repaint every scroll
-frame. Behind everything sits a **celestial backdrop** — three structured forms
-rather than the two large round colour blobs it replaced, which read as random
-splotches instead of as sky:
+frame. Behind everything: **dust clouds and bright stars.** Nothing else.
 
-1. A **galactic band** on a diagonal, softly multi-hued, the way a galactic
-   plane actually crosses a frame.
-2. Faint concentric **orbital rings** from an off-screen focus, drawn as
-   hairline stops in a radial gradient.
-3. A low **horizon glow** at the bottom edge — the limb of something lit.
+Two earlier attempts failed for opposite reasons, and both are worth recording
+so they are not retried:
 
-The hero's ambient light is likewise a **directional wash** rather than two
-spotlights. A **vignette** darkens the page edges like the falloff of a
-viewport.
+- **Large saturated circles** read as random splotches, not as sky.
+- **Concentric orbital rings** read as geometry drawn on top of the page.
+
+What works is soft, **desaturated, irregular** cloud — several wide ellipses at
+different angles and 5–7% alpha, overlapping so no single one reads as a shape.
+If you can see where one cloud ends, it is too strong.
+
+**Bright stars** are a separate fixed layer: a handful of hero stars, each four
+gradients — a wide halo, a hard core, and two thin elongated gradients forming
+**diffraction spikes**, the cross flare a real bright star shows through a
+lens. The spikes are what make one read unmistakably as a star rather than a
+speck, which was the original "looks like dust" complaint.
+
+A **vignette** darkens the page edges like the falloff of a viewport.
 
 One faint coordinate grid survives at a large 128px pitch — a hint of
 measurement rather than a technical drawing.

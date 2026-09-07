@@ -423,9 +423,10 @@ describe('the skill galaxy', () => {
   })
 
   it('places no two star labels on top of each other', () => {
-    // Same canvas constants the component solves in.
-    const W = 1100
-    const H = 620
+    // The component publishes its own canvas size, so this cannot drift out of
+    // sync with the layout constants the way a hardcoded copy did.
+    const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
+    expect(W, 'galaxy did not publish its canvas size').toBeGreaterThan(0)
     const CHAR = 8.4
     const boxes = stars.map((s) => ({
       label: s.label,
@@ -570,4 +571,66 @@ describe('spectral hues meet AA in both themes', () => {
       }
     },
   )
+})
+
+describe('constellations stay separated', () => {
+  /**
+   * Crowding regression guard.
+   *
+   * A single repulsion margin let different clusters drift into each other and
+   * read as one crowded field. Nodes from different clusters now repel far
+   * harder than nodes within a cluster, plus a cohesion pull keeps each
+   * constellation compact.
+   *
+   * Measured after that change: mean cluster radius ~50px, closest
+   * cross-cluster pair 208px. The thresholds below sit well inside those.
+   */
+  const html = page('index.html')
+  const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
+
+  /** Stars grouped by the cluster they are rendered inside. */
+  const clusters = [
+    ...html.matchAll(
+      /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
+    ),
+  ]
+    .map((m) =>
+      [...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/g)].map(
+        (s) => ({
+          x: (parseFloat(s[1]) / 100) * W,
+          y: (parseFloat(s[2]) / 100) * H,
+        }),
+      ),
+    )
+    .filter((c) => c.length > 0)
+
+  it('parses one group of stars per skill category', () => {
+    expect(clusters.length).toBe(resume.skills.length)
+  })
+
+  it('keeps each constellation compact', () => {
+    for (const [i, stars] of clusters.entries()) {
+      if (stars.length < 2) continue
+      const cx = stars.reduce((s, p) => s + p.x, 0) / stars.length
+      const cy = stars.reduce((s, p) => s + p.y, 0) / stars.length
+      const r =
+        stars.reduce((s, p) => s + Math.hypot(p.x - cx, p.y - cy), 0) / stars.length
+      expect(r, `cluster ${i + 1} mean radius`).toBeLessThan(95)
+    }
+  })
+
+  it('keeps different constellations apart', () => {
+    let closest = Infinity
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        for (const a of clusters[i]) {
+          for (const b of clusters[j]) {
+            closest = Math.min(closest, Math.hypot(a.x - b.x, a.y - b.y))
+          }
+        }
+      }
+    }
+    // Comfortably more than a cluster's own radius, or they read as one field.
+    expect(closest).toBeGreaterThan(130)
+  })
 })

@@ -260,3 +260,37 @@ and the background's "random splotches of colour" looked funky.
   `#ffffff` to `#fff`, so `--c-surface` parsed as NaN and **every ratio against
   it was silently garbage**. Fixed in both copies of the parser, including the
   older grid-contrast one where it had not yet caused a visible failure.
+
+## 3b.13 Simpler backdrop, uncrowded clusters *(sixth review)*
+
+- [x] **Removed the concentric orbital rings** — they read as geometry drawn on
+      the page rather than as sky. The diagonal galactic band went with them.
+- [x] Backdrop is now **dust clouds and bright stars only**: four wide,
+      desaturated, overlapping ellipses at 5–7% alpha
+- [x] **Bright stars** as a separate fixed layer — halo, hard core, and two
+      thin elongated gradients forming diffraction spikes (the cross flare).
+      The spikes are what make a star read as a star and not a speck.
+- [x] Cluster crowding fixed: tighter intra-cluster spread, centres placed
+      further apart, a taller canvas (620 → 760), and a per-pass cohesion pull
+- [x] The component now **publishes its canvas size** as `data-canvas`, so the
+      overlap test reads it instead of duplicating the constant — the
+      hardcoded copy broke the moment the canvas grew
+- [x] Regression test: mean cluster radius < 95px, closest cross-cluster pair
+      > 130px. Measured: ~57px and 208px.
+
+### A causal claim I got wrong
+
+I introduced a larger repulsion margin for different-cluster pairs and wrote
+that it was "the fix for cluster crowding." **It isn't.** Varying
+`MARGIN_OTHER` from 6 to 46 changes the closest cross-cluster distance not at
+all — 208px in every case — because the cohesion pull keeps nodes near their
+own centre long before a foreign node gets close.
+
+Measured properly by disabling cohesion instead: mean cluster radius grows
+57px → 76px and separation falls 208px → 187px. **Cohesion, tighter spread and
+wider centres are what separate the clusters.** The margin is kept only as a
+safety net for when the skill list grows, and the comment now says so.
+
+This surfaced because a guard I wrote failed to fail — a test that cannot
+detect the thing it claims to protect is worse than no test, so it was worth
+chasing down rather than accepting the green run.

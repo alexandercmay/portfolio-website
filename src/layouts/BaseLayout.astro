@@ -54,6 +54,11 @@ const { title, description, image, noindex, wide, jsonLd } = Astro.props
         intercept a click. */
     }
     <div class="scroll-progress" aria-hidden="true"></div>
+    {
+      /* A few hero stars with diffraction spikes, fixed behind the content.
+        Purely decorative. */
+    }
+    <div class="bright-stars" aria-hidden="true"></div>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header />
     <main id="main" class:list={[!wide && 'container']}>

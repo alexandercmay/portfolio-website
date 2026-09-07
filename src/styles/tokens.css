@@ -141,6 +141,12 @@
   --c-halo-violet: rgb(203 182 255 / 20%);
   --c-halo-gold: rgb(255 217 160 / 20%);
 
+  /* Diffraction spikes — the cross flare on a bright star. Fainter than the
+     halo, or the cross reads as a drawn plus sign rather than as flare. */
+  --c-spike-blue: rgb(168 216 255 / 30%);
+  --c-spike-cyan: rgb(127 230 247 / 30%);
+  --c-spike-gold: rgb(255 217 160 / 28%);
+
   --c-text: #e6edf3; /* 16.47:1 */
   --c-text-muted: #9aa7b4; /*  7.93:1 */
   --c-text-subtle: #7d8b9a; /*  5.59:1 — the floor */
@@ -215,6 +221,9 @@
   --c-halo-cyan: transparent;
   --c-halo-violet: transparent;
   --c-halo-gold: transparent;
+  --c-spike-blue: transparent;
+  --c-spike-cyan: transparent;
+  --c-spike-gold: transparent;
 
   --c-spec-1: #1d4ed8;
   --c-spec-2: #334155;

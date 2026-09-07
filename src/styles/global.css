@@ -82,15 +82,16 @@ body {
     128px 128px;
 }
 
-/* ── Celestial backdrop ───────────────────────────────────────────────────
-   Replaces two large round colour blobs, which read as random splotches
-   rather than as sky. Three structured forms instead:
+/* ── Dust clouds ──────────────────────────────────────────────────────────
+   Simple: diffuse dust and bright stars, nothing else.
 
-     1. A milky-way BAND on a diagonal — soft, slightly multi-hued, the way a
-        galactic plane actually crosses a frame.
-     2. Faint concentric ORBITAL RINGS from an off-screen focus, drawn as
-        hairline stops in a radial gradient.
-     3. A low HORIZON GLOW at the bottom edge — the limb of something lit.
+   Two earlier attempts failed for opposite reasons. Large saturated circles
+   read as random splotches. Concentric orbital rings read as geometry drawn on
+   top of the page rather than as sky.
+
+   What works is soft, DESATURATED, irregular cloud — several wide ellipses at
+   different angles and very low alpha, overlapping so no single one reads as a
+   shape. If you can see where one cloud ends, it is too strong.
 
    Fixed and behind everything, so it never moves under the content or
    intercepts a pointer.
@@ -102,34 +103,61 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    /* 3 — horizon glow */
     radial-gradient(
-      140% 45% at 50% 108%,
-      color-mix(in srgb, var(--color-cyan) 13%, transparent),
-      transparent 60%
+      70% 42% at 18% 22%,
+      color-mix(in srgb, var(--c-star-blue) 7%, transparent),
+      transparent 72%
     ),
-    /* 2 — orbital rings, hairline stops from an off-screen focus */
     radial-gradient(
-        circle at 88% 12%,
-        transparent 27.5%,
-        color-mix(in srgb, var(--color-violet) 15%, transparent) 27.7%,
-        transparent 28%,
-        transparent 43.5%,
-        color-mix(in srgb, var(--color-violet) 11%, transparent) 43.7%,
-        transparent 44%,
-        transparent 61.5%,
-        color-mix(in srgb, var(--color-cyan) 9%, transparent) 61.7%,
-        transparent 62%
-      ),
-    /* 1 — the galactic band */
-    linear-gradient(
-        104deg,
-        transparent 30%,
-        color-mix(in srgb, var(--color-violet) 7%, transparent) 42%,
-        color-mix(in srgb, var(--c-star-blue) 8%, transparent) 50%,
-        color-mix(in srgb, var(--color-cyan) 6%, transparent) 58%,
-        transparent 70%
-      );
+      55% 60% at 82% 34%,
+      color-mix(in srgb, var(--color-violet) 6%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      85% 35% at 46% 78%,
+      color-mix(in srgb, var(--color-cyan) 5%, transparent),
+      transparent 74%
+    ),
+    radial-gradient(
+      40% 55% at 66% 92%,
+      color-mix(in srgb, var(--c-star-blue) 5%, transparent),
+      transparent 70%
+    );
+}
+
+/* ── Bright stars ─────────────────────────────────────────────────────────
+   A handful of genuine hero stars, distinct from the field.
+
+   Each is four layers: a wide halo, a hard core, and two thin elongated
+   gradients forming DIFFRACTION SPIKES — the cross flare a real bright star
+   shows through a lens. The spikes are what make one read unmistakably as a
+   star rather than as a bright speck, which was the "looks like dust"
+   complaint.
+
+   Fixed, so they sit steady behind scrolling content like a real sky.
+   ─────────────────────────────────────────────────────────────────────── */
+body .bright-stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    /* ── star 1, blue-white, upper left ── */
+    radial-gradient(26px 1px at 14% 18%, var(--c-spike-blue), transparent),
+    radial-gradient(1px 26px at 14% 18%, var(--c-spike-blue), transparent),
+    radial-gradient(9px 9px at 14% 18%, var(--c-halo-blue), transparent 70%),
+    radial-gradient(2px 2px at 14% 18%, var(--c-star-core), transparent),
+    /* ── star 2, gold, right ── */
+    radial-gradient(22px 1px at 86% 44%, var(--c-spike-gold), transparent),
+    radial-gradient(1px 22px at 86% 44%, var(--c-spike-gold), transparent),
+    radial-gradient(8px 8px at 86% 44%, var(--c-halo-gold), transparent 70%),
+    radial-gradient(1.8px 1.8px at 86% 44%, var(--c-star-core), transparent),
+    /* ── star 3, cyan, lower centre ── */
+    radial-gradient(20px 1px at 58% 82%, var(--c-spike-cyan), transparent),
+    radial-gradient(1px 20px at 58% 82%, var(--c-spike-cyan), transparent),
+    radial-gradient(8px 8px at 58% 82%, var(--c-halo-cyan), transparent 70%),
+    radial-gradient(1.7px 1.7px at 58% 82%, var(--c-star-core), transparent);
 }
 
 /* Vignette — the falloff of a viewport looking into space. */

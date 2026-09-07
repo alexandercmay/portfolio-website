@@ -48,11 +48,27 @@ function hash(s: string): number {
  * pairwise repulsion.
  */
 const W = 1100
-const H = 620
+const H = 760 // taller than 16/9: five clusters need vertical room to separate
 const CHAR = 8.4 // --text-sm in JetBrains Mono, px per character
 const BOX_H = 28
 const PAD = 30 // dot + gap + horizontal padding
-const MARGIN = 8
+
+/*
+ * Two margins: same-cluster pairs may sit close, different-cluster pairs are
+ * pushed much further apart.
+ *
+ * MEASURED CAVEAT: as currently configured this second margin never actually
+ * binds. Varying MARGIN_OTHER from 6 to 46 changes the closest cross-cluster
+ * distance not at all (208px in every case), because the cohesion pull below
+ * keeps nodes near their own centre long before a foreign node gets close.
+ *
+ * What genuinely separates the clusters is the combination of the cohesion
+ * pull, the tighter intra-cluster spread, and centres placed further apart —
+ * NOT this margin. It is kept as a safety net for when the skill list grows
+ * and clusters get large enough for it to engage.
+ */
+const MARGIN_SAME = 6
+const MARGIN_OTHER = 46
 
 type Node = {
   key: string
@@ -67,11 +83,11 @@ type Node = {
 
 /** Cluster centres in px. Hand-placed to keep the constellations apart. */
 const CENTRES = [
-  { x: W * 0.2, y: H * 0.32 },
-  { x: W * 0.68, y: H * 0.2 },
-  { x: W * 0.78, y: H * 0.68 },
-  { x: W * 0.26, y: H * 0.78 },
-  { x: W * 0.46, y: H * 0.5 },
+  { x: W * 0.17, y: H * 0.24 },
+  { x: W * 0.72, y: H * 0.16 },
+  { x: W * 0.82, y: H * 0.62 },
+  { x: W * 0.2, y: H * 0.74 },
+  { x: W * 0.5, y: H * 0.46 },
 ]
 
 const nodes: Node[] = []
@@ -79,7 +95,10 @@ const nodes: Node[] = []
 groups.forEach((group, gi) => {
   const c = CENTRES[gi % CENTRES.length]
   const n = group.items.length
-  const spread = n === 1 ? 0 : Math.min(70 + n * 14, 165)
+  // Tighter internally than before: a compact cluster reads as one object.
+  // The separation now comes from inter-cluster repulsion, not from each
+  // cluster sprawling.
+  const spread = n === 1 ? 0 : Math.min(52 + n * 9, 118)
 
   // The category label is part of the collision set, so stars cannot land on
   // top of it.
@@ -113,15 +132,20 @@ groups.forEach((group, gi) => {
 
 // Relax overlaps: push each colliding pair apart along the axis of least
 // penetration. Deterministic, so the layout is stable across builds.
-for (let iter = 0; iter < 90; iter++) {
+// A pull back toward the cluster centre, applied each pass, keeps repulsion
+// from dissolving the constellations into an even scatter.
+for (let iter = 0; iter < 140; iter++) {
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const a = nodes[i]
       const b = nodes[j]
       const dx = b.x - a.x
       const dy = b.y - a.y
-      const ox = (a.w + b.w) / 2 + MARGIN - Math.abs(dx)
-      const oy = (a.h + b.h) / 2 + MARGIN - Math.abs(dy)
+      const sameCluster = a.cluster === b.cluster
+      const mx = sameCluster ? MARGIN_SAME : MARGIN_OTHER
+      const my = sameCluster ? MARGIN_SAME : MARGIN_OTHER * 0.45
+      const ox = (a.w + b.w) / 2 + mx - Math.abs(dx)
+      const oy = (a.h + b.h) / 2 + my - Math.abs(dy)
       if (ox <= 0 || oy <= 0) continue
 
       if (ox < oy) {
@@ -135,6 +159,17 @@ for (let iter = 0; iter < 90; iter++) {
       }
     }
   }
+  // Cohesion: pull each node gently back toward its cluster centre.
+  //
+  // This is what actually keeps constellations compact and apart. Measured
+  // with it disabled: mean cluster radius grows 57px -> 76px and the closest
+  // cross-cluster distance falls 208px -> 187px.
+  for (const nd of nodes) {
+    const c = CENTRES[nd.cluster % CENTRES.length]
+    nd.x += (c.x - nd.x) * 0.012
+    nd.y += (c.y - nd.y) * 0.012
+  }
+
   // Keep everything inside the canvas.
   for (const nd of nodes) {
     nd.x = Math.max(nd.w / 2 + 4, Math.min(W - nd.w / 2 - 4, nd.x))
@@ -179,7 +214,7 @@ const clusters = groups.map((group, gi) => {
       nothing else. Containers are pointer-transparent; their children are
       not, so the overlapping full-size boxes never steal a hover. */
   }
-  <div class="galaxy" aria-hidden="true">
+  <div class="galaxy" aria-hidden="true" data-canvas={`${W}x${H}`}>
     <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none">
       {
         clusters.map((c, i) => (
@@ -242,7 +277,7 @@ const clusters = groups.map((group, gi) => {
     .galaxy {
       display: block;
       position: relative;
-      aspect-ratio: 16 / 9;
+      aspect-ratio: 1100 / 760;
       width: 100%;
     }
 
