@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { existsSync, globSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { resume } from '../content/resume'
+import { TECH } from '../content/taxonomy'
 
 /**
  * Assertions against what actually ships.
@@ -388,5 +389,83 @@ describe('the landing page has every expected section', () => {
 
   it('still reaches contact — the section deleted by that edit', () => {
     expect(page('index.html')).toContain('mailto:')
+  })
+})
+
+describe('the skill galaxy', () => {
+  /**
+   * Positions are solved at build time, so a change to the placement
+   * algorithm can silently reintroduce overlapping labels — the first version
+   * shipped eleven overlapping pairs. This recomputes the boxes from the
+   * rendered inline styles and asserts none collide.
+   */
+  const html = page('index.html')
+
+  const stars = [
+    ...html.matchAll(
+      /class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"(.*?)<\/span><\/span>/gs,
+    ),
+  ].map((m) => ({
+    x: parseFloat(m[1]),
+    y: parseFloat(m[2]),
+    label: m[3].match(/class="name"[^>]*>([^<]+)</)?.[1] ?? '',
+  }))
+
+  it('renders a star for every skill', () => {
+    const total = resume.skills.reduce((n, g) => n + g.items.length, 0)
+    expect(stars.length).toBe(total)
+  })
+
+  it('places no two star labels on top of each other', () => {
+    // Same canvas constants the component solves in.
+    const W = 1100
+    const H = 620
+    const CHAR = 8.4
+    const boxes = stars.map((s) => ({
+      label: s.label,
+      cx: (s.x / 100) * W,
+      cy: (s.y / 100) * H,
+      w: s.label.length * CHAR + 30,
+      h: 28,
+    }))
+    const collisions: string[] = []
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i]
+        const b = boxes[j]
+        if (
+          Math.abs(a.cx - b.cx) < (a.w + b.w) / 2 &&
+          Math.abs(a.cy - b.cy) < (a.h + b.h) / 2
+        ) {
+          collisions.push(`${a.label} / ${b.label}`)
+        }
+      }
+    }
+    expect(collisions).toEqual([])
+  })
+
+  it('keeps every star inside the canvas', () => {
+    for (const s of stars) {
+      expect(s.x, s.label).toBeGreaterThan(0)
+      expect(s.x, s.label).toBeLessThan(100)
+      expect(s.y, s.label).toBeGreaterThan(0)
+      expect(s.y, s.label).toBeLessThan(100)
+    }
+  })
+
+  it('never hides a skill name behind hover', () => {
+    // Hover is emphasis only. Every name must be in the markup as text, or
+    // keyboard and touch users lose the content outright.
+    for (const group of resume.skills) {
+      for (const key of group.items) {
+        expect(html).toContain(TECH[key].label)
+      }
+    }
+  })
+
+  it('provides a plain grouped list as the screen-reader and mobile path', () => {
+    expect(html).toMatch(/class="galaxy-list/)
+    // The scatter is decorative duplication, so it is hidden from AT.
+    expect(html).toMatch(/class="galaxy"[^>]*aria-hidden="true"/)
   })
 })

@@ -1,0 +1,378 @@
+---
+import { TECH, type TechKey } from '../../content/taxonomy'
+
+interface Props {
+  groups: { category: string; items: readonly TechKey[] }[]
+}
+const { groups } = Astro.props
+
+/**
+ * Skills as star clusters — one constellation per category.
+ *
+ * Positions are computed HERE, at build time, and baked into inline styles.
+ * Nothing is calculated in the browser, so this ships zero JavaScript like
+ * everything else.
+ *
+ * Accessibility contract:
+ *  - Every skill NAME is always visible. Hover only adds glow and emphasis;
+ *    it never reveals information. Hover-gated content would exclude keyboard
+ *    and touch users outright.
+ *  - DOM order stays logical (category, then items in declared order) even
+ *    though the visual placement is scattered — a screen reader reads the
+ *    grouped list, not the scatter.
+ *  - Below 60rem the whole thing falls back to a plain grouped list, because
+ *    a scattered galaxy on a phone is unreadable.
+ *  - The constellation lines are decorative and aria-hidden.
+ *
+ * Known cost: a scatter is harder to scan than a column. /resume keeps the
+ * clean grouped list so a scannable version of this information always exists.
+ */
+
+/** Deterministic hash → stable positions across builds. */
+function hash(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0) / 4294967295
+}
+
+/*
+ * Layout is solved in PIXELS at build time, then converted to percentages.
+ *
+ * The first version scattered stars on a jittered ring and produced eleven
+ * overlapping label pairs. Because the labels are monospace their widths are
+ * exactly predictable, so the boxes can be laid out properly instead of hoped
+ * at: place on a ring, then relax overlaps with a few dozen iterations of
+ * pairwise repulsion.
+ */
+const W = 1100
+const H = 620
+const CHAR = 8.4 // --text-sm in JetBrains Mono, px per character
+const BOX_H = 28
+const PAD = 30 // dot + gap + horizontal padding
+const MARGIN = 8
+
+type Node = {
+  key: string
+  label: string
+  cluster: number
+  isLabel: boolean
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/** Cluster centres in px. Hand-placed to keep the constellations apart. */
+const CENTRES = [
+  { x: W * 0.2, y: H * 0.32 },
+  { x: W * 0.68, y: H * 0.2 },
+  { x: W * 0.78, y: H * 0.68 },
+  { x: W * 0.26, y: H * 0.78 },
+  { x: W * 0.46, y: H * 0.5 },
+]
+
+const nodes: Node[] = []
+
+groups.forEach((group, gi) => {
+  const c = CENTRES[gi % CENTRES.length]
+  const n = group.items.length
+  const spread = n === 1 ? 0 : Math.min(70 + n * 14, 165)
+
+  // The category label is part of the collision set, so stars cannot land on
+  // top of it.
+  nodes.push({
+    key: `label-${gi}`,
+    label: group.category,
+    cluster: gi,
+    isLabel: true,
+    x: c.x,
+    y: c.y - spread * 0.55 - 26,
+    w: group.category.length * 7 + 8,
+    h: 20,
+  })
+
+  group.items.forEach((key, i) => {
+    const seed = hash(key)
+    const angle = (i / Math.max(n, 1)) * Math.PI * 2 + seed * 0.6
+    const rad = spread * (0.62 + seed * 0.38)
+    nodes.push({
+      key,
+      label: TECH[key as TechKey].label,
+      cluster: gi,
+      isLabel: false,
+      x: c.x + Math.cos(angle) * rad,
+      y: c.y + Math.sin(angle) * rad * 0.66,
+      w: TECH[key as TechKey].label.length * CHAR + PAD,
+      h: BOX_H,
+    })
+  })
+})
+
+// Relax overlaps: push each colliding pair apart along the axis of least
+// penetration. Deterministic, so the layout is stable across builds.
+for (let iter = 0; iter < 90; iter++) {
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i]
+      const b = nodes[j]
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      const ox = (a.w + b.w) / 2 + MARGIN - Math.abs(dx)
+      const oy = (a.h + b.h) / 2 + MARGIN - Math.abs(dy)
+      if (ox <= 0 || oy <= 0) continue
+
+      if (ox < oy) {
+        const push = (ox / 2) * (dx < 0 ? -1 : 1)
+        a.x -= push
+        b.x += push
+      } else {
+        const push = (oy / 2) * (dy < 0 ? -1 : 1)
+        a.y -= push
+        b.y += push
+      }
+    }
+  }
+  // Keep everything inside the canvas.
+  for (const nd of nodes) {
+    nd.x = Math.max(nd.w / 2 + 4, Math.min(W - nd.w / 2 - 4, nd.x))
+    nd.y = Math.max(nd.h / 2 + 4, Math.min(H - nd.h / 2 - 4, nd.y))
+  }
+}
+
+const clusters = groups.map((group, gi) => {
+  const members = nodes.filter((nd) => nd.cluster === gi)
+  const label = members.find((nd) => nd.isLabel)!
+  const stars = members
+    .filter((nd) => !nd.isLabel)
+    .map((nd) => ({
+      key: nd.key,
+      label: nd.label,
+      x: (nd.x / W) * 100,
+      y: (nd.y / H) * 100,
+      r: 2 + hash(nd.key) * 1.7,
+    }))
+  // The constellation hub is the centroid of the stars actually placed, so
+  // the spokes stay tidy after relaxation moved things.
+  const hub = {
+    x: stars.reduce((s, n) => s + n.x, 0) / Math.max(stars.length, 1),
+    y: stars.reduce((s, n) => s + n.y, 0) / Math.max(stars.length, 1),
+  }
+  return {
+    category: group.category,
+    label: { x: (label.x / W) * 100, y: (label.y / H) * 100 },
+    hub,
+    stars,
+  }
+})
+---
+
+<div class="galaxy-wrap">
+  {/* Desktop: the scatter. Decorative lines first, behind the stars. */}
+  <div class="galaxy" aria-hidden="true">
+    <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+      {
+        clusters.map((c) => (
+          <g class="cluster-lines">
+            {c.stars.map((s) => (
+              <line x1={c.hub.x} y1={c.hub.y} x2={s.x} y2={s.y} />
+            ))}
+          </g>
+        ))
+      }
+    </svg>
+
+    {
+      clusters.map((c) => (
+        <>
+          <p class="cluster-label" style={`left:${c.label.x}%;top:${c.label.y}%`}>
+            {c.category}
+          </p>
+          {c.stars.map((s) => (
+            <span class="star" style={`left:${s.x}%;top:${s.y}%`}>
+              <span class="dot" style={`--r:${s.r.toFixed(2)}px`} />
+              <span class="name">{s.label}</span>
+            </span>
+          ))}
+        </>
+      ))
+    }
+  </div>
+
+  {
+    /* The real, readable content. Visible on narrow screens; on wide screens
+      it is the screen-reader path while the scatter above is aria-hidden. */
+  }
+  <div class="galaxy-list">
+    {
+      groups.map((group) => (
+        <div class="list-group">
+          <h3>{group.category}</h3>
+          <ul>
+            {group.items.map((key) => (
+              <li>{TECH[key].label}</li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  /* ── Scatter ───────────────────────────────────────────────────────── */
+  .galaxy {
+    display: none;
+  }
+
+  @media (min-width: 60rem) {
+    .galaxy {
+      display: block;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+    }
+
+    .galaxy-list {
+      display: none;
+    }
+  }
+
+  .lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .lines line {
+    stroke: var(--color-cyan);
+    stroke-width: 0.12;
+    opacity: 0.16;
+    transition: opacity var(--duration-state) var(--ease-out);
+  }
+
+  .cluster-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+    cursor: default;
+    transition:
+      transform var(--duration-state) var(--ease-out),
+      background-color var(--duration-state) var(--ease-out);
+  }
+
+  .dot {
+    width: calc(var(--r) * 2);
+    height: calc(var(--r) * 2);
+    border-radius: var(--radius-full);
+    background: var(--color-cyan);
+    box-shadow: var(--glow-cyan);
+    flex-shrink: 0;
+    transition:
+      box-shadow var(--duration-state) var(--ease-out),
+      transform var(--duration-state) var(--ease-out);
+  }
+
+  .name {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    transition: color var(--duration-state) var(--ease-out);
+  }
+
+  /* ── Hover: emphasis only, never information ───────────────────────── */
+  .star:hover {
+    transform: translate(-50%, -50%) scale(1.12);
+    background: color-mix(in srgb, var(--color-cyan) 10%, transparent);
+  }
+
+  .star:hover .dot {
+    transform: scale(1.5);
+    box-shadow:
+      var(--glow-cyan-lg),
+      0 0 0 3px color-mix(in srgb, var(--color-cyan) 20%, transparent);
+  }
+
+  .star:hover .name {
+    color: var(--color-cyan);
+    text-shadow: var(--glow-cyan);
+  }
+
+  /* Everything else recedes, so the hovered star reads as the focus. */
+  .galaxy:has(.star:hover) .star:not(:hover) {
+    opacity: 0.35;
+  }
+
+  .galaxy:has(.star:hover) .cluster-label {
+    opacity: 0.4;
+  }
+
+  .galaxy:has(.star:hover) .lines line {
+    opacity: 0.08;
+  }
+
+  .star,
+  .cluster-label,
+  .lines line {
+    transition-property: opacity, transform, color, background-color, box-shadow;
+    transition-duration: var(--duration-state);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* ── Narrow screens: the plain grouped list ────────────────────────── */
+  .galaxy-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1.75rem 2.5rem;
+  }
+
+  .list-group {
+    border-left: 1px solid var(--color-border);
+    padding-left: 1rem;
+  }
+
+  h3 {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-cyan);
+    margin: 0 0 0.7rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.9;
+    color: var(--color-text-muted);
+  }
+</style>

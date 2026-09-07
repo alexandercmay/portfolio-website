@@ -6,7 +6,7 @@ import SectionHeader from '@/components/SectionHeader.astro'
 import Label from '@/components/Label.astro'
 import ExperienceEntry from '@/components/ExperienceEntry.astro'
 import ProjectCard from '@/components/ProjectCard.astro'
-import SkillsComposition from '@/components/SkillsComposition.astro'
+import SkillGalaxy from '@/components/SkillGalaxy.astro'
 import { getFeaturedProjects, formatPeriod } from '@/lib/content'
 import { resume } from '../../content/resume'
 
@@ -92,7 +92,7 @@ const featuredProjects = await getFeaturedProjects(3)
     <section class="band" aria-labelledby="skills">
       <SectionHeader index="03" id="skills" title="Skills" />
       <div class="reveal-stagger">
-        <SkillsComposition groups={skills} />
+        <SkillGalaxy groups={skills} />
       </div>
     </section>
 

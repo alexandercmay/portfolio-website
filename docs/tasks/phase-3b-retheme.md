@@ -191,3 +191,34 @@ manual DOM check caught it.
 
 - [x] Added a structure test asserting all five sections exist, in order, with
       consecutive indexes, and that the page still reaches a `mailto:` link
+
+## 3b.11 Skill galaxy *(fourth review)*
+
+Requested: interactive skills with hover feedback, clustered like a galaxy with
+one cluster per category.
+
+- [x] `SkillGalaxy` — one constellation per category, spokes from the centroid
+- [x] Positions solved at BUILD time; zero JavaScript shipped
+- [x] Hover: star scales, dot glows, name goes cyan, other stars dim to 0.35
+      and cluster labels to 0.4 (`:has()`)
+- [x] **Hover is emphasis only** — every skill name is visible at all times, so
+      keyboard and touch users lose nothing
+- [x] Scatter is `aria-hidden`; a plain grouped list is the screen-reader path
+      and the render below 60rem
+- [x] Verified hover with a real pointer move, reading computed styles after
+      the transition settled — name `rgb(34,211,238)`, dot `scale(1.5)`, star
+      `scale(1.12)`, others `0.35`
+
+### The bug, and the guard
+
+The first placement scattered stars on a jittered ring and produced **eleven
+overlapping label pairs**. Because labels are monospace their widths are
+exactly predictable, so the layout now runs ~90 iterations of pairwise
+repulsion against real box sizes. Zero overlaps across all 30 elements.
+
+- [x] Regression test recomputes boxes from the rendered markup and asserts no
+      collisions — **verified to fail** by collapsing clusters to a point and
+      disabling relaxation
+
+**Stated cost:** a scatter is harder to scan than a column. `/resume` keeps the
+plain grouped list so a scannable version always exists.

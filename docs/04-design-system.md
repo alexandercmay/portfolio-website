@@ -234,6 +234,41 @@ measures **1.11:1**. Two mitigations, both required:
 Light mode has **no starfield** — the star tokens resolve to `transparent`,
 so the layers render nothing. Dark specks on white read as dirt, not as space.
 
+### The skill galaxy
+
+Skills render as **star clusters — one constellation per category** — with
+constellation spokes from each cluster's centroid and hover emphasis on each
+star.
+
+**Positions are solved at build time**, in pixels, then converted to
+percentages. Placement is a jittered ring per cluster followed by ~90
+iterations of pairwise repulsion; because the labels are monospace their widths
+are exactly predictable, so boxes can be laid out properly rather than hoped
+at. The first version skipped the relaxation step and shipped **eleven
+overlapping label pairs**.
+
+Nothing is computed in the browser. This ships zero JavaScript like everything
+else.
+
+**The accessibility contract, which constrains the whole idea:**
+
+- **Every skill name is visible at all times.** Hover adds glow, scale, and
+  dims the other stars — it never *reveals* anything. Hover-gated content would
+  exclude keyboard and touch users outright.
+- The scatter is `aria-hidden`; a plain grouped list carries the real content
+  for screen readers, and is what renders below 60rem. A scattered galaxy on a
+  phone is unreadable.
+- DOM order stays grouped and logical even though placement is scattered.
+
+**Known cost:** a scatter is harder to scan than a column — a reader hunting
+for "Python" has to search rather than read down a list. `/resume` keeps the
+plain grouped composition, so a scannable version of this information always
+exists.
+
+Tests recompute the boxes from the rendered markup and assert none collide,
+that every star is inside the canvas, and that every skill name is present as
+text.
+
 ### Panels and modules
 
 The structural answer to "the sections look dull on their own": a stack of
