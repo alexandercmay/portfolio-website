@@ -1,20 +1,18 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   Display face — Fraunces, weight axis only.
+   JetBrains Mono — the single loaded face.
 
-   Chosen over Instrument Serif after rendering both: Instrument Serif is
-   higher contrast and goes visibly thin at --text-deck, which is exactly
-   where the load-bearing text lives (role headline accomplishments). See
-   docs/04-design-system.md.
+   It carries the whole identity: headings, labels, metadata, numbers, status
+   readouts. Body prose stays on the system sans stack — a 600-word project
+   writeup set in mono is a wall, and readability there matters more than
+   aesthetic consistency.
 
-   Self-hosted, latin subset, weight axis only — 36KB against a 45KB budget.
-   The optical-size variant is 68KB and blows it, which is why this is the
-   wght file rather than the opsz one the plan originally assumed.
+   Variable weight axis, Latin subset, 39KB against a 45KB budget.
    ───────────────────────────────────────────────────────────────────────── */
 
 @font-face {
-  font-family: 'Fraunces';
-  src: url('/fonts/fraunces-wght.woff2') format('woff2-variations');
-  font-weight: 100 900;
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono.woff2') format('woff2-variations');
+  font-weight: 100 800;
   font-style: normal;
   font-display: swap;
   unicode-range:
@@ -24,21 +22,23 @@
 }
 
 /*
-  Metric-matched fallback so the swap doesn't shift layout.
+  Metric-matched fallback.
 
-  Measured from the actual font files with fontkit:
-    Fraunces  xHeight 0.4820  capHeight 0.7000  ascent 0.9780  descent -0.2550
-    Georgia   xHeight 0.4814  capHeight 0.6929  ascent 0.9170  descent -0.2192
+  Measured with fontkit rather than guessed:
+    JetBrains Mono  advance 0.6000  ascent 1.0200  descent -0.3000
+    Menlo           advance 0.6021  ascent 0.9282  descent -0.2358
 
-  Georgia turns out to be a near-perfect metric match — size-adjust lands at
-  100.12%. The overrides below make the line boxes identical, so CLS from the
-  swap is effectively zero.
+  In a MONOSPACE face the advance width is what controls line wrapping, so it
+  is the metric that causes reflow on swap — not x-height, which is the right
+  target for a proportional face. The two are within 0.35% of each other, so
+  the swap is effectively invisible.
 */
 @font-face {
-  font-family: 'Fraunces Fallback';
-  src: local('Georgia'), local('Times New Roman'), local('Times');
-  size-adjust: 100.12%;
-  ascent-override: 97.69%;
-  descent-override: 25.47%;
+  font-family: 'JetBrains Mono Fallback';
+  src:
+    local('Menlo'), local('SFMono-Regular'), local('Consolas'), local('DejaVu Sans Mono');
+  size-adjust: 99.66%;
+  ascent-override: 102.35%;
+  descent-override: 30.1%;
   line-gap-override: 0%;
 }

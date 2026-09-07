@@ -1,129 +1,152 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   Design tokens — see docs/04-design-system.md
+   Design tokens — instrument panel. See docs/04-design-system.md and D-015.
 
-   Colors use one level of indirection so themes can swap them:
-     @theme maps Tailwind's --color-* to a raw var
-     :root and :root[data-theme='dark'] set the raw vars
-   Everything else is static and lives directly in @theme.
+   DARK IS THE DEFAULT. It sits on bare :root, so it applies with no attribute
+   and no JavaScript. Light is the explicit alternative.
+
+   Colors go through one level of indirection (--c-* raw, --color-* semantic)
+   so themes swap by redefining the raw vars only.
    ───────────────────────────────────────────────────────────────────────── */
 
 @theme {
   /* Type ------------------------------------------------------------------ */
-  --font-display: 'Fraunces', 'Fraunces Fallback', Georgia, 'Times New Roman', serif;
+  --font-mono:
+    'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
-  --text-xs: 0.79rem;
-  --text-sm: 0.889rem;
-  --text-base: 1.0625rem;
-  --text-lg: 1.2rem;
-  --text-xl: 1.5rem;
-  --text-2xl: 1.9rem;
-  --text-3xl: clamp(2.2rem, 4vw, 3rem);
-  /* The token that makes the editorial treatment work: a role's headline
-     accomplishment, set large enough to read as a statement. */
-  --text-deck: clamp(1.5rem, 3.2vw, 2.4rem);
-  --text-display: clamp(3rem, 8vw, 5.5rem);
+  /* Mono is wider per character than a proportional face, so the display
+     sizes here are deliberately SMALLER than the editorial scale they
+     replace — the old 5.5rem name overflowed a phone in mono. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2rem, 4vw, 2.75rem);
+  --text-deck: clamp(1.35rem, 2.8vw, 2rem);
+  --text-display: clamp(2.5rem, 7vw, 4.5rem);
 
-  --leading-tight: 1.08;
-  --leading-deck: 1.2;
-  --leading-normal: 1.6;
+  --leading-tight: 1.1;
+  --leading-deck: 1.3;
+  --leading-normal: 1.65;
 
-  --tracking-display: -0.022em;
-  --tracking-tight: -0.011em;
-  --tracking-wide: 0.06em;
+  /* Mono is loose by default; tightening is what stops a large heading
+     reading as a code listing. */
+  --tracking-display: -0.03em;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.12em;
 
   /* Layout ---------------------------------------------------------------- */
   --container-prose: 68ch;
   --container-content: 1100px;
   --container-wide: 1400px;
+  --spacing-section: clamp(3.5rem, 9vw, 7rem);
 
-  /* Editorial layouts want a much larger section rhythm than app layouts. */
-  --spacing-section: clamp(4rem, 10vw, 8rem);
-
-  --radius-sm: 3px;
-  --radius-md: 6px;
+  /* Shape — rounded, paired with 1px hard borders and no soft shadows.
+     Rounded + crisp border reads as hardware; rounded + blur reads as a
+     consumer app, which is the wrong register. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
 
   /* Motion ---------------------------------------------------------------- */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --duration-state: 150ms;
-  --duration-enter: 250ms;
+  --duration-enter: 300ms;
 
-  /* Semantic colors, resolved through the raw vars below ------------------ */
+  /* Semantic colors ------------------------------------------------------- */
   --color-bg: var(--c-bg);
   --color-surface: var(--c-surface);
-  --color-surface-sunk: var(--c-surface-sunk);
+  --color-raised: var(--c-raised);
   --color-border: var(--c-border);
-  --color-rule: var(--c-rule);
+  --color-grid: var(--c-grid);
   --color-text: var(--c-text);
   --color-text-muted: var(--c-text-muted);
   --color-text-subtle: var(--c-text-subtle);
-  --color-accent: var(--c-accent);
-  --color-accent-hover: var(--c-accent-hover);
-  --color-accent-quiet: var(--c-accent-quiet);
+
+  /* Accents are data channels, not decoration. Each means one thing:
+       cyan   primary signal / interactive
+       lime   live, active, running
+       violet secondary series
+       amber  degraded, paused, archived
+     A colour appearing without meaning something is a bug. */
+  --color-cyan: var(--c-cyan);
+  --color-lime: var(--c-lime);
+  --color-violet: var(--c-violet);
+  --color-amber: var(--c-amber);
+
+  --color-accent: var(--c-cyan);
 }
 
-/* Light — warm paper and ink. Reads as printed rather than emitted. --------- */
+/* ── Dark — the default ───────────────────────────────────────────────────
+   Every pair below verified against all three grounds before being written
+   here. Ratios are against --c-bg; the floor across all 42 pairs is 4.76. */
 :root {
-  --c-bg: #fbfaf7;
-  --c-surface: #ffffff;
-  --c-surface-sunk: #f2f0ea;
-  --c-border: #e2ded4;
-  --c-rule: #1c1917;
-  --c-text: #1a1714; /* 15.2:1 on bg */
-  --c-text-muted: #57514a; /*  7.1:1 */
-  --c-text-subtle: #736c63; /*  4.96:1 on bg, 4.55:1 on sunk — the floor */
-  --c-accent: #9a3412; /* burnt sienna — deliberately not tech-blue */
-  --c-accent-hover: #7c2d12;
-  --c-accent-quiet: #fdf3ee;
+  --c-bg: #0a0d12;
+  --c-surface: #11161d;
+  --c-raised: #171d26;
+  --c-border: #232b36;
+  --c-grid: #141a23;
 
-  color-scheme: light;
+  --c-text: #e6edf3; /* 16.47:1 */
+  --c-text-muted: #9aa7b4; /*  7.93:1 */
+  --c-text-subtle: #7d8b9a; /*  5.59:1 — the floor */
+
+  --c-cyan: #22d3ee; /* 10.77:1 */
+  --c-lime: #a3e635; /* 12.91:1 */
+  --c-violet: #c4b5fd; /* 10.54:1 */
+  --c-amber: #fbbf24; /* 11.66:1 */
+
+  color-scheme: dark;
 }
 
-/* Dark — a redefinition of meaning, not an inversion.
+/* ── Light — explicit choice, or a light system preference ────────────────
+   The media query is guarded so an explicit dark choice still wins. The
+   lime and amber here were darkened twice during verification: earlier
+   candidates cleared 4.5:1 against --c-bg but failed against --c-raised,
+   which is exactly what a single-background spot-check misses. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --c-bg: #f6f8fa;
+    --c-surface: #ffffff;
+    --c-raised: #eef2f6;
+    --c-border: #d5dde5;
+    --c-grid: #ecf0f4;
 
-   Defined TWICE, deliberately:
-     1. under prefers-color-scheme, guarded by :not([data-theme='light']),
-        so a dark-mode visitor gets dark even with JavaScript disabled
-     2. under [data-theme='dark'], so an explicit choice wins in both
-        directions
-   The inline script in BaseLayout only *stamps* the choice; it is not what
-   makes dark mode work. Without it the system preference still applies —
-   the script exists to prevent a flash when the stored choice disagrees
-   with the system.
-   -------------------------------------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --c-bg: #12100e;
-    --c-surface: #1a1714;
-    --c-surface-sunk: #241f1a;
-    --c-border: #332d26;
-    --c-rule: #f5f2ec;
-    --c-text: #f5f2ec;
-    --c-text-muted: #b8afa4;
-    --c-text-subtle: #918880;
-    --c-accent: #f4a582;
-    --c-accent-hover: #f7bfa4;
-    --c-accent-quiet: #2a1a12;
+    --c-text: #0d1117;
+    --c-text-muted: #4a5763;
+    --c-text-subtle: #5c6b7a;
 
-    color-scheme: dark;
+    --c-cyan: #0e7490;
+    --c-lime: #446d0c;
+    --c-violet: #6d28d9;
+    --c-amber: #945708;
+
+    color-scheme: light;
   }
 }
 
-:root[data-theme='dark'] {
-  --c-bg: #12100e;
-  --c-surface: #1a1714;
-  --c-surface-sunk: #241f1a;
-  --c-border: #332d26;
-  --c-rule: #f5f2ec;
-  --c-text: #f5f2ec;
-  --c-text-muted: #b8afa4;
-  --c-text-subtle: #918880;
-  --c-accent: #f4a582; /* lightened — the light-mode sienna fails on dark */
-  --c-accent-hover: #f7bfa4;
-  --c-accent-quiet: #2a1a12;
+:root[data-theme='light'] {
+  --c-bg: #f6f8fa;
+  --c-surface: #ffffff;
+  --c-raised: #eef2f6;
+  --c-border: #d5dde5;
+  --c-grid: #ecf0f4;
 
-  color-scheme: dark;
+  --c-text: #0d1117;
+  --c-text-muted: #4a5763;
+  --c-text-subtle: #5c6b7a;
+
+  --c-cyan: #0e7490;
+  --c-lime: #446d0c;
+  --c-violet: #6d28d9;
+  --c-amber: #945708;
+
+  color-scheme: light;
 }

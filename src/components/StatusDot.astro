@@ -1,0 +1,57 @@
+---
+export type Status = 'active' | 'shipped' | 'archived' | 'exploration'
+
+interface Props {
+  status: Status
+}
+const { status } = Astro.props
+---
+
+{
+  /* Decorative: the adjacent Badge always renders the status as text, so a
+    reader who cannot distinguish the colours still gets the information.
+    Colour is never the only signal. */
+}
+<span class:list={['dot', status]} aria-hidden="true"></span>
+
+<style>
+  .dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-text-subtle);
+    flex-shrink: 0;
+  }
+
+  .active {
+    background: var(--color-lime);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+  }
+
+  .shipped {
+    background: var(--color-text-muted);
+  }
+
+  .archived,
+  .exploration {
+    background: var(--color-amber);
+  }
+
+  /* The one pulse on the site, and only on a live project. */
+  @media (prefers-reduced-motion: no-preference) {
+    .active {
+      animation: pulse 2.4s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-lime) 8%, transparent);
+    }
+  }
+</style>

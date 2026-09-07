@@ -15,19 +15,13 @@ const d = project.data
 {
   /*
   Only the heading is a link, with an overlay stretching the hit area across
-  the card.
-
-  Wrapping the whole card in an <a> instead would give the link an accessible
-  name built from every scrap of text inside it — a screen reader would
-  announce "Shipped Updated August 2026 Retrieval Service Semantic search
-  over 12M documents..." as one link. This way the link is named "Retrieval
-  Service" and the card is still fully clickable.
-
-  The stack chips sit above the overlay so they stay independently clickable —
-  nested interactive elements would be invalid HTML.
+  the card. Wrapping the whole card in an <a> would build the link's accessible
+  name from every scrap of text inside it. This way the link is named
+  "Chalk Talk" and the card is still fully clickable. The chips sit above the
+  overlay so they stay independently clickable.
 */
 }
-<article class="card">
+<article class="card panel">
   {
     d.cover && (
       <div class="cover">
@@ -38,7 +32,7 @@ const d = project.data
 
   <div class="meta">
     <Badge status={d.status} />
-    <span class="updated">Updated {formatMonth(d.updated)}</span>
+    <span class="updated">{formatMonth(d.updated)}</span>
   </div>
 
   <h3>
@@ -56,9 +50,44 @@ const d = project.data
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--color-border);
+    gap: 0.85rem;
+    padding: 1.35rem;
+    transition:
+      border-color var(--duration-state) var(--ease-out),
+      background-color var(--duration-state) var(--ease-out);
+  }
+
+  .card:hover {
+    border-color: var(--color-cyan);
+    background: var(--color-raised);
+  }
+
+  /* No cover image is the normal case, not a broken one — the layout must not
+     depend on it. */
+  .cover :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .meta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .updated {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+  }
+
+  h3 {
+    font-size: var(--text-xl);
+    margin: 0;
   }
 
   h3 a {
@@ -71,54 +100,25 @@ const d = project.data
     content: '';
     position: absolute;
     inset: 0;
+    border-radius: var(--radius-lg);
   }
 
   .card:hover h3 a {
-    color: var(--color-accent);
+    color: var(--color-cyan);
+  }
+
+  .tagline {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-text-muted);
   }
 
   /* Above the overlay, so chips stay clickable in their own right. */
   .chips {
     position: relative;
     z-index: 1;
-  }
-
-  /* No cover image is the normal case, not a broken one — the layout must
-     not depend on it. */
-  .cover {
-    margin-bottom: 1rem;
-  }
-
-  .cover :global(img) {
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-  }
-
-  .meta {
-    position: relative;
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .updated {
-    font-size: var(--text-xs);
-    color: var(--color-text-subtle);
-  }
-
-  h3 {
-    font-size: var(--text-xl);
-    margin: 0 0 0.35rem;
-  }
-
-  .tagline {
-    margin: 0;
-    font-size: var(--text-sm);
-    line-height: 1.5;
-    color: var(--color-text-muted);
-    max-width: 44ch;
+    margin-top: auto;
+    padding-top: 0.35rem;
   }
 </style>

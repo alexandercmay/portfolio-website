@@ -3,40 +3,70 @@ interface Props {
   title: string
   href?: string
   linkLabel?: string
-  /** Set so the enclosing <section> can point aria-labelledby at it. An
-      unnamed <section> is landmark noise for screen reader users. */
+  /** Two-digit section index, e.g. "01" — part of the instrument framing. */
+  index?: string
+  /** Set so the enclosing <section> can point aria-labelledby at it. */
   id?: string
 }
-const { title, href, linkLabel, id } = Astro.props
+const { title, href, linkLabel, index, id } = Astro.props
 ---
 
 <div class="header">
-  <h2 id={id}>{title}</h2>
-  {href && <a href={href}>{linkLabel ?? 'See all'} &rarr;</a>}
+  <h2 id={id}>
+    {
+      index && (
+        <span class="idx" aria-hidden="true">
+          {index}
+        </span>
+      )
+    }
+    {title}
+  </h2>
+  {
+    href && (
+      <a class="more" href={href}>
+        {linkLabel ?? 'See all'} &rarr;
+      </a>
+    )
+  }
 </div>
 
 <style>
   .header {
     display: flex;
-    align-items: baseline;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 1.5rem;
     margin-bottom: 2rem;
   }
 
   h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
     font-size: var(--text-2xl);
     margin: 0;
   }
 
-  a {
+  /* The section index — an instrument cue, and aria-hidden so a screen reader
+     hears the section name rather than a bare number in front of it. */
+  .idx {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-cyan);
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .more {
     flex-shrink: 0;
+    font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
     text-decoration: none;
+    transition: color var(--duration-state) var(--ease-out);
   }
 
-  a:hover {
-    color: var(--color-accent);
+  .more:hover {
+    color: var(--color-cyan);
   }
 </style>

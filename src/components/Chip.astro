@@ -1,7 +1,8 @@
 ---
 /**
- * Neutral by design. Stack chips are NOT colour-coded — twelve arbitrary tag
- * colours is noise and defeats the single accent. See docs/04-design-system.md.
+ * Neutral by design. Stack chips are NOT colour-coded — the accents are
+ * semantic data channels, and spending them on twenty technology tags would
+ * make them mean nothing. See docs/04-design-system.md.
  */
 interface Props {
   href?: string
@@ -16,13 +17,14 @@ const Tag = href ? 'a' : 'span'
 <style>
   .chip {
     display: inline-block;
-    padding: 0.2em 0.6em;
+    padding: 0.25em 0.6em;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
     color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    line-height: 1.4;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
     text-decoration: none;
     white-space: nowrap;
   }
@@ -34,7 +36,7 @@ const Tag = href ? 'a' : 'span'
   }
 
   a.chip:hover {
-    color: var(--color-accent);
-    border-color: var(--color-accent);
+    color: var(--color-cyan);
+    border-color: var(--color-cyan);
   }
 </style>

@@ -14,8 +14,7 @@ const { role, variant = 'featured' } = Astro.props
 /**
  * The homepage leads with the headline and a couple of supporting points; the
  * full list lives on /resume. Without this cap the "Selected" section shows
- * every bullet and the curation does nothing — which is exactly what it did
- * before this line existed.
+ * every bullet and the curation does nothing.
  */
 const FEATURED_HIGHLIGHTS = 3
 const highlights =
@@ -62,14 +61,11 @@ const hidden = role.highlights.length - highlights.length
 </article>
 
 <style>
-  /* Asymmetric: quiet metadata in a narrow column, content in a wide one.
-     That asymmetry is a large part of what reads as designed rather than
-     stacked. */
   .entry {
     display: grid;
     grid-template-columns: minmax(9rem, 1fr) minmax(0, 3fr);
     gap: 2rem;
-    padding: 2.5rem 0;
+    padding: 2.25rem 0;
   }
 
   .aside > * {
@@ -77,24 +73,28 @@ const hidden = role.highlights.length - highlights.length
   }
 
   .period {
+    font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: var(--tracking-wide);
-    text-transform: uppercase;
-    color: var(--color-text-subtle);
-    margin-bottom: 0.5rem;
+    color: var(--color-cyan);
+    margin-bottom: 0.6rem;
   }
 
   .org {
+    font-family: var(--font-mono);
     font-size: var(--text-base);
+    font-weight: 500;
     color: var(--color-text);
   }
 
   .title {
     font-size: var(--text-sm);
     color: var(--color-text-muted);
+    margin-top: 0.25rem;
   }
 
   .headline {
+    font-family: var(--font-mono);
     font-size: var(--text-lg);
     margin: 0 0 0.75rem;
     color: var(--color-text);
@@ -102,39 +102,52 @@ const hidden = role.highlights.length - highlights.length
 
   .highlights {
     margin: 1rem 0 1.1rem;
-    padding-left: 1.1rem;
+    padding-left: 0;
+    list-style: none;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
   .highlights li {
-    margin-bottom: 0.4rem;
+    position: relative;
+    padding-left: 1.2rem;
+    margin-bottom: 0.55rem;
   }
 
-  .full .highlights {
-    margin-top: 0.6rem;
+  /* A readout marker rather than a bullet. */
+  .highlights li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 0.5rem;
+    height: 1px;
+    background: var(--color-cyan);
+    opacity: 0.7;
   }
 
   .more {
     margin: 0 0 1.1rem;
+    font-family: var(--font-mono);
     font-size: var(--text-sm);
   }
 
   .more a {
     color: var(--color-text-muted);
     text-decoration: none;
+    transition: color var(--duration-state) var(--ease-out);
   }
 
   .more a:hover {
-    color: var(--color-accent);
+    color: var(--color-cyan);
   }
 
   @media (max-width: 46rem) {
     .entry {
       grid-template-columns: 1fr;
       gap: 0.9rem;
-      padding: 2rem 0;
+      padding: 1.75rem 0;
     }
 
     .aside {
@@ -146,6 +159,10 @@ const hidden = role.highlights.length - highlights.length
 
     .period {
       margin-bottom: 0;
+    }
+
+    .title {
+      margin-top: 0;
     }
   }
 </style>

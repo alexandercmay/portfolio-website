@@ -1,202 +1,205 @@
 # Design System
 
-**Direction: editorial.** Large display type, generous whitespace, a strong grid,
-restrained color, accomplishments treated as pull quotes. The reference points
-are well-made publications, not dev portfolios.
+**Direction: instrument panel.** Dark by default, monospace-forward, vibrant
+accents used as data channels, rounded corners, motion driven by scroll.
 
-This is the right call for a specific reason: the terminal-inflected dark-mode
-developer aesthetic is the most common look in this category, so it blends in.
-An editorial treatment stands out by contrast, ages better, and signals judgment
-rather than novelty.
+The reference is a piece of **lab or measurement equipment** — an oscilloscope,
+a telemetry dashboard, a plotted experiment — not a hacker terminal. That
+distinction is the whole point of the direction and it is worth stating plainly:
 
-Because the site ships essentially no JavaScript, **typography and layout are
-the entire product.** This document is load-bearing.
+> The dark terminal-dev aesthetic is the single most common look in this
+> category. Green-on-black, a blinking cursor, ASCII art, `~$ whoami` — a
+> reviewer has seen fifty of them. Doing that generically means blending in.
+
+What differentiates here is the **scientific instrumentation** layer: a measured
+grid, monospace readouts with real units, status LEDs, tick marks, indexed
+specimens, values that look plotted rather than typed. It reads as *someone who
+builds systems and measures them*, which is the actual claim.
+
+See `06-decisions.md` D-015 for how this supersedes the editorial direction.
 
 ## Design principles
 
-1. **Type carries the design.** Hierarchy, scale, and rhythm do the work. Effects
-   don't.
-2. **One accent color.** A restrained palette reads as considered. A rainbow of
-   tag colors reads as a student project.
-3. **Whitespace is structure, not leftover.** Editorial layouts breathe. Cramped
-   is the most common failure of self-designed sites.
-4. **The strongest sentence gets the largest type.** Accomplishments are set as
-   decks and pull quotes, not buried in bullets.
-5. **Motion responds to the reader; it never performs for them.** Scroll-linked,
-   subtle, always optional.
-6. **Content sets the layout.** No layout that requires a cover image to look
-   right — you will eventually add a project without one.
-7. **Dark mode is a first-class mode, not an inversion.**
+1. **Monospace is the voice; sans is for reading.** Headings, labels, metadata,
+   and every number are mono. Long prose is not — a full-mono project writeup is
+   a wall.
+2. **Accents are data channels, not decoration.** Each accent means one thing
+   consistently. Cyan is the primary signal, lime is live/active, violet is a
+   secondary series, amber is degraded or archived. If a color appears without
+   meaning something, it is wrong.
+3. **Everything reads as measured.** Units on numbers, indexes on sections,
+   tick marks where a scale is implied. The site should feel like it was
+   instrumented rather than styled.
+4. **Rounded, not soft.** Consistent radii on every surface. Rounded corners
+   with hard, thin borders read as hardware; rounded with fuzzy shadows reads
+   as a consumer app.
+5. **Motion is scroll-driven and physical.** Things enter as you scroll to them,
+   at a rate you control. Nothing performs on a timer.
+6. **Dark is the default, light is complete.** Not an afterthought inversion —
+   both palettes are verified independently.
+7. **Content still sets the layout.** No layout that requires a cover image.
 
 ## Tokens
 
 CSS custom properties in `src/styles/tokens.css`, exposed to Tailwind v4 via
-`@theme`. One source, both systems.
+`@theme`. Colors go through one level of indirection so themes can swap them.
 
 ### Color
 
-An editorial palette: warm off-white paper, near-black ink, one accent. Warmer
-and lower-contrast-at-the-extremes than a typical developer site — it reads as
-printed rather than emitted.
+**Dark is the default.** Light is the explicit alternative.
 
 ```css
+/* Dark — default. Deep blue-black, like an unlit instrument panel. */
 :root {
-  --color-bg:           #fbfaf7;   /* warm paper, not pure white */
-  --color-surface:      #ffffff;
-  --color-surface-sunk: #f2f0ea;
-  --color-border:       #e2ded4;
-  --color-rule:         #1c1917;   /* hairlines and structural rules */
-  --color-text:         #1a1714;   /* warm near-black ink — 15.2:1 on bg */
-  --color-text-muted:   #57514a;   /*  7.1:1 */
-  --color-text-subtle:  #736c63;   /*  4.7:1 — the floor */
-  --color-accent:       #9a3412;   /* burnt sienna — editorial, not tech-blue */
-  --color-accent-hover: #7c2d12;
-  --color-accent-quiet: #fdf3ee;
+  --c-bg: #0a0d12;
+  --c-surface: #11161d;
+  --c-raised: #171d26;
+  --c-border: #232b36;
+  --c-grid: #1a212b; /* the measured background grid */
+  --c-text: #e6edf3; /* 16.47:1 on bg */
+  --c-text-muted: #9aa7b4; /*  7.93:1 */
+  --c-text-subtle: #7d8b9a; /*  5.59:1 — the floor */
+
+  --c-cyan: #22d3ee; /* primary signal   10.77:1 */
+  --c-lime: #a3e635; /* live / active    12.91:1 */
+  --c-violet: #c4b5fd; /* secondary series 10.54:1 */
+  --c-amber: #fbbf24; /* degraded         11.66:1 */
 }
 
-:root[data-theme='dark'] {
-  --color-bg:           #12100e;
-  --color-surface:      #1a1714;
-  --color-surface-sunk: #241f1a;
-  --color-border:       #332d26;
-  --color-rule:         #f5f2ec;
-  --color-text:         #f5f2ec;
-  --color-text-muted:   #b8afa4;
-  --color-text-subtle:  #918880;
-  --color-accent:       #f4a582;   /* lightened — the light-mode sienna fails on dark */
-  --color-accent-hover: #f7bfa4;
-  --color-accent-quiet: #2a1a12;
+:root[data-theme='light'] {
+  --c-bg: #f6f8fa;
+  --c-surface: #ffffff;
+  --c-raised: #eef2f6;
+  --c-border: #d5dde5;
+  --c-grid: #e6ecf2;
+  --c-text: #0d1117;
+  --c-text-muted: #4a5763;
+  --c-text-subtle: #5c6b7a;
+
+  --c-cyan: #0e7490;
+  --c-lime: #446d0c;
+  --c-violet: #6d28d9;
+  --c-amber: #945708;
 }
 ```
 
-Every pair meets **WCAG AA (4.5:1)** for body text — verified in Phase 1
-against all three light grounds and all three dark ones, not just against `bg`.
+**All 42 pairs — every foreground against every ground, in both themes — were
+verified to meet WCAG AA (4.5:1) before these values were written down. The
+lowest ratio is 4.76.** The light-mode lime and amber were darkened twice
+during that check; the first two candidates failed against `--c-raised` while
+passing against `--c-bg`, which is exactly the failure a spot-check against one
+background misses.
 
-`--color-text-subtle` is the floor and is the pair that binds: an earlier value
-(`#777067`) cleared 4.5:1 on `bg` but landed at **4.29:1 on `surface-sunk`**,
-which is exactly the kind of failure that survives a spot-check against one
-background. Use it for genuinely secondary metadata only — never for anything a
-recruiter needs to read.
+`--c-text-subtle` is the floor and is for genuinely secondary metadata only.
 
-The accent is deliberately not blue. Tech-blue is the default of the category;
-a warm accent supports the editorial register and is instantly more distinctive.
-Swap it if you dislike it, but keep it to one.
+#### Accent semantics
 
-Project states carry meaning and get color: `active` (accent), `shipped`
-(neutral-positive), `archived` / `exploration` (muted). **Tags and stack chips
-stay neutral.**
+| Token | Means | Used by |
+| --- | --- | --- |
+| `cyan` | primary signal, interactive | links, primary actions, focus |
+| `lime` | live, active, running | `status: active`, live indicators |
+| `violet` | secondary series | secondary data, AI/ML category tags |
+| `amber` | degraded, paused, archived | `status: archived` / `exploration` |
+
+`shipped` deliberately gets no accent — it is the neutral resting state.
 
 ### Theme switching
 
-Default to `prefers-color-scheme`; a toggle writes to `localStorage`. An
-**inline blocking script in `<head>`** sets `data-theme` before first paint —
-without it the page flashes light before switching, which is the most visible
-possible bug on a site meant to look polished.
+**Dark is the default with no attribute set.** Light applies only under
+`[data-theme='light']`, plus a `prefers-color-scheme: light` block guarded by
+`:not([data-theme='dark'])` so a light-preferring visitor gets light without
+JavaScript.
 
-That ~15 lines is the only JavaScript on most pages, and it earns its place.
+The inline blocking script in `<head>` stamps a stored choice before first
+paint. Without it a stored preference flashes the wrong theme.
 
-### Type — the centerpiece
+### Type
 
-**Two roles, one loaded face.**
+**One loaded face: JetBrains Mono (variable, weight axis, 40KB).**
 
-**Display** (name, section headers, deck lines, pull quotes, metrics): a
-self-hosted serif with real character. This is where the editorial identity
-lives, and it is now a requirement rather than optional.
+It carries the entire identity — headings, labels, metadata, numbers, status
+readouts. It is the most recognizable developer typeface there is, which is the
+point of the direction, and the variable axis matters because mono is doing work
+at many sizes and weights here.
 
-Candidates, all free and self-hostable:
-
-| Face | Character |
-| --- | --- |
-| **Fraunces** | Variable, with an optical-size axis genuinely useful at display sizes. Warm, slightly quirky. Strong default. |
-| **Instrument Serif** | High contrast, elegant, very editorial. Single weight keeps it light. |
-| **Newsreader** | Cleaner and more neutral. Safer, less distinctive. |
-
-**Body**: the system stack. Renders instantly, no request, no layout shift, and
-in a well-set editorial layout the body face is close to invisible — the display
-type and spacing carry the impression.
+Body prose stays on the **system sans stack**: no request, no layout shift, and
+genuinely more readable for a 600-word project writeup than mono would be.
 
 ```
---font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
---font-sans:    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-                'Helvetica Neue', Arial, sans-serif;
---font-mono:    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 ```
 
-Rules for the display face:
-
-- **Self-hosted**, subsetted to Latin. Never Google Fonts' CDN — extra
-  connection, worse privacy.
-- One variable file, or one static weight. Not a family.
-- `font-display: swap`, with `size-adjust` / `ascent-override` tuned on the
-  fallback so the swap doesn't shift layout.
-- `<link rel="preload">` it — it's above the fold in the hero.
-- Headings and display elements only. **Body text stays on the system stack.**
-
-If, after building, the page still feels generic, add a body face in Phase 4 and
-measure the cost. Don't spend that budget before you know you need it.
+Rules: self-hosted, Latin subset, `font-display: swap`, preloaded (it is above
+the fold), with a metric-matched fallback so the swap does not shift layout.
 
 #### Scale
 
-Editorial needs more range than a typical app — the gap between body and display
-is where the drama lives. Fluid, `clamp()`-based.
-
 | Token | Size | Use |
 | --- | --- | --- |
-| `--text-xs` | 0.79rem | Metadata, dates, role labels |
-| `--text-sm` | 0.889rem | Chips, captions |
-| `--text-base` | 1.0625rem | Body — slightly above 16px, editorial convention |
-| `--text-lg` | 1.2rem | Lead paragraphs |
-| `--text-xl` | 1.5rem | Card titles, h3 |
-| `--text-2xl` | 1.9rem | h2 |
-| `--text-3xl` | clamp(2.2rem, 4vw, 3rem) | Page titles, section headers |
-| `--text-deck` | clamp(1.5rem, 3.2vw, 2.4rem) | **Role headline accomplishments** |
-| `--text-display` | clamp(3rem, 8vw, 5.5rem) | Name in hero, metric figures |
+| `--text-xs` | 0.75rem | Labels, units, indexes |
+| `--text-sm` | 0.875rem | Metadata, chips, captions |
+| `--text-base` | 1rem | Body |
+| `--text-lg` | 1.125rem | Lead paragraphs |
+| `--text-xl` | 1.375rem | Card titles |
+| `--text-2xl` | 1.75rem | h2 |
+| `--text-3xl` | clamp(2rem, 4vw, 2.75rem) | Page titles |
+| `--text-deck` | clamp(1.35rem, 2.8vw, 2rem) | Role headline accomplishments |
+| `--text-display` | clamp(2.5rem, 7vw, 4.5rem) | Name in hero, metric readouts |
 
-`--text-deck` is the token that makes the editorial treatment work. Every
-featured role's `headline` is set at this size — large enough to read as a
-statement, not a bullet.
+Display sizes are **smaller than the editorial system used**. Mono is wider per
+character; the same nominal size occupies far more horizontal space, and a name
+set at 5.5rem in mono overflows a phone.
 
-Prose measure capped at **68 characters**. Deck lines can run wider (~28–34
-characters) because they're display type, set short by nature.
+Mono headings get `letter-spacing: -0.02em` — mono is loose by default and
+tightening it is what stops large headings looking like a code listing.
 
-### Spacing, grid, rhythm
+Prose measure is capped at **68ch**.
 
-4px base. Editorial layouts want larger section rhythm than app layouts —
-`--space-section: clamp(4rem, 10vw, 8rem)` between major landing sections.
+### Shape
 
-Containers:
+Rounded corners are a stated requirement of this direction.
 
-- `--w-prose: 68ch` — MDX body content
-- `--w-content: 1100px` — cards, grids, resume
-- `--w-wide: 1400px` — full-bleed moments
+```
+--radius-sm: 6px    /* chips, badges, inline code */
+--radius-md: 10px   /* buttons, inputs */
+--radius-lg: 14px   /* cards, panels */
+--radius-xl: 20px   /* large containers */
+--radius-full: 999px /* status dots, pills */
+```
 
-A 12-column grid on the landing page enables deliberate asymmetry: metadata in a
-narrow left column, deck and body in a wider right column. That asymmetry is a
-large part of what reads as "designed" rather than "stacked divs."
+Paired with **1px hard borders, no soft shadows.** Rounded plus a crisp border
+reads as a hardware panel; rounded plus a blurred drop shadow reads as a
+consumer app, which is the wrong register.
 
-Hairline rules (`--color-rule` at low opacity) separate sections. Cheap, and very
-editorial.
+### The measured grid
 
-Breakpoints: 640 / 768 / 1024 / 1280. Mobile-first — the hero must be excellent
-at 375px, because a meaningful share of recruiters open the link on a phone
-between meetings.
+A faint grid sits behind the page — the single strongest carrier of the
+instrument feel, for almost nothing:
+
+```css
+background-image:
+  linear-gradient(var(--color-grid) 1px, transparent 1px),
+  linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+background-size: 32px 32px;
+```
+
+It must stay **barely visible** — if you notice it as a grid rather than as
+texture, it is too strong. It is masked out behind text containers so it never
+competes with reading.
 
 ## Motion
 
-Editorial motion is restrained and reader-driven. Nothing performs.
+Scroll-driven, CSS only, zero JavaScript. `animation-timeline: view()` and
+`scroll()` are native.
 
-### Scroll-driven animation — CSS only
-
-Native CSS scroll-driven animations (`animation-timeline: view()` / `scroll()`)
-provide scroll-linked reveals, the career-timeline progress rule, and section
-transitions **with zero JavaScript**. No IntersectionObserver, no library.
-
-**The pattern is opt-in, never opt-out.** This matters more than anything else in
-this section:
+**The pattern is opt-in, never opt-out — this is non-negotiable:**
 
 ```css
-/* Visible by default. Always. */
-.reveal { opacity: 1; transform: none; }
+.reveal {
+  opacity: 1;
+  transform: none;
+} /* visible by default, always */
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -207,106 +210,77 @@ this section:
     }
   }
 }
-
-@keyframes reveal {
-  from { opacity: 0; transform: translateY(1rem); }
-  to   { opacity: 1; transform: none; }
-}
 ```
 
-Writing this backwards — hiding content by default and revealing it with the
-animation — makes your content **invisible** in any browser without support, and
-for anyone with reduced-motion enabled. That is a catastrophic, silent failure on
-a site whose purpose is being read. Never author it that way.
+Authoring this backwards — hiding content and revealing it on scroll — makes the
+page **blank** in any browser without `animation-timeline` and for every visitor
+with reduced motion. On a site whose purpose is being read, that is a silent,
+total failure. A test asserts the base rule stays visible, and that test has been
+verified to actually catch the inversion.
 
-Support is real but not universal (Chromium and Safari; Firefox has lagged).
-That's acceptable precisely because it's progressive enhancement: unsupported
-browsers get a clean static page, which is the baseline anyway.
+Motion vocabulary:
 
-Constraints:
+- **`.reveal`** — fade and rise, on entry
+- **`.reveal-stagger`** — children enter in sequence via `animation-delay`
+- **Scroll progress rail** — a scroll-linked accent line down the experience
+  section, drawn with `scroll()`
+- **Readout count-in** — metric figures scale up slightly on entry, like a gauge
+  settling
+- **Hover** — 150ms border and glow transitions only
 
-- **Never on the hero.** Name, headline, and contact render immediately at full
-  opacity on first paint.
-- Subtle: ≤1rem of movement, opacity from 0.
-- `transform` and `opacity` only.
-- Never on primary text a reader is trying to scan.
+Never on the hero. Name, headline, and contact render at full opacity on first
+paint, always. Durations 150ms (state) / 300ms (entry). `transform` and `opacity`
+only.
 
-### Other motion
-
-- Durations: 150ms (state), 250ms (enter/exit). Nothing over 300ms.
-- Easing: `cubic-bezier(0.2, 0, 0, 1)`
-- `prefers-reduced-motion: reduce` disables all non-essential motion as a global
-  base-stylesheet rule, not per component.
-
-### Still excluded
-
-Relaxing the scroll-animation ban does **not** relax these:
-
-- **Scroll-jacking** — hijacking scroll speed or position. Distinct from
-  scroll-*linked* animation, which responds to natural scrolling. The first
-  takes control from the reader; the second doesn't.
-- Hero animations that delay the name, headline, or contact
-- Typewriter effects on your job title
-- Custom cursors and cursor-follow effects
-- Horizontal scroll sections
-- Preloader screens
-- Sound
-- 3D backgrounds
+Still excluded: scroll-jacking (hijacking scroll position or speed — distinct
+from scroll-*linked* animation), typewriter effects, fake terminal prompts,
+matrix rain, particle fields, custom cursors, preloaders, sound.
 
 ## Components
 
-**`src/components/` — `.astro`, zero JS.** Nearly everything:
+**`src/components/` — `.astro`, zero JS.**
 
-`Button`, `Link`, `Chip`, `Badge`, `Card`, `Prose`, `Icon`, `VisuallyHidden`,
-`Rule`, `SectionHeader`, `Deck`, `MetricFigure`, `ExperienceEntry`,
-`ProjectCard`, `StackChips`, `SkillsComposition`, `ResumeSection`,
-`Header`, `Footer`, `SEO`
+`Button`, `Chip`, `Badge`, `Card`, `Prose`, `Rule`, `SectionHeader`, `Deck`,
+`MetricFigure`, `StatusDot`, `Label`, `ProjectCard`, `ExperienceEntry`,
+`SkillsComposition`, `StackChips`, `EmptyState`, `Header`, `Footer`, `SEO`
 
-**MDX-mapped** — available in content with no imports: `Callout`, `Figure`,
-`CodeBlock`, `Comparison`, `Metric`, `Aside`, `DemoFrame`
+Direction-specific additions:
 
-**`src/islands/` — `.tsx`, ships JS.** Should stay nearly empty.
+- **`StatusDot`** — a small filled circle in the status accent, optionally with
+  a `lime` pulse for `active`. The LED.
+- **`Label`** — uppercase mono micro-label with wide tracking, for the
+  `SECTION 01 /` and `STATUS /` style annotations that carry the instrument feel.
 
-Astro scopes component styles by default, so components own their CSS with no
-naming convention and no leakage.
+**`src/islands/` — `.tsx`, ships JS.** Currently empty, and `@astrojs/react` is
+not installed: it emitted a 187KB client runtime into `dist/` referenced by zero
+pages. It returns in Phase 5 with the first real island.
 
 ## Accessibility
 
-A build requirement, not a final pass. On a site aimed at engineering employers,
-an inaccessible portfolio is a visible technical failure.
-
-- **Contrast**: WCAG AA minimum, verified in CI
-- **Keyboard**: everything reachable and operable; visible `:focus-visible` ring
-- **Semantics**: real landmarks, one `<h1>`, no skipped heading levels
-- **Skip link** as the first focusable element
-- **Images**: meaningful `alt`, or `alt=""` when decorative
-- **Display type must still meet contrast** — large type lowers the *required*
-  ratio, but the palette above clears the stricter bar anyway
-- **Reduced-motion produces a complete, correct page**, not a degraded one
-- CI runs `axe-core` against every built route and fails on violations
+- **Contrast**: WCAG AA, verified computationally in both themes
+- **Vibrant accents on dark are exactly where contrast quietly fails** — every
+  accent was checked against all three grounds, not just `--c-bg`
+- **Color is never the only signal.** Status is a dot *and* a text label; a
+  reader who cannot distinguish lime from amber still reads "Active".
+- Visible `:focus-visible` ring in both themes; never `outline: none` bare
+- One `<h1>` per page, no skipped levels, skip link first, named landmarks
+- Reduced motion produces a complete, correct page
+- The background grid is decorative and must not reduce text contrast
+- CI runs `axe-core` against every built route
 
 ## Performance budget
 
-Enforced in CI. Violations fail the build.
-
 | Metric | Budget |
 | --- | --- |
-| JS — landing, resume, project index, stack (gzip) | **≤ 2KB** (inline theme script only) |
-| JS — a project page with an island | ≤ 100KB |
+| JS — every page (gzip) | **≤ 2KB** (inline theme script only) |
 | CSS (gzip) | ≤ 30KB |
-| Font payload | **≤ 45KB** (one subsetted variable display face) |
+| Font payload | ≤ 45KB (JetBrains Mono variable, 40KB) |
 | LCP (mid-tier mobile, 4G) | ≤ 1.4s |
 | CLS | ≤ 0.02 |
 | Lighthouse Performance | 100 |
 | Lighthouse Accessibility | 100 |
 
-Two budgets moved to pay for the editorial direction: fonts 30 → 45KB, LCP
-1.2 → 1.4s. That is the entire cost of it — because the motion is CSS and the
-layout is static, **"flashy" here costs one font file and nothing else.**
-
-The JavaScript budget did not move and will not. If a page starts shipping
-unexpected JS, something was accidentally made an island — that's a bug, not a
-tradeoff.
-
-The budget protects a specific outcome: a recruiter on hotel wifi sees your name
-and headline immediately. Everything else is negotiable; that is not.
+Unchanged by the retheme. The direction costs one font file; the grid, the
+rounded corners, the accents, and every scroll animation are CSS. **If a page
+starts shipping JavaScript, something was accidentally made an island — that is
+a bug, not a tradeoff.**

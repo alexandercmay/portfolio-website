@@ -1,8 +1,8 @@
 ---
 /**
- * A role's headline accomplishment, set at --text-deck (~3x body).
+ * A role's headline accomplishment, set at --text-deck.
  *
- * This size is unforgiving on purpose: a vague sentence looks worse set large
+ * The size is unforgiving on purpose: a vague sentence looks worse set large
  * than it does buried in a bullet list. If a deck reads weakly here, the
  * sentence is wrong — not the type size. See docs/02-content-model.md.
  */
@@ -17,13 +17,13 @@ const { as: Tag = 'p', class: className } = Astro.props
 
 <style>
   .deck {
-    font-family: var(--font-display);
+    font-family: var(--font-mono);
     font-size: var(--text-deck);
-    font-weight: 400;
+    font-weight: 500;
     line-height: var(--leading-deck);
     letter-spacing: var(--tracking-tight);
     text-wrap: balance;
-    max-width: 34ch;
+    max-width: 40ch;
     margin: 0;
     color: var(--color-text);
   }

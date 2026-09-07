@@ -30,39 +30,42 @@ const Tag = href ? 'a' : 'button'
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.4em;
+    gap: 0.45em;
     padding: 0.6em 1.1em;
     border-radius: var(--radius-md);
     border: 1px solid transparent;
-    font: inherit;
+    font-family: var(--font-mono);
     font-size: var(--text-sm);
+    font-weight: 500;
     line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
     transition:
       background-color var(--duration-state) var(--ease-out),
       border-color var(--duration-state) var(--ease-out),
+      box-shadow var(--duration-state) var(--ease-out),
       color var(--duration-state) var(--ease-out);
   }
 
   .primary {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
+    background: var(--color-cyan);
+    border-color: var(--color-cyan);
+    /* Always the page ground, so this stays legible in both themes. */
     color: var(--color-bg);
   }
 
   .primary:hover {
-    background: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-cyan) 22%, transparent);
   }
 
   .secondary {
-    background: transparent;
+    background: var(--color-surface);
     border-color: var(--color-border);
     color: var(--color-text);
   }
 
   .secondary:hover {
-    border-color: var(--color-text-muted);
+    border-color: var(--color-cyan);
+    color: var(--color-cyan);
   }
 </style>

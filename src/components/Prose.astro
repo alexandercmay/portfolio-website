@@ -16,9 +16,13 @@ const { class: className } = Astro.props
     max-width: var(--container-prose);
   }
 
+  /* Mono headings, sans body. A 600-word writeup set entirely in mono is a
+     wall — readability wins over aesthetic consistency here. */
   .prose :global(h2) {
     font-size: var(--text-2xl);
-    margin: 2.5rem 0 0.75rem;
+    margin: 2.75rem 0 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--color-border);
   }
 
   .prose :global(h3) {
@@ -42,7 +46,7 @@ const { class: className } = Astro.props
   }
 
   .prose :global(a) {
-    color: var(--color-accent);
+    color: var(--color-cyan);
   }
 
   .prose :global(strong) {
@@ -51,28 +55,37 @@ const { class: className } = Astro.props
 
   .prose :global(code) {
     font-family: var(--font-mono);
-    font-size: 0.9em;
-    background: var(--color-surface-sunk);
-    padding: 0.12em 0.35em;
+    font-size: 0.875em;
+    background: var(--color-raised);
+    border: 1px solid var(--color-border);
+    padding: 0.1em 0.35em;
     border-radius: var(--radius-sm);
+    color: var(--color-cyan);
   }
 
   .prose :global(pre) {
-    padding: 1rem 1.1rem;
-    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     overflow-x: auto;
-    margin: 0 0 1.4rem;
+    margin: 0 0 1.5rem;
   }
 
   .prose :global(pre code) {
     background: none;
+    border: 0;
     padding: 0;
+    color: inherit;
   }
 
   .prose :global(blockquote) {
     margin: 0 0 1.4rem;
     padding-left: 1.1rem;
-    border-left: 2px solid var(--color-border);
+    border-left: 2px solid var(--color-cyan);
     color: var(--color-text-muted);
+  }
+
+  .prose :global(strong) {
+    color: var(--color-text);
   }
 </style>

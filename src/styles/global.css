@@ -3,7 +3,7 @@
 @import './fonts.css';
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Base — see docs/04-design-system.md
+   Base — instrument panel. See docs/04-design-system.md
    ───────────────────────────────────────────────────────────────────────── */
 
 html {
@@ -17,17 +17,26 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+
+  /* The measured grid — the strongest carrier of the instrument feel, for
+     the cost of two gradients. It must stay BARELY visible: if you notice it
+     as a grid rather than as texture, it is too strong. Decorative only, and
+     it must not cost a single AA contrast pair. */
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
 }
 
-/* Display face carries the editorial identity: name, section headers, decks,
-   metric figures. Body text stays on the system stack. */
+/* Mono is the voice: headings, labels, metadata, every number. */
 h1,
 h2,
 h3,
-.font-display {
-  font-family: var(--font-display);
-  font-weight: 400;
+h4,
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
@@ -44,9 +53,8 @@ a {
   text-underline-offset: 0.18em;
 }
 
-/* Never `outline: none` without a replacement. Visible in both themes. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-cyan);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -59,17 +67,25 @@ video {
   height: auto;
 }
 
-/* Skip link: offscreen until focused. Accessibility requirement, not a
-   design choice — it has been here since the Phase 0 skeleton. */
+::selection {
+  background: var(--color-cyan);
+  color: var(--color-bg);
+}
+
+/* Skip link: offscreen until focused. Accessibility requirement, not a design
+   choice — it has been here since the Phase 0 skeleton. */
 .skip-link {
   position: absolute;
   left: -9999px;
   top: 0;
   z-index: 100;
   padding: 0.6rem 1rem;
+  border: 1px solid var(--color-cyan);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
 }
 
 .skip-link:focus {
@@ -77,7 +93,21 @@ video {
   top: 0.5rem;
 }
 
-/* ── Scroll-driven reveal ────────────────────────────────────────────────
+/* A panel: rounded with a hard 1px border and no soft shadow. Rounded plus a
+   crisp border reads as hardware; rounded plus a blur reads as a consumer
+   app. */
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Containers sit on solid ground so the grid never competes with reading. */
+.grid-mask {
+  background: var(--color-bg);
+}
+
+/* ── Scroll-driven motion ────────────────────────────────────────────────
    AUTHORED OPT-IN, AND IT MUST STAY THAT WAY.
 
    Content is visible by default. The animation is added only where BOTH
@@ -87,9 +117,13 @@ video {
    reduced motion enabled. On a site whose entire purpose is being read, that
    is a silent, catastrophic failure.
 
+   A test asserts the base rule stays visible, and that test has been verified
+   to actually catch the inversion.
+
    See docs/04-design-system.md, Motion.
    ────────────────────────────────────────────────────────────────────── */
-.reveal {
+.reveal,
+.reveal-stagger > * {
   opacity: 1;
   transform: none;
 }
@@ -99,6 +133,32 @@ video {
     .reveal {
       animation: reveal linear both;
       animation-timeline: view();
+      animation-range: entry 0% entry 50%;
+    }
+
+    /* Children enter in sequence. Delay is negative because a view() timeline
+       is scroll-position-driven, not time-driven — a positive delay would
+       stall the animation rather than offset it. */
+    .reveal-stagger > * {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    .reveal-stagger > *:nth-child(2) {
+      animation-range: entry 5% entry 65%;
+    }
+    .reveal-stagger > *:nth-child(3) {
+      animation-range: entry 10% entry 70%;
+    }
+    .reveal-stagger > *:nth-child(4) {
+      animation-range: entry 15% entry 75%;
+    }
+
+    /* Gauge settling: a readout scales in slightly rather than sliding. */
+    .settle {
+      animation: settle linear both;
+      animation-timeline: view();
       animation-range: entry 0% entry 55%;
     }
   }
@@ -107,7 +167,7 @@ video {
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    transform: translateY(0.9rem);
   }
   to {
     opacity: 1;
@@ -115,8 +175,19 @@ video {
   }
 }
 
-/* Global reduced-motion override — a base rule, not something remembered
-   per component. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Global reduced-motion override — a base rule, not something remembered per
+   component. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

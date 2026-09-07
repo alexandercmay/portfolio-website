@@ -355,9 +355,14 @@ host *that service* separately and keep the site on the CDN.
 
 ---
 
-### D-013 — The site is the resume; editorial direction
+### D-013 — The site is the resume *(visual direction superseded by D-015)*
 
-**Status:** accepted
+**Status:** accepted, except for the visual register
+
+> **Superseded in part.** The *structural* decision here still stands: the
+> homepage carries curated resume content and `/resume` is the complete
+> document view. The *editorial / magazine* visual direction was replaced —
+> see D-015.
 
 **Decision:** the homepage carries curated resume content — selected experience
 with headline accomplishments, skills, education, featured projects — presented
@@ -445,6 +450,64 @@ was used where — on the homepage, on `/resume`, and on each project page.
 **Revisit if:** the project count grows enough that most technologies appear in
 two or more places. Re-adding it is additive — the taxonomy and the data it
 derived from are unchanged.
+
+---
+
+### D-015 — Instrument-panel direction, dark by default *(supersedes D-013's visual register)*
+
+**Status:** accepted
+
+**Decision:** replace the editorial/magazine treatment with a dark-first
+developer aesthetic built around **scientific instrumentation** — monospace
+type, a measured background grid, vibrant accents used as data channels,
+rounded corners on hard-bordered surfaces, and scroll-driven motion.
+
+**My recorded objection, and why it does not block this.** D-013 argued the
+dark terminal-dev look is the most common thing in this category and therefore
+blends in. That objection stands *for the generic version of it* — green-on-
+black, blinking cursor, `~$ whoami`, matrix rain. A reviewer has seen fifty.
+
+The science-instrument framing is what makes this different, and it is not
+decoration: it lets the visual language carry the actual claim. Someone who
+builds systems and measures them gets a site that looks measured — units on
+numbers, status LEDs, indexed sections, a plotted grid. That is a sharper
+signal than a serif ever was for this person, whose strongest material is
+latency numbers, message throughput, and threat-model coverage.
+
+The direction is therefore accepted **on the condition that the generic
+terminal tropes stay excluded**, which `04-design-system.md` enumerates. Losing
+that constraint collapses the direction back into the thing the objection was
+about.
+
+**What changed:**
+
+- Dark is the default; light is the explicit alternative
+- JetBrains Mono variable (40KB) replaces Fraunces (36KB) as the single loaded
+  face; body prose stays on the system stack
+- Four semantic accents replace the single burnt-sienna accent — each means one
+  thing (cyan signal, lime live, violet secondary, amber degraded)
+- Radii go 3/6px → 6/10/14/20px, paired with 1px hard borders and no soft
+  shadows
+- A faint measured grid sits behind the page
+- More scroll-driven motion: staggered reveals, a scroll progress rail, metric
+  readouts that settle in
+
+**What did not change:**
+
+- The performance budget. Still ≤2KB JS per page, still zero external scripts.
+  The whole direction is CSS plus one font file.
+- The scroll-animation safety contract. `.reveal` is visible by default and the
+  animation is added only inside `@supports` + `prefers-reduced-motion`.
+  Inverting it blanks the page for anyone without support.
+- Accessibility. All 42 colour pairs verified to AA *before* the values were
+  written into the doc, across all three grounds in both themes — the light
+  lime and amber failed twice against `--c-raised` while passing against
+  `--c-bg`, which is the failure mode a single-background spot-check misses.
+- Colour is never the only signal. Status is a dot *and* a label.
+
+**Rejected within the direction:** fake terminal prompts, typewriter effects,
+matrix rain, ASCII art headers, blinking cursors, custom cursors, particle
+fields. These are the tropes that make the objection above true.
 
 ---
 

@@ -1,31 +1,82 @@
 ---
-/** A number as a graphic element. Highest impact-per-pixel on the page. */
+/** An instrument readout: value, unit, label, tick marks. */
 interface Props {
   value: string
   label: string
 }
 const { value, label } = Astro.props
+
+/**
+ * Split a trailing UNIT off the number so it can be set smaller and in the
+ * accent — "<7s" reads as a measurement when the magnitude and the unit are
+ * visually distinct.
+ *
+ * Restricted to an explicit whitelist of measurement units. An earlier version
+ * split on any trailing non-digit, which turned "1M+" into a huge "1" with a
+ * tiny "M+" — the magnitude suffix is part of the number, and hiding it
+ * misstated the figure by six orders of magnitude.
+ */
+const UNITS = ['ms', 's', 'x', '%', 'fps', 'kb', 'mb', 'gb']
+const match = value.match(/^(.*?)([a-z%]+)$/i)
+const unit = match && UNITS.includes(match[2].toLowerCase()) ? match[2] : ''
+const num = unit ? value.slice(0, -unit.length) : value
 ---
 
-<div class="metric">
-  <div class="value">{value}</div>
+<div class="metric settle">
+  <div class="ticks" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <div class="value">
+    {num}{unit && <span class="unit">{unit}</span>}
+  </div>
   <div class="label">{label}</div>
 </div>
 
 <style>
+  .metric {
+    padding-top: 0.75rem;
+  }
+
+  /* Tick marks imply a scale — the cheapest instrument cue available. */
+  .ticks {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .ticks span {
+    width: 1px;
+    height: 0.5rem;
+    background: var(--color-border);
+  }
+
+  .ticks span:first-child {
+    height: 0.85rem;
+    background: var(--color-cyan);
+  }
+
   .value {
-    font-family: var(--font-display);
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    font-weight: 600;
     line-height: 1;
     letter-spacing: var(--tracking-display);
     color: var(--color-text);
   }
 
+  .unit {
+    font-size: 0.5em;
+    font-weight: 500;
+    color: var(--color-cyan);
+    margin-left: 0.15em;
+  }
+
   .label {
-    margin-top: 0.5rem;
+    margin-top: 0.7rem;
     font-size: var(--text-sm);
-    line-height: 1.4;
+    line-height: 1.5;
     color: var(--color-text-muted);
     text-wrap: pretty;
+    max-width: 26ch;
   }
 </style>

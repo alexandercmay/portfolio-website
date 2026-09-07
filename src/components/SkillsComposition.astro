@@ -8,54 +8,58 @@ const { groups } = Astro.props
 ---
 
 {
-  /* Inner groups are <div>, not <section> — they are groupings, not
-    landmarks, and an unnamed <section> is noise in the landmark list. */
+  /* Inner groups are <div>, not <section> — they are groupings, not landmarks,
+    and an unnamed <section> is noise in the landmark list. */
 }
 <div class="skills">
   {
     groups.map((group) => (
-      <div>
+      <div class="group">
         <h3>{group.category}</h3>
-        <p class="items">
-          {group.items.map((key, i) => (
-            <>
-              {i > 0 && <span class="sep"> · </span>}
-              <span>{TECH[key].label}</span>
-            </>
+        <ul>
+          {group.items.map((key) => (
+            <li>{TECH[key].label}</li>
           ))}
-        </p>
+        </ul>
       </div>
     ))
   }
 </div>
 
 <style>
-  /* A typographic composition, not a row of uniform pills. No proficiency
-     bars — nobody believes them, and "React 90%" invites a question you
-     cannot answer. */
+  /* A readout, not a row of uniform pills. No proficiency bars — nobody
+     believes them, and "React 90%" invites a question you cannot answer. */
   .skills {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-    gap: 2rem 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.75rem 2.5rem;
+  }
+
+  .group {
+    border-left: 1px solid var(--color-border);
+    padding-left: 1rem;
   }
 
   h3 {
-    font-family: var(--font-sans);
+    font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--color-text-subtle);
-    margin: 0 0 0.6rem;
+    color: var(--color-cyan);
+    margin: 0 0 0.7rem;
   }
 
-  .items {
+  ul {
+    list-style: none;
     margin: 0;
-    line-height: 1.9;
-    color: var(--color-text);
+    padding: 0;
   }
 
-  .sep {
-    color: var(--color-text-subtle);
+  li {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.9;
+    color: var(--color-text-muted);
   }
 </style>

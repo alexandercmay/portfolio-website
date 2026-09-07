@@ -4,12 +4,12 @@ interface Props {
   updated?: Date
 }
 const { updated = new Date() } = Astro.props
-
-const stamp = updated.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+const stamp = updated.toISOString().slice(0, 10)
 
 const links = [
-  { href: 'mailto:alexcmay11@gmail.com', label: 'Email' },
-  { href: 'https://github.com/alexandercmay', label: 'GitHub' },
+  { href: 'mailto:alexcmay11@gmail.com', label: 'email' },
+  { href: 'https://github.com/alexandercmay', label: 'github' },
+  { href: 'https://www.linkedin.com/in/alexandercmay/', label: 'linkedin' },
 ]
 ---
 
@@ -24,14 +24,18 @@ const links = [
         ))
       }
     </ul>
-    <p class="stamp">Last updated {stamp}</p>
+    <p class="stamp">
+      <span class="dim" aria-hidden="true">build</span>
+      {stamp}
+    </p>
   </div>
 </footer>
 
 <style>
   footer {
     margin-top: var(--spacing-section);
-    border-top: 1px solid color-mix(in srgb, var(--color-rule) 10%, transparent);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
   }
 
   .inner {
@@ -42,7 +46,7 @@ const links = [
     gap: 1rem;
     max-width: var(--container-content);
     margin: 0 auto;
-    padding: 2rem 1.5rem 3rem;
+    padding: 1.75rem 1.5rem 2.5rem;
   }
 
   ul {
@@ -54,17 +58,26 @@ const links = [
   }
 
   a {
+    font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color var(--duration-state) var(--ease-out);
   }
 
   a:hover {
-    color: var(--color-accent);
+    color: var(--color-cyan);
   }
 
   .stamp {
     margin: 0;
+    font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--color-text-subtle);
+  }
+
+  .dim {
+    opacity: 0.6;
+    margin-right: 0.4em;
   }
 </style>

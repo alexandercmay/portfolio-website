@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro'
 import Button from '@/components/Button.astro'
 import Rule from '@/components/Rule.astro'
 import SectionHeader from '@/components/SectionHeader.astro'
+import Label from '@/components/Label.astro'
 import ExperienceEntry from '@/components/ExperienceEntry.astro'
 import MetricFigure from '@/components/MetricFigure.astro'
 import ProjectCard from '@/components/ProjectCard.astro'
@@ -35,6 +36,10 @@ const featuredProjects = await getFeaturedProjects(3)
   }
   <section class="hero" aria-label="Introduction">
     <div class="wrap">
+      <Label class="status">
+        <span class="live" aria-hidden="true"></span>
+        Open to full-stack &amp; AI engineering roles
+      </Label>
       <h1>{basics.name}</h1>
       <p class="headline">{basics.headline}</p>
       <p class="summary">{basics.summary}</p>
@@ -53,6 +58,7 @@ const featuredProjects = await getFeaturedProjects(3)
     {/* SELECTED EXPERIENCE — the heart of the page. */}
     <section class="band" aria-labelledby="experience">
       <SectionHeader
+        index="01"
         id="experience"
         title="Selected experience"
         href="/resume"
@@ -71,7 +77,7 @@ const featuredProjects = await getFeaturedProjects(3)
       metrics && metrics.length > 0 && (
         <>
           <Rule />
-          <section class="band metrics reveal" aria-label="Key numbers">
+          <section class="band metrics reveal-stagger" aria-label="Key numbers">
             {metrics.map((m) => (
               <MetricFigure value={m.value} label={m.label} />
             ))}
@@ -84,12 +90,13 @@ const featuredProjects = await getFeaturedProjects(3)
 
     <section class="band reveal" aria-labelledby="work">
       <SectionHeader
+        index="02"
         id="work"
         title="Selected work"
         href="/projects"
         linkLabel="All projects"
       />
-      <div class="projects">
+      <div class="projects reveal-stagger">
         {featuredProjects.map((project) => <ProjectCard project={project} />)}
       </div>
     </section>
@@ -97,14 +104,14 @@ const featuredProjects = await getFeaturedProjects(3)
     <Rule />
 
     <section class="band reveal" aria-labelledby="skills">
-      <SectionHeader id="skills" title="Skills" />
+      <SectionHeader index="03" id="skills" title="Skills" />
       <SkillsComposition groups={skills} />
     </section>
 
     <Rule />
 
     <section class="band reveal" aria-labelledby="education">
-      <SectionHeader id="education" title="Education" />
+      <SectionHeader index="04" id="education" title="Education" />
       {
         education.map((e) => (
           <div class="education">
@@ -123,7 +130,7 @@ const featuredProjects = await getFeaturedProjects(3)
     <Rule />
 
     <section class="band reveal contact" aria-labelledby="contact">
-      <SectionHeader id="contact" title="Get in touch" />
+      <SectionHeader index="05" id="contact" title="Get in touch" />
       <p class="lead">
         I'm looking for full-stack and AI engineering roles. The fastest way to reach me
         is email.
@@ -149,22 +156,49 @@ const featuredProjects = await getFeaturedProjects(3)
     padding-inline: 1.5rem;
   }
 
+  .education,
+  .contact .lead,
+  .summary {
+    /* Prose sits on the page ground rather than over the grid. */
+    position: relative;
+  }
+
   /* ── Hero ─────────────────────────────────────────────────────────── */
   .hero {
     padding: clamp(2.5rem, 8vw, 5rem) 0 clamp(2.5rem, 6vw, 4rem);
   }
 
+  /* No reveal class anywhere in the hero. Name, headline, and contact render
+     at full opacity on first paint — the scan test depends on it. */
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    color: var(--color-lime);
+  }
+
+  .live {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: var(--radius-full);
+    background: var(--color-lime);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+  }
+
   h1 {
     font-size: var(--text-display);
+    font-weight: 700;
     letter-spacing: var(--tracking-display);
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.9rem;
   }
 
   .headline {
+    font-family: var(--font-mono);
     font-size: var(--text-lg);
-    color: var(--color-text);
+    color: var(--color-cyan);
     margin: 0 0 1.25rem;
-    max-width: 30ch;
+    max-width: 34ch;
   }
 
   .summary {
@@ -194,7 +228,7 @@ const featuredProjects = await getFeaturedProjects(3)
   */
   .timeline {
     position: relative;
-    padding-left: 1.5rem;
+    padding-left: 1.75rem;
   }
 
   .timeline::before {
@@ -203,9 +237,9 @@ const featuredProjects = await getFeaturedProjects(3)
     left: 0;
     top: 0;
     bottom: 0;
-    width: 1px;
-    background: var(--color-rule);
-    opacity: 0.15;
+    width: 2px;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
   }
 
   .timeline::after {
@@ -214,8 +248,9 @@ const featuredProjects = await getFeaturedProjects(3)
     left: 0;
     top: 0;
     bottom: 0;
-    width: 1px;
-    background: var(--color-accent);
+    width: 2px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(var(--color-cyan), var(--color-violet));
     transform-origin: top;
   }
 

@@ -15,6 +15,13 @@ import { resume } from '../content/resume'
  */
 
 const DIST = join(import.meta.dirname, '..', 'dist')
+
+/** Every built stylesheet, concatenated — the build emits more than one. */
+function allCss(): string {
+  return globSync('_astro/*.css', { cwd: DIST })
+    .map((f) => readFileSync(join(DIST, f), 'utf8'))
+    .join('\n')
+}
 const page = (p: string) => readFileSync(join(DIST, p), 'utf8')
 
 describe('projects render from the collection', () => {
@@ -56,8 +63,16 @@ describe('metadata', () => {
     expect(page('resume/index.html')).toMatch(/canonical" href="[^"]*\/resume"/)
   })
 
-  it('preloads the display font — it is above the fold in the hero', () => {
-    expect(page('index.html')).toMatch(/rel="preload"[^>]*fraunces[^>]*as="font"/)
+  it('preloads the mono face — it is above the fold in the hero', () => {
+    expect(page('index.html')).toMatch(/rel="preload"[^>]*jetbrains-mono[^>]*as="font"/)
+  })
+
+  it('preloads a font that actually exists in the build', () => {
+    // A stale preload after a font swap silently fetches a file nothing uses,
+    // or 404s. Check the referenced file is really there.
+    const href = page('index.html').match(/rel="preload"[^>]*href="([^"]+)"/)?.[1]
+    expect(href).toBeTruthy()
+    expect(existsSync(join(DIST, href!.replace(/^\//, '')))).toBe(true)
   })
 })
 
@@ -74,20 +89,22 @@ describe('the scroll-reveal utility is opt-in, not opt-out', () => {
    * So: assert the base rule is visible, and that opacity:0 only ever appears
    * inside the guarded keyframes.
    */
-  const css = (() => {
-    const file = globSync('_astro/*.css', { cwd: DIST })[0]
-    return readFileSync(join(DIST, file), 'utf8')
-  })()
+  // Every built stylesheet, concatenated. Reading only the first one silently
+  // missed tokens as soon as the build emitted more than one file.
+  const css = allCss()
 
-  it('declares .reveal visible in the base rule', () => {
-    expect(css).toMatch(/\.reveal\{[^}]*opacity:1/)
+  // Every rule whose selector mentions .reveal — the base rule now groups
+  // `.reveal` with `.reveal-stagger > *`, so matching only `.reveal{` misses it.
+  const revealRules = css.match(/[^{}]*\.reveal[^{}]*\{[^}]*\}/g) ?? []
+
+  it('declares the reveal targets visible in a base rule', () => {
+    expect(revealRules.some((r) => /opacity:1/.test(r))).toBe(true)
   })
 
-  it('never sets .reveal to opacity:0 outside the keyframes', () => {
-    const baseRules = css.match(/\.reveal\{[^}]*\}/g) ?? []
-    expect(baseRules.length).toBeGreaterThan(0)
-    for (const rule of baseRules) {
-      expect(rule).not.toMatch(/opacity:0(?![.\d])/)
+  it('never sets a reveal target to opacity:0 outside the keyframes', () => {
+    expect(revealRules.length).toBeGreaterThan(0)
+    for (const rule of revealRules) {
+      expect(rule, rule).not.toMatch(/opacity:0(?![.\d])/)
     }
   })
 
@@ -173,10 +190,24 @@ describe('the metrics band', () => {
   })
 
   it('shows every metric value', () => {
+    // Readouts split a trailing unit into its own span, so the value is not
+    // contiguous in the markup. Strip tags before comparing.
     const esc = (s: string) =>
       s.replace(/&/g, '&#38;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const text = page('index.html')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, '')
     for (const m of resume.metrics ?? []) {
-      expect(page('index.html')).toContain(esc(m.value))
+      expect(text).toContain(esc(m.value).replace(/\s+/g, ''))
+    }
+  })
+
+  it('never hides a magnitude suffix in the unit span', () => {
+    // "1M+" split as a huge "1" and a tiny "M+" misstated the figure by six
+    // orders of magnitude. Only real measurement units may be split off.
+    const units = page('index.html').match(/class="unit[^"]*"[^>]*>([^<]*)</g) ?? []
+    for (const u of units) {
+      expect(u).not.toMatch(/[MKB]\+?</)
     }
   })
 })
@@ -257,5 +288,60 @@ describe('the build ships no unreferenced assets', () => {
       return !html.some((h) => h.includes(name))
     })
     expect(orphans).toEqual([])
+  })
+})
+
+describe('the background grid is decorative, not costly', () => {
+  /**
+   * The AA verification for the palette was done against the flat page
+   * background. Text also sits ON grid lines, which are lighter in dark mode
+   * and darker in light mode — a ground the flat check never looked at.
+   *
+   * The grid is decoration and must not cost a single contrast pair.
+   */
+  function ratio(fg: string, bg: string): number {
+    const lin = (c: number) => {
+      c /= 255
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    }
+    const lum = (h: string) => {
+      const v = h.replace('#', '')
+      return (
+        0.2126 * lin(parseInt(v.slice(0, 2), 16)) +
+        0.7152 * lin(parseInt(v.slice(2, 4), 16)) +
+        0.0722 * lin(parseInt(v.slice(4, 6), 16))
+      )
+    }
+    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x)
+    return (a + 0.05) / (b + 0.05)
+  }
+
+  /** Read a raw token value out of the built CSS, scoped to a theme block. */
+  function token(name: string, scope: RegExp): string {
+    const block = allCss().match(scope)?.[0] ?? ''
+    return block.match(new RegExp(`${name}:\\s*(#[0-9a-f]{3,6})`, 'i'))?.[1] ?? ''
+  }
+
+  const darkBlock = /:root\{[^}]*--c-bg:#0a0d12[^}]*\}/i
+  const lightBlock = /\[data-theme=light\]\{[^}]*\}/i
+
+  it('dark: body text clears AA over a grid line', () => {
+    const grid = token('--c-grid', darkBlock)
+    const text = token('--c-text', darkBlock)
+    expect(grid).toBeTruthy()
+    expect(ratio(text, grid)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('dark: the smallest text still clears AA over a grid line', () => {
+    const grid = token('--c-grid', darkBlock)
+    const subtle = token('--c-text-subtle', darkBlock)
+    expect(ratio(subtle, grid)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('light: the smallest text still clears AA over a grid line', () => {
+    const grid = token('--c-grid', lightBlock)
+    const subtle = token('--c-text-subtle', lightBlock)
+    expect(grid).toBeTruthy()
+    expect(ratio(subtle, grid)).toBeGreaterThanOrEqual(4.5)
   })
 })
