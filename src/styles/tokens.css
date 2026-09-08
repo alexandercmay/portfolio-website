@@ -113,7 +113,14 @@
      exactly what the single-gradient version looked like.
 
      Still deliberately restrained: stars are high-contrast POINTS, unlike a
-     uniform grid, so they cost more readability per unit of brightness. */
+     uniform grid, so they cost more readability per unit of brightness.
+
+     Most of these are read at BUILD time by scripts/generate-starfield.ts,
+     which bakes the field into tiled SVGs — the CSS-gradient version was
+     92 layers over a document-sized layer and made scrolling heavy. Change
+     one and run `npm run gen:starfield`, or the sky will not move.
+     --c-star-blue is the exception: the dust clouds in global.css still
+     read it at runtime. */
   --c-star-core: #ffffff;
   --c-star-blue: #a8d8ff;
   --c-star-cyan: #7fe6f7;
@@ -191,8 +198,11 @@
     --c-grid: #ecf0f4;
 
     /* Light mode has no starfield — dark specks on white read as dirt, not
-     as space. Every star token resolves to transparent, so the gradient
-     layers render nothing at all. */
+     as space. The field itself is switched off in starfield.css, which is
+     where it lives now; a baked image cannot read a custom property. These
+     stay as an invariant — no star colour ever paints on a light ground —
+     and --c-star-blue is load-bearing among them: the dust clouds read it,
+     and without this they would wash the light theme in blue. */
     --c-star-core: transparent;
     --c-star-blue: transparent;
     --c-star-cyan: transparent;
@@ -225,9 +235,8 @@
   --c-border: #d5dde5;
   --c-grid: #ecf0f4;
 
-  /* Light mode has no starfield — dark specks on white read as dirt, not
-     as space. Every star token resolves to transparent, so the gradient
-     layers render nothing at all. */
+  /* Light mode has no starfield — see the note in the media-query block
+     above. --c-star-blue is the load-bearing one: the dust clouds read it. */
   --c-star-core: transparent;
   --c-star-blue: transparent;
   --c-star-cyan: transparent;

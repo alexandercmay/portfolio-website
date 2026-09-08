@@ -189,6 +189,16 @@ const featuredProjects = await getFeaturedProjects(3)
   .hero {
     position: relative;
     isolation: isolate;
+    /* The ambient wash bleeds 10% past both sides so its soft edge is never
+       visible. Without this it also bleeds past the VIEWPORT: on a 390px
+       phone that is 39px of extra document width, which makes the page
+       horizontally scrollable and leaves the centred content sitting against
+       the left edge with a gap on the right. Reported on iOS Safari; it was
+       there in every browser, just less obvious with a visible scrollbar.
+
+       `clip` and not `hidden`: it does the same job without making the hero a
+       scroll container. */
+    overflow: clip;
     padding: clamp(2.5rem, 8vw, 5rem) 0 clamp(2.5rem, 6vw, 4rem);
   }
 

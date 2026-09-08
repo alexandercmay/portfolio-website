@@ -122,16 +122,20 @@ const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
 
           {body === 'observatory' && (
             <>
-              {/* Dome and its open slit in one even-odd path, so the sky shows
-                  through the opening rather than the page ground being painted
-                  over it. */}
-              <path
-                d="M4.5 18.6a7.5 7.5 0 0 1 15 0Z
-                   M12 12.1a1.1 1.1 0 0 1 1.1 1.1v5.4h-2.2v-5.4A1.1 1.1 0 0 1 12 12.1Z"
-                fill="currentColor"
-                fill-rule="evenodd"
-              />
-              <path d="M3.2 19.6h17.6v2.4H3.2Z" fill="currentColor" opacity="0.85" />
+              {/* The dome is drawn as TWO halves with the shutter slit as the
+                  GAP between them, open all the way to the apex.
+
+                  The first version was one semicircle with a notch cut in it,
+                  and it read as a hill on a plinth: a half-circle alone is an
+                  arch, and the slit stopped short of the top so nothing was
+                  actually open. What identifies an observatory is the profile
+                  — a dome deeper than a half-circle, a lip ringing its base,
+                  and a drum NARROWER than the dome underneath. The old base
+                  was wider than the dome, which is what made it a mushroom. */}
+              <path d="M5.4 16.5A6.6 6.6 0 0 1 11 8.5V16.5Z" fill="currentColor" />
+              <path d="M13 8.5A6.6 6.6 0 0 1 18.6 16.5H13Z" fill="currentColor" />
+              <path d="M4.2 16.5h15.6v1.7H4.2Z" fill="currentColor" />
+              <path d="M6.6 18.2h10.8v3.6H6.6Z" fill="currentColor" opacity="0.85" />
             </>
           )}
 
