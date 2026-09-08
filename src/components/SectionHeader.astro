@@ -4,11 +4,10 @@ interface Props {
   href?: string
   linkLabel?: string
   /**
-   * Position of this section in the page's system, "01"-"05".
+   * Position of this section in the page, "01"-"05".
    *
-   * It selects which celestial body is drawn beside the title — 01 is the
-   * star everything else orbits, and the rest run outward from it. It still
-   * orders the sections; it just is not rendered as a numeral any more.
+   * It selects which marker is drawn beside the title. It still orders the
+   * sections; it just is not rendered as a numeral any more.
    */
   index?: string
   /** Set so the enclosing <section> can point aria-labelledby at it. */
@@ -17,34 +16,44 @@ interface Props {
 const { title, href, linkLabel, index, id } = Astro.props
 
 /**
- * The section markers, as one small planetary system.
+ * The section markers.
  *
  * They replace the "01"-"05" numerals. A number beside a heading is a table of
- * contents; this page is a sky, and a body in that sky says the same thing —
- * "third one out" — without a second typographic voice competing with the
- * title.
+ * contents; this page is a sky, and something in that sky can say what the
+ * section IS without a second typographic voice competing with the title.
  *
- * The last one is not a body. Four worlds out from the star, and then the
- * thing that listens: Get in touch is where a reader stops looking and starts
- * moving, so it gets a dish rather than another rock.
+ * Each marker encodes MEANING, not position. The first version of this was a
+ * planetary system ordered outward — first section, innermost world — and it
+ * failed for a reason worth recording: position is not meaning. Skills got a
+ * gas giant because it was third, not because it was Skills, and once the
+ * dish arrived (which is not a body at all) the remaining planets read as
+ * arbitrary rather than as a system.
  *
- * A dish and not a rocket, which was the first version of this. A rocket says
- * "launch", but the action here is not propulsion — it is sending a message to
- * someone far away and hoping for an answer. That is a transmission. It also
- * gives the site ONE comms language: the same arcs the lost probe on the 404
- * is sending.
+ *   01 Experience    a star, burning and working
+ *   02 Projects      a ringed planet — distinct worlds, built
+ *   03 Skills        a constellation — literally what the section contains
+ *   04 Education     an observatory dome — where you learn to look
+ *   05 Get in touch  a dish, mid-transmission
  *
- * Every body is one SOLID disc with pieces cut out of it, never a shape drawn
- * in the background colour. At 18px a solid silhouette with a cutout stays
- * legible where an outline-and-fill drawing turns to mush, and a cutout is
- * genuinely transparent, so these survive sitting on the page's starfield.
+ * The dish is not a rocket, which was the first version of that one. A rocket
+ * says "launch", but the action here is not propulsion — it is sending a
+ * message to someone far away and hoping for an answer. That is a
+ * transmission, and it gives the site ONE comms language: the same arcs the
+ * lost probe on the 404 is sending.
  *
- * The mask ids carry the index because five of these render on one page and
- * duplicate ids would make every section draw the first section's cutouts.
+ * Filled silhouettes, and where a shape needs a hole — the observatory's slit,
+ * the dish's dark side — it is a real cutout via an even-odd fill, never a
+ * shape painted in the background colour. At 24px a solid silhouette with a
+ * cutout stays legible where an outline-and-fill drawing turns to mush, and a
+ * cutout is genuinely transparent, so these survive sitting on the starfield.
+ *
+ * No ids anywhere in here, deliberately. Five of these render on one page, and
+ * an earlier pass used masks whose ids had to be hand-namespaced or every
+ * section would draw the first section's cutouts. Even-odd fills need no ids,
+ * so the whole class of bug is gone.
  */
-const BODIES = ['star', 'ringed', 'banded', 'crescent', 'dish'] as const
+const BODIES = ['star', 'ringed', 'constellation', 'observatory', 'dish'] as const
 const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
-const uid = `body-${index ?? '1'}`
 ---
 
 <div class="header charge">
@@ -90,38 +99,39 @@ const uid = `body-${index ?? '1'}`
             </>
           )}
 
-          {body === 'banded' && (
+          {body === 'constellation' && (
             <>
-              <mask id={`${uid}-mask`}>
-                <circle cx="12" cy="12" r="7" fill="#fff" />
-                <rect x="0" y="8.4" width="24" height="1.6" fill="#000" />
-                <rect x="0" y="13.2" width="24" height="2.2" fill="#000" />
-              </mask>
-              <circle
-                cx="12"
-                cy="12"
-                r="7"
-                fill="currentColor"
-                mask={`url(#${uid}-mask)`}
+              {/* An asterism: four stars and the chain joining them. The
+                  second is the bright one, the way a real constellation has
+                  an anchor star you find first. */}
+              <path
+                d="M4.8 16.6 9.6 8.2 15 13.6 19.6 6.6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                opacity="0.55"
               />
+              <circle cx="4.8" cy="16.6" r="1.5" fill="currentColor" />
+              <circle cx="9.6" cy="8.2" r="2.3" fill="currentColor" />
+              <circle cx="15" cy="13.6" r="1.6" fill="currentColor" />
+              <circle cx="19.6" cy="6.6" r="1.8" fill="currentColor" />
             </>
           )}
 
-          {body === 'crescent' && (
+          {body === 'observatory' && (
             <>
-              {/* The unlit limb is cut away, not painted over, so the starfield
-                  shows through it. */}
-              <mask id={`${uid}-mask`}>
-                <circle cx="12" cy="12" r="7" fill="#fff" />
-                <circle cx="15.6" cy="10.4" r="6.4" fill="#000" />
-              </mask>
-              <circle
-                cx="12"
-                cy="12"
-                r="7"
+              {/* Dome and its open slit in one even-odd path, so the sky shows
+                  through the opening rather than the page ground being painted
+                  over it. */}
+              <path
+                d="M4.5 18.6a7.5 7.5 0 0 1 15 0Z
+                   M12 12.1a1.1 1.1 0 0 1 1.1 1.1v5.4h-2.2v-5.4A1.1 1.1 0 0 1 12 12.1Z"
                 fill="currentColor"
-                mask={`url(#${uid}-mask)`}
+                fill-rule="evenodd"
               />
+              <path d="M3.2 19.6h17.6v2.4H3.2Z" fill="currentColor" opacity="0.85" />
             </>
           )}
 

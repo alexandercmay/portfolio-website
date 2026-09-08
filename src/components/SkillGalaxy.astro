@@ -915,9 +915,21 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
   }
 
   /* ── Star catalog ──────────────────────────────────────────────────── */
+  /* No rule above this. Its own border-top plus the section rule below boxed
+     the summary into a strip of its own — it read as a separate component
+     parked between two lines rather than as the chart's own footer. */
   .catalog {
-    margin-top: 2.5rem;
-    border-top: 1px solid var(--color-border);
+    margin-top: 1rem;
+  }
+
+  @media (min-width: 60rem) {
+    .catalog {
+      /* The landscape chart is solved to a fixed 1100x820 box, not to its
+         contents, so it ends with ~134px of empty sky below its lowest
+         constellation. Sit the summary up in that sky instead of after it.
+         The portrait chart fills its canvas, so it keeps the plain margin. */
+      margin-top: -4.5rem;
+    }
   }
 
   summary {

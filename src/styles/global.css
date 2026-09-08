@@ -11,6 +11,9 @@ html {
 }
 
 body {
+  /* Containing block for the cloud layer below, so the clouds span the whole
+     DOCUMENT rather than the viewport — see body::before. */
+  position: relative;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -46,8 +49,14 @@ body {
      emptier rather than deeper. Positions come from a seeded blue-noise
      sampler with WRAPPED distances, so no tile clumps against its own seam.
 
-     Layers scroll with the page: `background-attachment: fixed` forces a full
-     repaint every scroll frame and is a known jank source on mobile Safari.
+     EVERYTHING here scrolls with the page. The three spiked hero stars used to
+     be a separate fixed layer that held still while the rest of the sky moved,
+     which read as smudges on the screen rather than as stars behind it — you
+     notice it the moment you scroll. They are a tier in this stack now.
+
+     Scrolling is done by tiling, not by `background-attachment: fixed`, which
+     forces a full repaint every scroll frame and is a known jank source on
+     mobile Safari.
 
      Stars are HIGH-CONTRAST POINTS, unlike a uniform grid — small text over
      the brightest one measures 1.11:1 — so the BRIGHT tier stays sparse and
@@ -55,6 +64,20 @@ body {
      Depth is bought in the faint tiers, which cost almost no contrast.
      ─────────────────────────────────────────────────────────────────────── */
   background-image:
+    /* ── hero stars: halo, hard core, and the diffraction spikes a
+       bright star throws through a lens. Rare on purpose. ── */
+    radial-gradient(26px 1px at 32.4% 15.1%, var(--c-spike-blue), transparent),
+    radial-gradient(1px 26px at 32.4% 15.1%, var(--c-spike-blue), transparent),
+    radial-gradient(9px 9px at 32.4% 15.1%, var(--c-halo-blue), transparent 70%),
+    radial-gradient(2px 2px at 32.4% 15.1%, var(--c-star-core), transparent),
+    radial-gradient(22px 1px at 5.8% 50.7%, var(--c-spike-gold), transparent),
+    radial-gradient(1px 22px at 5.8% 50.7%, var(--c-spike-gold), transparent),
+    radial-gradient(8px 8px at 5.8% 50.7%, var(--c-halo-gold), transparent 70%),
+    radial-gradient(1.8px 1.8px at 5.8% 50.7%, var(--c-star-core), transparent),
+    radial-gradient(20px 1px at 62.7% 94.8%, var(--c-spike-cyan), transparent),
+    radial-gradient(1px 20px at 62.7% 94.8%, var(--c-spike-cyan), transparent),
+    radial-gradient(8px 8px at 62.7% 94.8%, var(--c-halo-cyan), transparent 70%),
+    radial-gradient(1.7px 1.7px at 62.7% 94.8%, var(--c-star-core), transparent),
     /* ── bright: halo, then core. Sparse on purpose. ── */
     radial-gradient(9px 9px at 45.2% 56%, var(--c-halo-blue), transparent 70%),
     radial-gradient(1.6px 1.6px at 45.2% 56%, var(--c-star-core), transparent),
@@ -141,6 +164,18 @@ body {
     linear-gradient(var(--color-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
   background-size:
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
+    1500px 1500px,
     1100px 1100px,
     1100px 1100px,
     1100px 1100px,
@@ -234,12 +269,13 @@ body {
    different angles and very low alpha, overlapping so no single one reads as a
    shape. If you can see where one cloud ends, it is too strong.
 
-   Fixed and behind everything, so it never moves under the content or
-   intercepts a pointer.
+   Absolutely positioned over the whole DOCUMENT, not fixed to the viewport.
+   Nebulosity that holds still while the stars in front of it move is the same
+   distraction the hero stars were: the sky has to move as one thing.
    ─────────────────────────────────────────────────────────────────────── */
 body::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -2;
   pointer-events: none;
@@ -264,41 +300,6 @@ body::before {
       color-mix(in srgb, var(--c-star-blue) 5%, transparent),
       transparent 70%
     );
-}
-
-/* ── Bright stars ─────────────────────────────────────────────────────────
-   A handful of genuine hero stars, distinct from the field.
-
-   Each is four layers: a wide halo, a hard core, and two thin elongated
-   gradients forming DIFFRACTION SPIKES — the cross flare a real bright star
-   shows through a lens. The spikes are what make one read unmistakably as a
-   star rather than as a bright speck, which was the "looks like dust"
-   complaint.
-
-   Fixed, so they sit steady behind scrolling content like a real sky.
-   ─────────────────────────────────────────────────────────────────────── */
-body .bright-stars {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-image:
-    /* ── star 1, blue-white, upper left ── */
-    radial-gradient(26px 1px at 14% 18%, var(--c-spike-blue), transparent),
-    radial-gradient(1px 26px at 14% 18%, var(--c-spike-blue), transparent),
-    radial-gradient(9px 9px at 14% 18%, var(--c-halo-blue), transparent 70%),
-    radial-gradient(2px 2px at 14% 18%, var(--c-star-core), transparent),
-    /* ── star 2, gold, right ── */
-    radial-gradient(22px 1px at 86% 44%, var(--c-spike-gold), transparent),
-    radial-gradient(1px 22px at 86% 44%, var(--c-spike-gold), transparent),
-    radial-gradient(8px 8px at 86% 44%, var(--c-halo-gold), transparent 70%),
-    radial-gradient(1.8px 1.8px at 86% 44%, var(--c-star-core), transparent),
-    /* ── star 3, cyan, lower centre ── */
-    radial-gradient(20px 1px at 58% 82%, var(--c-spike-cyan), transparent),
-    radial-gradient(1px 20px at 58% 82%, var(--c-spike-cyan), transparent),
-    radial-gradient(8px 8px at 58% 82%, var(--c-halo-cyan), transparent 70%),
-    radial-gradient(1.7px 1.7px at 58% 82%, var(--c-star-core), transparent);
 }
 
 /* Vignette — the falloff of a viewport looking into space. */

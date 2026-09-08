@@ -394,16 +394,31 @@ describe('the landing page has every expected section', () => {
     const bodies = [
       ...page('index.html').matchAll(/<h2[^>]*>.*?data-body="(\w+)"/gs),
     ].map((m) => m[1])
-    // The last one is not a body: Get in touch is where the reader stops
-    // looking and starts moving, so it is a dish, mid-transmission.
-    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'dish'])
+    /*
+     * Each marker says what its section IS. The first version ordered a
+     * planetary system outward instead, and that failed because position is
+     * not meaning: Skills got a gas giant for being third, not for being
+     * Skills.
+     */
+    expect(bodies).toEqual(['star', 'ringed', 'constellation', 'observatory', 'dish'])
   })
 
-  it('gives each marker its own mask ids', () => {
-    // Five of these render on one page. Duplicate ids and every section draws
-    // the first section's cutouts, which is invisible in code review.
-    const ids = [...page('index.html').matchAll(/<mask id="([^"]+)"/g)].map((m) => m[1])
-    expect(new Set(ids).size).toBe(ids.length)
+  it('keeps the markers free of ids entirely', () => {
+    /*
+     * Five markers render on one page. An earlier pass drew their cutouts with
+     * <mask>, whose ids had to be hand-namespaced per section — miss that and
+     * every section silently draws the FIRST section's cutouts, which no code
+     * review catches because the markup looks right.
+     *
+     * Even-odd fills need no ids at all, so this asserts the escape rather
+     * than policing the namespacing.
+     */
+    const markers = [...page('index.html').matchAll(/<svg class="body"[\s\S]*?<\/svg>/g)]
+    expect(markers.length).toBe(5)
+    for (const m of markers) {
+      expect(m[0]).not.toMatch(/\sid="/)
+      expect(m[0]).not.toContain('<mask')
+    }
   })
 
   it('still reaches contact — the section deleted by that edit', () => {
