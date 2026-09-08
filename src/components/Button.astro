@@ -7,15 +7,20 @@ interface Props {
   download?: boolean | string
   class?: string
   /**
-   * Puts a rocket on the pad in front of the label; it lifts on hover and on
-   * keyboard focus.
+   * Puts a transmitting dish in front of the label; it starts sending on hover
+   * and on keyboard focus.
    *
-   * Only for the "reach out" action. A page where every button launches is a
-   * page where launching means nothing, and the animation is decoration on an
-   * action the label already names — so the glyph is aria-hidden and the
+   * Only for the "reach out" action. A page where every button transmits is a
+   * page where transmitting means nothing, and the animation is decoration on
+   * an action the label already names — so the glyph is aria-hidden and the
    * motion is behind prefers-reduced-motion.
+   *
+   * This was a rocket first. A rocket says "launch", but the action is not
+   * propulsion — it is sending a message to someone far away and hoping for an
+   * answer, which is a transmission. The dish also matches the probe on the
+   * 404, so the site speaks one language about reaching people instead of two.
    */
-  launch?: boolean
+  transmit?: boolean
 }
 const {
   href,
@@ -23,39 +28,50 @@ const {
   type = 'button',
   download,
   class: className,
-  launch,
+  transmit,
 } = Astro.props
 const Tag = href ? 'a' : 'button'
 ---
 
 <Tag
-  class:list={['btn', variant, launch && 'launch', className]}
+  class:list={['btn', variant, transmit && 'transmit', className]}
   href={href}
   download={download}
   type={href ? undefined : type}
 >
   {
-    launch && (
-      <svg class="rocket" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    transmit && (
+      <svg class="dish" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M8.6 13.9 7.4 19.9h2.3l1.1-5.6Z" fill="currentColor" opacity="0.8" />
+        <path d="M5.4 20.6h8.2v1.5H5.4Z" fill="currentColor" opacity="0.8" />
         <path
-          class="plume"
-          d="M12 17.6c1.5 1.7 1.5 3.8 0 5.5-1.5-1.7-1.5-3.8 0-5.5Z"
+          d="M9.5 13.5 13 10.6"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-linecap="round"
+        />
+        <circle cx="13.2" cy="10.4" r="1.15" fill="currentColor" />
+        <ellipse
+          cx="9.5"
+          cy="13.5"
+          rx="5.9"
+          ry="3.2"
+          transform="rotate(50 9.5 13.5)"
           fill="currentColor"
         />
-        <path
-          d="M7.5 12.2 4.2 15.8v3.5l3.3-2.4Zm9 0 3.3 3.6v3.5l-3.3-2.4Z"
-          fill="currentColor"
-          opacity="0.75"
-        />
-        {/* Fuselage and porthole are one path with an even-odd fill, so the
-            window is a hole and this needs no mask — and therefore no id.
-            Two launch buttons render on the homepage, and a shared mask id
-            would have made the second one draw the first one's window. */}
-        <path
-          d="M12 1.2c3.1 3.4 4.6 7.6 4.6 11.6v4.3H7.4v-4.3c0-4 1.5-8.2 4.6-11.6ZM14.1 8.4a2.1 2.1 0 1 0-4.2 0 2.1 2.1 0 1 0 4.2 0Z"
-          fill="currentColor"
-          fill-rule="evenodd"
-        />
+        <g class="beam" fill="none" stroke="currentColor" stroke-linecap="round">
+          <path
+            class="arc"
+            d="M10.59 7.30A6.3 6.3 0 0 1 15.21 10.84"
+            stroke-width="1.3"
+          />
+          <path class="arc" d="M11.05 4.74A8.9 8.9 0 0 1 17.57 9.74" stroke-width="1.2" />
+          <path
+            class="arc"
+            d="M11.50 2.18A11.5 11.5 0 0 1 19.92 8.64"
+            stroke-width="1.1"
+          />
+        </g>
       </svg>
     )
   }
@@ -112,46 +128,68 @@ const Tag = href ? 'a' : 'button'
     box-shadow: var(--glow-cyan);
   }
 
-  /* ── Launch ────────────────────────────────────────────────────────── */
-  .rocket {
-    width: 1.05em;
-    height: 1.05em;
+  /* ── Transmit ──────────────────────────────────────────────────────── */
+  .dish {
+    width: 1.15em;
+    height: 1.15em;
     flex-shrink: 0;
-    /* The label is what the reader is aiming at; the rocket is a cue beside
-       it, not a second headline. */
+    /* The label is what the reader is aiming at; the dish is a cue beside it,
+       not a second headline. */
     opacity: 0.85;
   }
 
-  .plume {
+  /* At rest the dish is pointed but quiet. The arcs are what say "sending",
+     so they are the part that waits for the pointer. */
+  .arc {
     opacity: 0;
-    transform-origin: 12px 17.6px;
+    transform-origin: 9.5px 13.5px;
+  }
+
+  .transmit:hover .dish,
+  .transmit:focus-visible .dish {
+    opacity: 1;
+  }
+
+  /* Held still, hovering simply lights the arcs up — the button still reads
+     as transmitting without any motion at all. */
+  .transmit:hover .arc,
+  .transmit:focus-visible .arc {
+    opacity: 0.8;
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .rocket {
-      transition:
-        transform 220ms var(--ease-out),
-        opacity var(--duration-state) var(--ease-out);
+    .dish {
+      transition: opacity var(--duration-state) var(--ease-out);
     }
 
-    .plume {
-      transition:
-        opacity 220ms var(--ease-out),
-        transform 220ms var(--ease-out);
+    .transmit:hover .arc,
+    .transmit:focus-visible .arc {
+      opacity: 0;
+      animation: transmit 1.5s var(--ease-out) infinite;
     }
 
-    /* Ignition. Small: this is a button, and a rocket that clears the label
-       reads as a bug rather than as a launch. */
-    .launch:hover .rocket,
-    .launch:focus-visible .rocket {
-      transform: translateY(-0.18em);
-      opacity: 1;
+    .transmit:hover .arc:nth-child(2),
+    .transmit:focus-visible .arc:nth-child(2) {
+      animation-delay: 0.18s;
     }
 
-    .launch:hover .plume,
-    .launch:focus-visible .plume {
-      opacity: 0.7;
-      transform: scaleY(1.25);
+    .transmit:hover .arc:nth-child(3),
+    .transmit:focus-visible .arc:nth-child(3) {
+      animation-delay: 0.36s;
+    }
+  }
+
+  @keyframes transmit {
+    0% {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+    30% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.15);
     }
   }
 </style>

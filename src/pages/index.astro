@@ -44,7 +44,7 @@ const featuredProjects = await getFeaturedProjects(3)
       <p class="headline">{basics.headline}</p>
       <p class="summary">{basics.summary}</p>
       <div class="actions">
-        <Button href={`mailto:${basics.email}`} launch>Get in touch</Button>
+        <Button href={`mailto:${basics.email}`} transmit>Get in touch</Button>
         <Button href="/alexander-may-resume.pdf" variant="secondary" download>
           Download resume
         </Button>
@@ -154,7 +154,7 @@ const featuredProjects = await getFeaturedProjects(3)
             me is email.
           </p>
           <div class="actions">
-            <Button href={`mailto:${basics.email}`} launch>
+            <Button href={`mailto:${basics.email}`} transmit>
               {basics.email}
             </Button>
             {

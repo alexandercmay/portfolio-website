@@ -14,9 +14,9 @@ const { groups } = Astro.props
  * everything else.
  *
  * Reads as a star chart rather than as a diagram of boxes:
- *  - the CATEGORY is the constellation name — letterspaced small caps with a
- *    catalog designation under it, no border and no background. A bordered
- *    chip is a UI control; a constellation name is a caption on the sky.
+ *  - the CATEGORY is the constellation name — letterspaced small caps, no
+ *    border and no background. A bordered chip is a UI control; a
+ *    constellation name is a caption on the sky.
  *  - each STAR is labelled with the technology, and the label sits on the side
  *    facing AWAY from the cluster centre, so text radiates outward and the
  *    lines in the middle stay clean
@@ -230,6 +230,87 @@ const PORTRAIT: Chart = {
   labelMaxW: 188,
 }
 
+/**
+ * The figure layer.
+ *
+ * Star atlases draw the constellation twice: the stick figure joining the
+ * actual stars, and — engraved faintly behind it — the thing the constellation
+ * is NAMED for. Crucially the drawing never matches the stars. Orion's figure
+ * is a man with a club; Orion's stars are an hourglass. The picture is laid
+ * over the sky, not derived from it.
+ *
+ * So these are laid over, not derived: nothing here constrains where a star
+ * goes or how many there are, which is the whole reason this approach is safe.
+ * Adding a skill cannot break a drawing.
+ *
+ * Each is a REAL constellation, and each is a real instrument — Lacaille
+ * spent the 1750s filling the southern sky with the tools on his desk, so
+ * there is already a shield, an easel, a furnace and a telescope up there. The
+ * mapping is doing actual work rather than being clip art with a space theme:
+ *
+ *   Languages                → Lyra, the lyre        (the instrument of speech)
+ *   AI systems               → Telescopium           (seeing further than you can)
+ *   Backend & infrastructure → Fornax, the furnace   (the thing burning underneath)
+ *   Frontend                 → Pictor, the easel     (the surface being painted)
+ *   Security                 → Scutum, the shield
+ *
+ * They are deliberately unlabelled. Naming them would put a second caption
+ * under every constellation, which is exactly the clutter the NGC designations
+ * were removed for. The rationale lives here instead.
+ *
+ * Drawn in a 100x100 box, stroked only, and scaled to the constellation with
+ * `meet` so nothing is ever distorted to fit.
+ */
+const FIGURES: Record<string, string> = {
+  // Lyra — soundbox, two arms, the yoke across them, and the strings.
+  // The arms have to bow OUTWARD before they rise: curved inward they meet at
+  // the top and the whole thing reads as a closed almond, not an instrument.
+  Languages: [
+    'M41 79C46 85 54 85 59 79',
+    'M41 79C27 65 25 44 37 24',
+    'M59 79C73 65 75 44 63 24',
+    'M34 27H66',
+    'M44 29V80',
+    'M50 29V83',
+    'M56 29V80',
+  ].join(''),
+
+  // Telescopium — a tube on a pillar mount, over a tripod.
+  'AI systems': [
+    'M27 60 62 25 72 35 37 70Z',
+    'M24 57 31 64',
+    'M47 55V64',
+    'M47 64 33 88',
+    'M47 64 61 88',
+    'M47 64V85',
+  ].join(''),
+
+  // Fornax — a brazier: rim, bowl, stand, and what is burning in it.
+  'Backend & infrastructure': [
+    'M26 51H74',
+    'M31 51 39 71H61L69 51',
+    'M50 71V82',
+    'M35 86H65',
+    'M50 48C43 39 45 31 50 23C55 31 57 39 50 48Z',
+  ].join(''),
+
+  // Pictor — a canvas on an easel.
+  Frontend: [
+    'M28 19H72V54H28Z',
+    'M34 54 27 87',
+    'M66 54 73 87',
+    'M50 54V81',
+    'M31 70H69',
+  ].join(''),
+
+  // Scutum — a heater shield, quartered.
+  Security: [
+    'M26 19H74V46C74 66 62 78 50 87C38 78 26 66 26 46Z',
+    'M50 19V87',
+    'M27 45H73',
+  ].join(''),
+}
+
 /** Centre of a node's collision box (the star plus its outward-hanging name). */
 const bx = (n: Node) => n.x + n.ox
 
@@ -400,14 +481,41 @@ function solve(chart: Chart) {
   return groups.map((group, gi) => {
     const mine = stars.filter((s) => s.cluster === gi)
     const label = labels[gi]
+
+    /*
+     * The figure's box: a SQUARE on the constellation's centre, sized from its
+     * longest side so the drawing is never squashed by a cluster that happens
+     * to be wide or tall — the portrait chart's bands are far taller than they
+     * are wide, and a box that followed the stars exactly would render Pictor
+     * as a sliver.
+     *
+     * Then clamped inside the canvas, because the figure is an absolutely
+     * positioned child and one hanging off the edge would give the page a
+     * horizontal scrollbar for the sake of a decoration nobody can see.
+     */
+    const sx0 = Math.min(...mine.map((s) => s.x))
+    const sx1 = Math.max(...mine.map((s) => s.x))
+    const sy0 = Math.min(...mine.map((s) => s.y))
+    const sy1 = Math.max(...mine.map((s) => s.y))
+    const size = Math.min(
+      Math.max(sx1 - sx0, sy1 - sy0) * 1.08,
+      chart.w * 0.82,
+      chart.h * 0.82,
+    )
+    const fx = Math.max(0, Math.min(chart.w - size, (sx0 + sx1) / 2 - size / 2))
+    const fy = Math.max(0, Math.min(chart.h - size, (sy0 + sy1) / 2 - size / 2))
     // Exactly one star per constellation carries diffraction spikes. More than
     // one and the flare stops meaning "this is the bright one".
     const brightest = mine.reduce((a, b) => (b.r > a.r ? b : a))
     return {
       category: group.category,
-      // A catalog designation, the way a real star cluster is labelled.
-      designation: `NGC ${(gi + 1) * 1147}`,
-      count: mine.length,
+      figure: FIGURES[group.category],
+      figureBox: {
+        x: (fx / chart.w) * 100,
+        y: (fy / chart.h) * 100,
+        w: (size / chart.w) * 100,
+        h: (size / chart.h) * 100,
+      },
       label: { x: (label.x / chart.w) * 100, y: (label.y / chart.h) * 100 },
       lines: spanningTree(mine).map(([a, b]) => ({
         x1: a.x,
@@ -471,9 +579,20 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
 
         {clusters.map((c, i) => (
           <div class="cluster" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
+            {c.figure && (
+              <svg
+                class="figure"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="xMidYMid meet"
+                aria-hidden="true"
+                style={`left:${c.figureBox.x}%;top:${c.figureBox.y}%;width:${c.figureBox.w}%;height:${c.figureBox.h}%`}
+              >
+                <path d={c.figure} />
+              </svg>
+            )}
+
             <h3 class="cluster-label" style={`left:${c.label.x}%;top:${c.label.y}%`}>
               <span class="cname">{c.category}</span>
-              <span class="desig">{`${c.designation} · ${c.count}`}</span>
             </h3>
 
             {/* role="list" because list-style:none drops list semantics in
@@ -578,6 +697,34 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
     pointer-events: none;
   }
 
+  /* ── The figure ────────────────────────────────────────────────────── */
+  /* Engraved, not drawn: at rest it should register as something you are not
+     quite sure you are seeing. If you can read it at a glance it is too
+     strong and it competes with the stars, which are the actual content. */
+  .figure {
+    position: absolute;
+    overflow: visible;
+    fill: none;
+    stroke: var(--spec);
+    stroke-width: 0.65;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    /* 0.11 was the first try and it was too legible: Pictor's canvas is a big
+       empty rectangle, and at that strength it read as a UI card sitting
+       behind the stars rather than as an engraving under them. */
+    opacity: 0.07;
+    pointer-events: none;
+    /* Slower than --duration-state: the figure should fade up like
+       something surfacing, not snap on like a UI state. */
+    transition: opacity var(--duration-enter) var(--ease-out);
+  }
+
+  /* Hovering the constellation name is the one moment the drawing is meant to
+     be legible — the same gesture that lights its stars. */
+  .cluster:has(.cluster-label:hover) .figure {
+    opacity: 0.42;
+  }
+
   .cluster-stars {
     position: absolute;
     inset: 0;
@@ -634,18 +781,6 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
     transition:
       color var(--duration-state) var(--ease-out),
       text-shadow var(--duration-state) var(--ease-out);
-  }
-
-  .desig {
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    font-weight: 400;
-    letter-spacing: 0.18em;
-    text-indent: 0.18em;
-    /* No opacity dimming here: at this size it drops the designation below AA
-       in light mode (measured 2.62:1). The subtle token already carries the
-       recede, and it clears AA in both themes. */
-    color: var(--color-text-subtle);
   }
 
   /* ── Stars ─────────────────────────────────────────────────────────── */

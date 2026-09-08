@@ -101,7 +101,10 @@
   --c-surface: #0e131c;
   --c-raised: #141a26;
   --c-border: #212a38;
-  --c-grid: #10151f;
+  /* Deliberately close to the ground: a coordinate grid is a PLANE at a
+     fixed distance, so a strong one pins the sky flat against the screen.
+     It should register as texture you notice on purpose, not as a lattice. */
+  --c-grid: #0b0f18;
 
   /* Starfield.
      Real stars have colour temperature, so these span blue-white through
@@ -118,6 +121,21 @@
   --c-star-gold: #ffd9a0;
   --c-star-mid: #93a9c4;
   --c-star-far: #4d5f77;
+
+  /* Warm faint stars.
+     The field used to be blue-grey the whole way down, which is backwards:
+     real skies are mostly cool, dim red dwarfs, and the blue-white ones are
+     the rare bright exceptions. Warmth belongs in the FAINT tiers. */
+  --c-star-far-warm: #6f5f4d;
+  --c-star-far-rose: #6b5160;
+
+  /* The faintest tier — barely above the ground.
+     A deep field is thousands of these and a handful of bright ones. Adding
+     depth here rather than brightening anything also keeps text contrast
+     intact: these sit ~1.3:1 against the page ground, so nothing measurable
+     changes for reading. */
+  --c-star-dim: #2f3a4a;
+  --c-star-dim-warm: #443b31;
 
   /* Constellation hues.
      Deliberately a SEPARATE palette from the semantic accents: cyan / lime /
@@ -217,6 +235,10 @@
   --c-star-gold: transparent;
   --c-star-mid: transparent;
   --c-star-far: transparent;
+  --c-star-far-warm: transparent;
+  --c-star-far-rose: transparent;
+  --c-star-dim: transparent;
+  --c-star-dim-warm: transparent;
   --c-halo-blue: transparent;
   --c-halo-cyan: transparent;
   --c-halo-violet: transparent;

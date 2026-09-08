@@ -395,8 +395,8 @@ describe('the landing page has every expected section', () => {
       ...page('index.html').matchAll(/<h2[^>]*>.*?data-body="(\w+)"/gs),
     ].map((m) => m[1])
     // The last one is not a body: Get in touch is where the reader stops
-    // looking and starts moving, so it is a rocket on the pad.
-    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'rocket'])
+    // looking and starts moving, so it is a dish, mid-transmission.
+    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'dish'])
   })
 
   it('gives each marker its own mask ids', () => {
@@ -448,6 +448,7 @@ const CHARTS = [
           : null
       })(),
       bright: [...c[2].matchAll(/data-bright/g)].length,
+      figures: [...c[2].matchAll(/<svg class="figure"/g)].length,
       lines: [...(c[2].match(/./) ? [] : [])] as {
         x1: number
         y1: number
@@ -604,13 +605,46 @@ describe('constellation identity', () => {
     expect(new Set(specs).size).toBe(specs.length)
   })
 
-  it('labels each cluster with a catalog designation and a count', () => {
+  it('names each cluster, and nothing else', () => {
     for (const group of resume.skills) {
       expect(html).toContain(group.category.replace(/&/g, '&amp;'))
     }
-    // Designation and count share the caption line under the name: two extra
-    // stacked elements next to a constellation name read as a UI badge.
-    expect(html).toMatch(/class="desig"[^>]*>NGC \d+ · \d+</)
+    /*
+     * Constellation names used to carry a fake NGC catalog designation and a
+     * star count under them. Both are gone.
+     *
+     * NGC is a real catalogue of ~7,840 objects and every number generated
+     * here landed inside its range, so each label pointed at an actual galaxy
+     * that has nothing to do with these skills — invented precision on a page
+     * that is otherwise careful not to overstate anything. The count went with
+     * it: a bare numeral under a name reads as a badge, and the stars it
+     * counts are right there to be counted.
+     */
+    expect(html).not.toMatch(/NGC \d+/)
+    expect(html).not.toMatch(/class="desig"/)
+  })
+
+  it.each(CHARTS)('$name draws a figure behind every constellation', (chart) => {
+    /*
+     * The figure layer: the thing the constellation is named for, engraved
+     * faintly behind its stars the way a star atlas does it.
+     *
+     * It is laid OVER the sky, never derived from it — no star position or
+     * count depends on it — so this only has to assert that every
+     * constellation has one and that it stays decoration.
+     */
+    expect(chart.clusters.map((c) => c.figures)).toEqual(chart.clusters.map(() => 1))
+  })
+
+  it('keeps the figures decorative and mute', () => {
+    // A figure that carried text would be announced along with the skills, and
+    // both charts are in the markup — so it would be announced twice.
+    const figures = [...html.matchAll(/<svg class="figure"([\s\S]*?)<\/svg>/g)]
+    expect(figures.length).toBe(resume.skills.length * 2)
+    for (const f of figures) {
+      expect(f[1]).toContain('aria-hidden="true"')
+      expect(f[1]).not.toMatch(/<(text|title|desc)\b/)
+    }
   })
 
   it('lights a whole constellation when its label is hovered', () => {
