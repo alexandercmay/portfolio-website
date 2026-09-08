@@ -284,9 +284,15 @@ const featuredProjects = await getFeaturedProjects(3)
     and readers with reduced motion get a correct static line rather than a
     missing one. The animation only ever *removes* ink that is already there.
   */
+  /* `--rail-gutter` is the distance from the rail to the content edge, and
+     ExperienceEntry reads it to park its epoch node on the line. It has to be
+     one number in one place: set the padding and the node offset separately
+     and they drift the moment either breakpoint changes. Wide enough now to
+     clear the 2.25rem node discs. */
   .timeline {
+    --rail-gutter: 2.75rem;
     position: relative;
-    padding-left: 1.75rem;
+    padding-left: var(--rail-gutter);
   }
 
   .timeline::before {
@@ -334,7 +340,7 @@ const featuredProjects = await getFeaturedProjects(3)
 
   @media (max-width: 46rem) {
     .timeline {
-      padding-left: 1rem;
+      --rail-gutter: 2.1rem;
     }
   }
 
@@ -452,7 +458,7 @@ const featuredProjects = await getFeaturedProjects(3)
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    margin-left: 1.75rem;
+    margin-left: 2.75rem;
     padding: 0.65em 1.1em;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -483,7 +489,7 @@ const featuredProjects = await getFeaturedProjects(3)
 
   @media (max-width: 46rem) {
     .timeline-more {
-      margin-left: 1rem;
+      margin-left: 2.1rem;
     }
   }
 

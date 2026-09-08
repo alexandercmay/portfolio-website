@@ -14,12 +14,40 @@ import type { TechKey } from './taxonomy'
  * LinkedIn only. Location is city-level for the same reason.
  */
 
+/**
+ * One timeline point: what happened, and when.
+ *
+ * `when` is a stamp, not a sentence — '2025', 'H1 2025', '2024—26'. It is set
+ * in mono at the left of the row and every stamp in a role shares a column, so
+ * anything longer than about eight characters breaks the alignment that makes
+ * the list scannable.
+ */
+export interface Milestone {
+  when: string
+  /**
+   * One line. Verb-first, ONE clause. If it needs a comma-and to hold
+   * together it is two milestones, or it belongs in the PDF and not here.
+   */
+  text: string
+}
+
+/** Big-bang chronology, oldest epoch first. See EpochIcon.astro. */
+export type EpochIcon =
+  | 'singularity'
+  | 'inflation'
+  | 'nucleosynthesis'
+  | 'first-light'
+  | 'galaxy'
+  | 'orbit'
+
 export interface WorkEntry {
   org: string
   title: string
   location?: string
   start: Date
   end?: Date
+  /** The node drawn on the timeline rail for this role. */
+  icon: EpochIcon
   /**
    * THE sentence — set at ~3x body size on the homepage.
    *
@@ -31,8 +59,11 @@ export interface WorkEntry {
   /** Appears in the homepage "Selected experience" section. */
   featured?: boolean
   weight?: number
-  /** Supporting accomplishments. Verb-first. Shown in full on /resume. */
-  highlights: string[]
+  /**
+   * The role as a timeline, newest first. These are read at a glance, not
+   * studied — the prose version of any of them lives in the PDF.
+   */
+  milestones: Milestone[]
   stack: readonly TechKey[]
 }
 
@@ -65,7 +96,7 @@ export interface Resume {
 export const resume: Resume = {
   basics: {
     name: 'Alexander May',
-    headline: 'Full-stack engineer building AI systems',
+    headline: 'Full-stack engineer building distributed AI systems',
     location: 'Cambridge, MA',
     email: 'alexcmay11@gmail.com',
     profiles: [
@@ -81,7 +112,7 @@ export const resume: Resume = {
       },
     ],
     summary:
-      'I build AI systems that do real work — tool layers, agent orchestration, and the event-driven services underneath them — and I work across the whole stack to ship them. I am most useful where the AI is a real system rather than a wrapper, and where correctness and security are design inputs rather than a final gate.',
+      'I build full-stack systems end to end, with a bias toward the ones that stay fast and correct under real load. Lately that means distributed AI — agent orchestration, tool layers, and the event-driven backbones underneath — fitting intelligence into the systems that already exist so it makes them measurably better, not just adjacent.',
   },
 
   work: [
@@ -91,20 +122,51 @@ export const resume: Resume = {
       location: 'Hopkinton, MA',
       start: new Date('2024-07-01'),
       end: new Date('2026-08-31'),
+      icon: 'orbit',
       headline:
         'Built the LLM tool layer that answers natural-language questions about production storage in under 7 seconds',
       featured: true,
       weight: 10,
-      highlights: [
-        'Built LLM-routable diagnostic tools computing health and update-plan risk for customer storage assets at query time, answering natural-language questions in under 7 seconds',
-        'Extended Agent2Agent (A2A) routing for a LlamaIndex ReAct agent running Claude on AWS Bedrock, so update workflows executed reliably against production storage arrays',
-        'Architected an event-driven AMQP pipeline ingesting and enriching 1M+ messages daily, replacing a manual data-loading step between legacy and modern systems',
-        'Designed a timestamp tagging protocol and prompt contract keeping timestamps machine-parseable through LLM output, unifying localization across A2A stream events and eliminating client-side timezone bugs',
-        'Engineered Golang controllers that detect and gracefully recover from failed Kubernetes node lifecycle operations, preventing a disruptive 8-hour cluster redeploy',
-        "Published an AI threat-modeling skill to the organization's shared engineering platform, producing CVSS-scored assessments via a security-scanning MCP server — cutting a multi-day process to minutes",
-        'Stood up the first production-fidelity penetration testing environment for an agentic storage platform, replicating 50+ microservices, and authored the runbook used in subsequent cycles',
-        'Triaged CVEs, ran STRIDE threat models, and managed quarterly security assessments across two products as Security Champion',
-        'Mentored a team of summer interns through a chaos engineering project, guiding their selection of Chaos Mesh for Kubernetes fault injection',
+      // PLACEHOLDER STAMPS — the `when` values below are inferred from the
+      // order the work was listed in, not from a record. Correct them; a
+      // timeline whose dates are wrong is worse than a bullet list with none.
+      milestones: [
+        {
+          when: '2026',
+          text: 'Published an org-wide AI threat-modeling skill, cutting CVSS assessments from days to minutes',
+        },
+        {
+          when: '2025',
+          text: 'Built LLM-routable diagnostic tools answering natural-language storage questions in under 7s',
+        },
+        {
+          when: '2025',
+          text: 'Extended A2A routing for a LlamaIndex ReAct agent on Bedrock, driving live update workflows',
+        },
+        {
+          when: '2025',
+          text: 'Designed a timestamp protocol keeping LLM output machine-parseable across A2A streams',
+        },
+        {
+          when: '2025',
+          text: 'Stood up the first production-fidelity pentest environment for the platform — 50+ services',
+        },
+        {
+          when: '2025',
+          text: 'Mentored the intern team through a Chaos Mesh fault-injection project',
+        },
+        {
+          when: '2024',
+          text: 'Architected an event-driven AMQP pipeline enriching 1M+ messages a day',
+        },
+        {
+          when: '2024',
+          text: 'Wrote Golang controllers that recover failed K8s node operations, avoiding 8-hour redeploys',
+        },
+        {
+          when: '2024—26',
+          text: 'Security Champion: CVE triage, STRIDE models, and quarterly assessments on two products',
+        },
       ],
       stack: [
         'python',
@@ -134,13 +196,20 @@ export const resume: Resume = {
       location: 'Raleigh, NC',
       start: new Date('2022-08-01'),
       end: new Date('2024-05-01'),
+      icon: 'first-light',
       headline:
         'Taught Unix and Linux fundamentals to 200+ students across four semesters',
       featured: true,
       weight: 5,
-      highlights: [
-        'Taught shell navigation, file systems, permissions, and remote access to ~50 students per semester across four semesters',
-        'Ran office hours and lab sessions debugging student code, graded assignments, and worked with course staff on delivery each term',
+      milestones: [
+        {
+          when: '2022—24',
+          text: 'Taught shells, filesystems, permissions, and remote access to ~50 students a semester',
+        },
+        {
+          when: '2022—24',
+          text: 'Ran labs and office hours debugging student code, and graded across four terms',
+        },
       ],
       stack: ['python'],
     },
