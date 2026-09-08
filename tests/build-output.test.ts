@@ -169,9 +169,7 @@ describe('internal links all resolve', () => {
    * Known-missing targets, each with the phase that produces it. An entry here
    * is a recorded gap, not a hidden one — remove it when the file lands.
    */
-  const NOT_YET_BUILT = new Set([
-    '/alexander-may-resume.pdf', // generated in Phase 4 (scripts/build-resume-pdf.ts)
-  ])
+  const NOT_YET_BUILT = new Set<string>([])
 
   const broken: string[] = []
   for (const p of pages) {
@@ -198,14 +196,25 @@ describe('the resume page', () => {
     expect(data.name).toBeTruthy()
   })
 
-  it('shows every work entry', () => {
-    for (const role of resume.work) {
-      expect(page('resume/index.html')).toContain(role.org)
-    }
+  /**
+   * /resume is the classical view: the PDF, embedded. The homepage carries the
+   * structured work history; this page just needs to render the document and
+   * hand over the file. (See resume.astro and D-005 for the drift trade-off.)
+   */
+  it('embeds the resume PDF', () => {
+    expect(page('resume/index.html')).toMatch(
+      /<object[^>]+data="\/alexander-may-resume\.pdf/,
+    )
   })
 
-  it('offers the PDF download', () => {
-    expect(page('resume/index.html')).toMatch(/href="\/alexander-may-resume\.pdf"/)
+  it('offers the PDF as a hard download', () => {
+    expect(page('resume/index.html')).toMatch(
+      /href="\/alexander-may-resume\.pdf"[^>]*\bdownload\b/,
+    )
+  })
+
+  it('ships the PDF file it points at', () => {
+    expect(existsSync(join(DIST, 'alexander-may-resume.pdf'))).toBe(true)
   })
 })
 

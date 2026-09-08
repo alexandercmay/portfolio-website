@@ -21,6 +21,8 @@ interface Props {
    * 404, so the site speaks one language about reaching people instead of two.
    */
   transmit?: boolean
+  /** Anything else (target, rel, aria-*, data-*) is forwarded to the element. */
+  [key: string]: unknown
 }
 const {
   href,
@@ -29,6 +31,7 @@ const {
   download,
   class: className,
   transmit,
+  ...rest
 } = Astro.props
 const Tag = href ? 'a' : 'button'
 ---
@@ -38,6 +41,7 @@ const Tag = href ? 'a' : 'button'
   href={href}
   download={download}
   type={href ? undefined : type}
+  {...rest}
 >
   {
     transmit && (
