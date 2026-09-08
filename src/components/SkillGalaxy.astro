@@ -23,19 +23,27 @@ const { groups } = Astro.props
  *  - stars vary in magnitude, and the brightest of each constellation carries
  *    diffraction spikes
  *
+ * TWO charts are solved, not one. A landscape sky at 1100x820 for wide
+ * viewports, and a portrait one 340px wide with the constellations stacked for
+ * narrow ones. Scaling the landscape chart down does not work: positions are
+ * percentages so they shrink, but the labels are set in absolute pixels and do
+ * not, so every constellation collapses into its own text. Only one chart is
+ * ever displayed, and `display: none` takes the other out of the accessibility
+ * tree as well, so nothing is announced twice.
+ *
  * Accessibility contract:
+ *  - The chart IS the content, not decoration. Each constellation is a real
+ *    <h3> and a real list, in declared order, so the DOM reads as a grouped
+ *    list of skills even though the visual placement is scattered.
  *  - Every skill NAME is always visible. Hover only adds glow and emphasis;
  *    it never reveals information. Hover-gated content would exclude keyboard
  *    and touch users outright.
- *  - DOM order stays logical (category, then items in declared order) even
- *    though the visual placement is scattered — a screen reader reads the
- *    grouped list, not the scatter.
- *  - Below 60rem the whole thing falls back to a plain grouped list, because
- *    a scattered galaxy on a phone is unreadable.
+ *  - The star catalog underneath is the same skills as a plain column, for
+ *    anyone who would rather scan than read a sky. It is collapsed by default,
+ *    which is only acceptable because the chart above it is semantic: gating
+ *    the skills themselves behind a disclosure would be the same mistake as
+ *    gating them behind hover.
  *  - The constellation lines are decorative and aria-hidden.
- *
- * Known cost: a scatter is harder to scan than a column. /resume keeps the
- * clean grouped list so a scannable version of this information always exists.
  */
 
 /** Deterministic hash → stable positions across builds. */
@@ -48,49 +56,10 @@ function hash(s: string): number {
   return (h >>> 0) / 4294967295
 }
 
-/*
- * Layout is solved in PIXELS at build time, then converted to percentages.
- *
- * Three rewrites, and the first two failed in ways that measurement missed:
- *
- *  1. Jittered rings, no relaxation      -> 11 overlapping labels
- *  2. Global relaxation + cohesion pull  -> clusters INTERLEAVED, and labels
- *     drifted away from their own stars entirely
- *
- * The second failure is the instructive one. "Minimum distance between stars
- * of different clusters" stayed healthy while constellations were threaded
- * through each other, because that metric cannot see interleaving at all. A
- * label sat over a foreign cluster's stars and the numbers looked fine.
- *
- * So the layout is now TERRITORIAL rather than emergent:
- *
- *   - cluster centres are placed far apart by hand, which is what actually
- *     prevents interleaving (measured: removing the radius clamp below changes
- *     nothing; moving the centres together produces 13 intruders immediately)
- *   - a radius clamp caps how far a star may sit from its own centre. At the
- *     current centre spacing it never binds — it is a bound on cluster GROWTH,
- *     so one large category cannot sprawl into a neighbour if the skill list
- *     expands
- *   - labels are placed AFTER the stars settle, from each cluster's actual
- *     bounding box, so a label can never drift away from its own stars
- *   - only then are labels relaxed against the stars, with the stars pinned
- */
-const W = 1100
-const H = 820
 const CHAR = 7.2 // --text-xs in JetBrains Mono, px per character
-const LABEL_CHAR = 9.9 // constellation name: 11px + 0.3em tracking
 const BOX_H = 22
 const PAD = 18 // dot + gap
 const MARGIN = 16
-
-/**
- * How far a star may sit from its own cluster centre.
- *
- * A bound on cluster growth, not the thing preventing interleaving — measured,
- * disabling it changes the layout not at all at the current centre spacing.
- * It matters only if a category grows large enough to sprawl.
- */
-const MAX_R = 152
 
 type Node = {
   key: string
@@ -114,138 +83,162 @@ type Node = {
   r: number
 }
 
-/**
- * Cluster territories, in a 3-over-2 arrangement. Centres are >340px apart
- * horizontally and >370px vertically, comfortably more than 2 * MAX_R, so the
- * territories cannot touch.
+type Chart = {
+  name: string
+  /** Canvas the layout is solved in, in px. */
+  w: number
+  h: number
+  /** Cluster territories, one per category. */
+  centres: { x: number; y: number }[]
+  /** Cap on how far a star may sit from its own cluster's centre. */
+  maxR: (cluster: number) => number
+  /**
+   * Whether constellation names are relaxed against the stars after placement.
+   *
+   * Only on a canvas with room to move them. On the portrait chart a name like
+   * "Backend & infrastructure" is 267px wide against a 340px canvas, so it
+   * overlaps essentially every star in its band and relaxation shoves it clean
+   * out of the band and up against the constellation above. There, reserved
+   * headroom does the job instead.
+   */
+  relaxLabels: boolean
+  /** Seed ring size for a cluster of n stars, before relaxation. */
+  spread: (n: number) => number
+  /** Ring aspect — portrait clusters are taller than they are wide. */
+  ring: { x: number; y: number }
+  /** How far above its stars a constellation name sits. */
+  labelGap: number
+  /**
+   * What the name is placed relative to.
+   *
+   * 'box' centres it over the cluster's whole bounding box, which is right in
+   * open sky. 'top-star' pins it directly above the cluster's topmost STAR,
+   * which is what a stacked chart needs: the bounding box of a narrow band is
+   * dominated by the widest skill name in it, and centring on that can leave
+   * the constellation's title floating nearer to the constellation above it
+   * than to its own — measured, 55px away from a neighbour's star and 68px
+   * from its own.
+   */
+  labelAnchor: 'box' | 'top-star'
+  /** Cap on the name's collision width. Wrapped names are not one line wide. */
+  labelMaxW: number
+}
+
+/** Constellation name width: 11px mono at 0.3em tracking, px per character. */
+const LABEL_CHAR = 9.9
+
+/*
+ * Layout is solved in PIXELS at build time, then converted to percentages.
+ *
+ * Three rewrites, and the first two failed in ways that measurement missed:
+ *
+ *  1. Jittered rings, no relaxation      -> 11 overlapping labels
+ *  2. Global relaxation + cohesion pull  -> clusters INTERLEAVED, and labels
+ *     drifted away from their own stars entirely
+ *
+ * The second failure is the instructive one. "Minimum distance between stars
+ * of different clusters" stayed healthy while constellations were threaded
+ * through each other, because that metric cannot see interleaving at all. A
+ * label sat over a foreign cluster's stars and the numbers looked fine.
+ *
+ * So the layout is TERRITORIAL rather than emergent:
+ *
+ *   - cluster centres are placed far apart by hand, which is what actually
+ *     prevents interleaving (measured: removing the radius clamp changes
+ *     nothing on the landscape chart; moving the centres together produces 13
+ *     intruders immediately)
+ *   - a radius clamp caps how far a star may sit from its own centre
+ *   - labels are placed AFTER the stars settle, from each cluster's actual
+ *     bounding box, so a label can never drift away from its own stars
+ *   - only then are labels relaxed against the stars, with the stars pinned
  */
-const CENTRES = [
+const LANDSCAPE: Chart = {
+  name: 'landscape',
+  w: 1100,
+  h: 820,
+  // A 3-over-2 arrangement. Centres are >340px apart horizontally and >370px
+  // vertically, comfortably more than 2 * maxR, so territories cannot touch.
   // These positions are load-bearing: they, not the radius clamp, are what
   // keeps constellations from threading through each other.
-  { x: W * 0.17, y: H * 0.23 },
-  { x: W * 0.5, y: H * 0.21 },
-  { x: W * 0.84, y: H * 0.26 },
-  { x: W * 0.24, y: H * 0.73 },
-  { x: W * 0.63, y: H * 0.74 },
-]
+  centres: [
+    { x: 1100 * 0.17, y: 820 * 0.23 },
+    { x: 1100 * 0.5, y: 820 * 0.21 },
+    { x: 1100 * 0.84, y: 820 * 0.26 },
+    { x: 1100 * 0.24, y: 820 * 0.73 },
+    { x: 1100 * 0.63, y: 820 * 0.74 },
+  ],
+  maxR: () => 152,
+  spread: (n) => (n === 1 ? 0 : Math.min(0.52 * 152 + n * 9, 152 * 0.82)),
+  ring: { x: 1, y: 0.74 },
+  labelGap: 40,
+  relaxLabels: true,
+  labelAnchor: 'box',
+  labelMaxW: Infinity,
+}
+
+/*
+ * The portrait chart.
+ *
+ * 340px wide because that is roughly what a 375px phone leaves after the
+ * page's padding, and it is capped there rather than stretching on a wider
+ * phone or a tablet — the labels are absolutely sized, so a stretched canvas
+ * only pulls the stars apart and strands the text in the gaps.
+ *
+ * At this width one label can be more than half the canvas ("Event-Driven
+ * Microservices" is 198px with its dot), so clusters cannot spread sideways.
+ * Each gets a tall band instead, which is why the seed ring is squashed
+ * horizontally and stretched vertically here.
+ *
+ * Here the radius clamp is doing real work rather than sitting dormant: it is
+ * sized per cluster from that cluster's own band, so a constellation
+ * physically cannot leave its band. That is what makes the headroom between
+ * bands reserved space, which is in turn what lets the names be placed without
+ * relaxing them against the stars.
+ */
+const PORTRAIT_W = 340
+const PORTRAIT_TOP = 26
+const PORTRAIT_LABEL = 88 // reserved headroom above each band, for its name
+const PORTRAIT_BANDS = groups.map((g) => Math.max(150, g.items.length * 32))
+
+const PORTRAIT: Chart = {
+  name: 'portrait',
+  w: PORTRAIT_W,
+  h:
+    PORTRAIT_TOP * 2 +
+    PORTRAIT_BANDS.reduce((sum, band) => sum + band + PORTRAIT_LABEL, 0),
+  centres: PORTRAIT_BANDS.map((band, i) => ({
+    // Alternate the horizontal bias so the stack does not read as a column of
+    // identical blobs.
+    x: PORTRAIT_W * (i % 2 === 0 ? 0.46 : 0.54),
+    y:
+      PORTRAIT_TOP +
+      PORTRAIT_BANDS.slice(0, i).reduce((s, b) => s + b + PORTRAIT_LABEL, 0) +
+      PORTRAIT_LABEL +
+      band / 2,
+  })),
+  // Sized from each cluster's own band, so no constellation can reach out of
+  // it and into the headroom that the name above it is relying on.
+  maxR: (gi) => PORTRAIT_BANDS[gi % PORTRAIT_BANDS.length] / 2 - 8,
+  spread: (n) => (n === 1 ? 0 : Math.min(34 + n * 9, 104)),
+  ring: { x: 0.52, y: 1.15 },
+  labelGap: 40,
+  relaxLabels: false,
+  labelAnchor: 'top-star',
+  // Portrait names wrap (see .galaxy[data-chart='portrait'] .cluster-label), so
+  // the widest is nowhere near its one-line width. Without this cap the
+  // canvas clamp shoves a long name far off its own constellation.
+  labelMaxW: 188,
+}
 
 /** Centre of a node's collision box (the star plus its outward-hanging name). */
 const bx = (n: Node) => n.x + n.ox
 
-const stars: Node[] = []
-
-groups.forEach((group, gi) => {
-  const c = CENTRES[gi % CENTRES.length]
-  const n = group.items.length
-  // Fill the territory rather than hugging the centre — the previous pass
-  // read as a tight knot.
-  const spread = n === 1 ? 0 : Math.min(0.52 * MAX_R + n * 9, MAX_R * 0.82)
-
-  group.items.forEach((key, i) => {
-    const seed = hash(key)
-    const angle = (i / Math.max(n, 1)) * Math.PI * 2 + seed * 0.7
-    const rad = spread * (0.68 + seed * 0.32)
-    const label = TECH[key as TechKey].label
-    // Names point away from the cluster centre, so the constellation lines run
-    // through open space instead of through text.
-    const side = Math.cos(angle) >= 0 ? 1 : -1
-    const w = label.length * CHAR + PAD
-    stars.push({
-      key,
-      label,
-      cluster: gi,
-      x: c.x + Math.cos(angle) * rad,
-      y: c.y + Math.sin(angle) * rad * 0.74,
-      w,
-      h: BOX_H,
-      ox: (side * w) / 2,
-      side,
-      // Magnitude. Skewed small so a few stars read as bright rather than all
-      // of them reading as medium — an even spread looks like a scatter plot.
-      r: 1.6 + Math.pow(seed, 1.5) * 2.9,
-    })
-  })
-})
-
-/** Push overlapping boxes apart along the axis of least penetration. */
-function separate(movable: Node[], fixed: Node[], passes: number, clamp = true) {
-  for (let iter = 0; iter < passes; iter++) {
-    for (let i = 0; i < movable.length; i++) {
-      for (let j = 0; j < movable.length + fixed.length; j++) {
-        const a = movable[i]
-        const b = j < movable.length ? movable[j] : fixed[j - movable.length]
-        if (a === b) continue
-        const dx = bx(b) - bx(a)
-        const dy = b.y - a.y
-        const ox = (a.w + b.w) / 2 + MARGIN - Math.abs(dx)
-        const oy = (a.h + b.h) / 2 + MARGIN - Math.abs(dy)
-        if (ox <= 0 || oy <= 0) continue
-        const bMovable = j < movable.length
-        if (ox < oy) {
-          const push = (ox / (bMovable ? 2 : 1)) * (dx < 0 ? -1 : 1)
-          a.x -= push
-          if (bMovable) b.x += push
-        } else {
-          const push = (oy / (bMovable ? 2 : 1)) * (dy < 0 ? -1 : 1)
-          a.y -= push
-          if (bMovable) b.y += push
-        }
-      }
-    }
-
-    for (const nd of movable) {
-      if (clamp) {
-        // Caps cluster radius. Dormant at current centre spacing.
-        const c = CENTRES[nd.cluster % CENTRES.length]
-        const dx = nd.x - c.x
-        const dy = nd.y - c.y
-        const d = Math.hypot(dx, dy)
-        if (d > MAX_R) {
-          nd.x = c.x + (dx / d) * MAX_R
-          nd.y = c.y + (dy / d) * MAX_R
-        }
-      }
-      // Clamp the BOX to the canvas, then solve back for the star.
-      nd.x = Math.max(nd.w / 2 + 4 - nd.ox, Math.min(W - nd.w / 2 - 4 - nd.ox, nd.x))
-      nd.y = Math.max(nd.h / 2 + 4, Math.min(H - nd.h / 2 - 4, nd.y))
-    }
-  }
-}
-
-separate(stars, [], 120)
-
-/*
- * Labels last, derived from where the stars actually ended up. Placing them
- * beforehand is what let a label drift away from its own constellation.
- */
-const labels: Node[] = groups.map((group, gi) => {
-  const mine = stars.filter((s) => s.cluster === gi)
-  const minX = Math.min(...mine.map((s) => bx(s) - s.w / 2))
-  const maxX = Math.max(...mine.map((s) => bx(s) + s.w / 2))
-  const minY = Math.min(...mine.map((s) => s.y - s.h / 2))
-  return {
-    key: `label-${gi}`,
-    label: group.category,
-    cluster: gi,
-    x: (minX + maxX) / 2,
-    y: minY - 40,
-    w: Math.max(group.category.length * LABEL_CHAR, 92) + 20,
-    h: 40,
-    ox: 0,
-    side: 1,
-    r: 0,
-  }
-})
-
-// Stars are pinned; only labels move.
-separate(labels, stars, 60, false)
-
 /**
  * Constellation lines = the Euclidean minimum spanning tree of the cluster.
  *
- * The previous version drew spokes from a hub, which is how you draw a bicycle
- * wheel, not a constellation: every star pointed at the same middle and the
- * result read as an asterisk. An MST connects each star to its nearest
+ * The version before this drew spokes from a hub, which is how you draw a
+ * bicycle wheel, not a constellation: every star pointed at the same middle
+ * and the result read as an asterisk. An MST connects each star to its nearest
  * already-connected neighbour, which is exactly the chain-of-nearest-stars
  * shape real star charts use — and it stays inside its own territory for free,
  * since the nearest neighbour of a star is always one of its own.
@@ -277,140 +270,320 @@ function spanningTree(nodes: Node[]): [Node, Node][] {
   return edges
 }
 
-const clusters = groups.map((group, gi) => {
-  const mine = stars.filter((s) => s.cluster === gi)
-  const label = labels[gi]
-  // Exactly one star per constellation carries diffraction spikes. More than
-  // one and the flare stops meaning "this is the bright one".
-  const brightest = mine.reduce((a, b) => (b.r > a.r ? b : a))
-  return {
-    category: group.category,
-    // A catalog designation, the way a real star cluster is labelled.
-    designation: `NGC ${(gi + 1) * 1147}`,
-    count: mine.length,
-    label: { x: (label.x / W) * 100, y: (label.y / H) * 100 },
-    lines: spanningTree(mine).map(([a, b]) => ({
-      x1: a.x,
-      y1: a.y,
-      x2: b.x,
-      y2: b.y,
-    })),
-    stars: mine.map((s) => ({
-      key: s.key,
-      label: s.label,
-      x: (s.x / W) * 100,
-      y: (s.y / H) * 100,
-      r: s.r,
-      side: s.side,
-      bright: s === brightest,
-    })),
+/** Push overlapping boxes apart along the axis of least penetration. */
+function separate(
+  chart: Chart,
+  movable: Node[],
+  fixed: Node[],
+  passes: number,
+  clamp = true,
+) {
+  for (let iter = 0; iter < passes; iter++) {
+    for (let i = 0; i < movable.length; i++) {
+      for (let j = 0; j < movable.length + fixed.length; j++) {
+        const a = movable[i]
+        const b = j < movable.length ? movable[j] : fixed[j - movable.length]
+        if (a === b) continue
+        const dx = bx(b) - bx(a)
+        const dy = b.y - a.y
+        const ox = (a.w + b.w) / 2 + MARGIN - Math.abs(dx)
+        const oy = (a.h + b.h) / 2 + MARGIN - Math.abs(dy)
+        if (ox <= 0 || oy <= 0) continue
+        const bMovable = j < movable.length
+        if (ox < oy) {
+          const push = (ox / (bMovable ? 2 : 1)) * (dx < 0 ? -1 : 1)
+          a.x -= push
+          if (bMovable) b.x += push
+        } else {
+          const push = (oy / (bMovable ? 2 : 1)) * (dy < 0 ? -1 : 1)
+          a.y -= push
+          if (bMovable) b.y += push
+        }
+      }
+    }
+
+    for (const nd of movable) {
+      if (clamp) {
+        const c = chart.centres[nd.cluster % chart.centres.length]
+        const maxR = chart.maxR(nd.cluster)
+        const dx = nd.x - c.x
+        const dy = nd.y - c.y
+        const d = Math.hypot(dx, dy)
+        if (d > maxR) {
+          nd.x = c.x + (dx / d) * maxR
+          nd.y = c.y + (dy / d) * maxR
+        }
+      }
+      // Clamp the BOX to the canvas, then solve back for the star.
+      nd.x = Math.max(
+        nd.w / 2 + 4 - nd.ox,
+        Math.min(chart.w - nd.w / 2 - 4 - nd.ox, nd.x),
+      )
+      nd.y = Math.max(nd.h / 2 + 4, Math.min(chart.h - nd.h / 2 - 4, nd.y))
+    }
   }
-})
+}
+
+function solve(chart: Chart) {
+  const stars: Node[] = []
+
+  groups.forEach((group, gi) => {
+    const c = chart.centres[gi % chart.centres.length]
+    const n = group.items.length
+    // Fill the territory rather than hugging the centre — an early pass read
+    // as a tight knot.
+    const spread = chart.spread(n)
+
+    group.items.forEach((key, i) => {
+      const seed = hash(key)
+      const angle = (i / Math.max(n, 1)) * Math.PI * 2 + seed * 0.7
+      const rad = spread * (0.68 + seed * 0.32)
+      const label = TECH[key as TechKey].label
+      // Names point away from the cluster centre, so the constellation lines
+      // run through open space instead of through text.
+      const side = Math.cos(angle) >= 0 ? 1 : -1
+      const boxW = label.length * CHAR + PAD
+      stars.push({
+        key,
+        label,
+        cluster: gi,
+        x: c.x + Math.cos(angle) * rad * chart.ring.x,
+        y: c.y + Math.sin(angle) * rad * chart.ring.y,
+        w: boxW,
+        h: BOX_H,
+        ox: (side * boxW) / 2,
+        side,
+        // Magnitude. Skewed small so a few stars read as bright rather than
+        // all of them reading as medium — an even spread looks like a scatter
+        // plot.
+        r: 1.6 + Math.pow(seed, 1.5) * 2.9,
+      })
+    })
+  })
+
+  separate(chart, stars, [], 120)
+
+  /*
+   * Labels last, derived from where the stars actually ended up. Placing them
+   * beforehand is what let a label drift away from its own constellation.
+   */
+  const labels: Node[] = groups.map((group, gi) => {
+    const mine = stars.filter((s) => s.cluster === gi)
+    const top = mine.reduce((a, b) => (b.y < a.y ? b : a))
+    const minX = Math.min(...mine.map((s) => bx(s) - s.w / 2))
+    const maxX = Math.max(...mine.map((s) => bx(s) + s.w / 2))
+    const w = Math.min(
+      Math.max(group.category.length * LABEL_CHAR, 92) + 20,
+      chart.labelMaxW,
+    )
+    const anchorX = chart.labelAnchor === 'top-star' ? top.x : (minX + maxX) / 2
+    return {
+      key: `label-${gi}`,
+      label: group.category,
+      cluster: gi,
+      // Kept on the canvas, but never further from its own topmost star than
+      // the clamp forces it to be.
+      x: Math.max(w / 2 + 4, Math.min(chart.w - w / 2 - 4, anchorX)),
+      y: top.y - top.h / 2 - chart.labelGap,
+      w,
+      h: 40,
+      ox: 0,
+      side: 1,
+      r: 0,
+    }
+  })
+
+  // Stars are pinned; only labels move. Skipped where the canvas is too narrow
+  // for a name to have anywhere to go — see Chart.relaxLabels.
+  if (chart.relaxLabels) separate(chart, labels, stars, 60, false)
+
+  return groups.map((group, gi) => {
+    const mine = stars.filter((s) => s.cluster === gi)
+    const label = labels[gi]
+    // Exactly one star per constellation carries diffraction spikes. More than
+    // one and the flare stops meaning "this is the bright one".
+    const brightest = mine.reduce((a, b) => (b.r > a.r ? b : a))
+    return {
+      category: group.category,
+      // A catalog designation, the way a real star cluster is labelled.
+      designation: `NGC ${(gi + 1) * 1147}`,
+      count: mine.length,
+      label: { x: (label.x / chart.w) * 100, y: (label.y / chart.h) * 100 },
+      lines: spanningTree(mine).map(([a, b]) => ({
+        x1: a.x,
+        y1: a.y,
+        x2: b.x,
+        y2: b.y,
+      })),
+      stars: mine.map((s) => ({
+        key: s.key,
+        label: s.label,
+        x: (s.x / chart.w) * 100,
+        y: (s.y / chart.h) * 100,
+        r: s.r,
+        side: s.side,
+        bright: s === brightest,
+      })),
+    }
+  })
+}
+
+const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
+  chart,
+  clusters: solve(chart),
+}))
 ---
 
 <div class="galaxy-wrap">
   {
-    /* Desktop: the scatter. Each cluster is its own container spanning the
-      canvas, so hovering a category name can light that constellation and
-      nothing else. Containers are pointer-transparent; their children are
-      not, so the overlapping full-size boxes never steal a hover. */
-  }
-  <div
-    class="galaxy"
-    aria-hidden="true"
-    data-canvas={`${W}x${H}`}
-    data-star-box={`${CHAR},${PAD},${BOX_H}`}
-  >
-    <svg class="lines" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      {
-        clusters.map((c, i) => (
-          <g class="cluster-lines" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
-            {c.lines.map((l) => (
-              <line
-                x1={l.x1}
-                y1={l.y1}
-                x2={l.x2}
-                y2={l.y2}
-                vector-effect="non-scaling-stroke"
-              />
-            ))}
-          </g>
-        ))
-      }
-    </svg>
-
-    {
-      clusters.map((c, i) => (
-        <div class="cluster" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
-          <p class="cluster-label" style={`left:${c.label.x}%;top:${c.label.y}%`}>
-            <span class="cname">{c.category}</span>
-            <span class="desig">
-              {c.designation} · {c.count}
-            </span>
-          </p>
-
-          {c.stars.map((s) => (
-            <span
-              class="star"
-              data-side={s.side > 0 ? 'right' : 'left'}
-              data-bright={s.bright ? '' : undefined}
-              style={`left:${s.x}%;top:${s.y}%;--r:${s.r.toFixed(2)}px`}
-            >
-              <span class="dot" />
-              <span class="name">{s.label}</span>
-            </span>
+    /* Each cluster is its own container spanning the canvas, so hovering a
+      constellation name can light that constellation and nothing else.
+      Containers are pointer-transparent; their children are not, so the
+      overlapping full-size boxes never steal a hover. */
+    CHARTS.map(({ chart, clusters }) => (
+      <div
+        class="galaxy"
+        data-chart={chart.name}
+        data-canvas={`${Math.round(chart.w)}x${Math.round(chart.h)}`}
+        data-star-box={`${CHAR},${PAD},${BOX_H}`}
+        style={`--canvas-w:${Math.round(chart.w)};--canvas-h:${Math.round(chart.h)}`}
+      >
+        <svg
+          class="lines"
+          viewBox={`0 0 ${chart.w} ${chart.h}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {clusters.map((c, i) => (
+            <g class="cluster-lines" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
+              {c.lines.map((l) => (
+                <line
+                  x1={l.x1}
+                  y1={l.y1}
+                  x2={l.x2}
+                  y2={l.y2}
+                  vector-effect="non-scaling-stroke"
+                />
+              ))}
+            </g>
           ))}
-        </div>
-      ))
-    }
-  </div>
+        </svg>
+
+        {clusters.map((c, i) => (
+          <div class="cluster" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
+            <h3 class="cluster-label" style={`left:${c.label.x}%;top:${c.label.y}%`}>
+              <span class="cname">{c.category}</span>
+              <span class="desig">{`${c.designation} · ${c.count}`}</span>
+            </h3>
+
+            {/* role="list" because list-style:none drops list semantics in
+                Safari, and this list is the path to the skills. */}
+            <ul class="cluster-stars" role="list">
+              {c.stars.map((s) => (
+                <li
+                  class="star"
+                  data-side={s.side > 0 ? 'right' : 'left'}
+                  data-bright={s.bright ? '' : undefined}
+                  style={`left:${s.x}%;top:${s.y}%;--r:${s.r.toFixed(2)}px`}
+                >
+                  <span class="dot" aria-hidden="true" />
+                  <span class="name">{s.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    ))
+  }
 
   {
-    /* The real, readable content. Visible on narrow screens; on wide screens
-      it is the screen-reader path while the scatter above is aria-hidden. */
+    /* The same skills as a column, for anyone who would rather scan than read
+      a sky. Collapsed by default — which is only safe because the chart above
+      is semantic, so nothing is gated behind opening this. */
   }
-  <div class="galaxy-list">
-    {
-      groups.map((group, i) => (
-        <div class="list-group" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
-          <h3>{group.category}</h3>
-          <ul>
-            {group.items.map((key) => (
-              <li>{TECH[key].label}</li>
-            ))}
-          </ul>
-        </div>
-      ))
-    }
-  </div>
+  <details class="catalog">
+    <summary>
+      <span class="caret" aria-hidden="true"></span>
+      Star catalog
+      <span class="hint">every skill as a plain list</span>
+    </summary>
+    <div class="catalog-body">
+      {
+        groups.map((group, i) => (
+          <div class="list-group" style={`--spec: var(--c-spec-${(i % 5) + 1})`}>
+            <h4>{group.category}</h4>
+            <ul>
+              {group.items.map((key) => (
+                <li>{TECH[key].label}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </details>
 </div>
 
 <style>
-  /* ── Scatter ───────────────────────────────────────────────────────── */
+  /* ── The two charts ────────────────────────────────────────────────── */
+  /* Exactly one is ever displayed. `display: none` rather than opacity or
+     clipping is deliberate: it takes the other chart out of the accessibility
+     tree too, so the skills are never announced twice. */
   .galaxy {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--canvas-w) / var(--canvas-h);
+  }
+
+  .galaxy[data-chart='landscape'] {
     display: none;
   }
 
+  .galaxy[data-chart='portrait'] {
+    /* Never stretched past the width it was solved at: the labels are set in
+       absolute pixels, so a wider canvas pulls the stars apart and leaves the
+       text stranded in the gaps. */
+    max-width: 21.25rem;
+    margin-inline: auto;
+  }
+
+  /* Constellation names wrap on the portrait chart. A one-line "Backend &
+     infrastructure" is 267px against a 340px canvas — wider than the sky it
+     is naming. */
+  .galaxy[data-chart='portrait'] .cluster-label {
+    max-width: 11.75rem;
+  }
+
+  .galaxy[data-chart='portrait'] .cname {
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+    text-align: center;
+    white-space: normal;
+  }
+
   @media (min-width: 60rem) {
-    .galaxy {
+    .galaxy[data-chart='landscape'] {
       display: block;
-      position: relative;
-      aspect-ratio: 1100 / 820;
-      width: 100%;
     }
 
-    .galaxy-list {
+    .galaxy[data-chart='portrait'] {
       display: none;
     }
   }
 
-  /* Each cluster spans the canvas so its label can reach its own stars. The
-     container is pointer-transparent; its children re-enable pointers, so the
-     overlapping boxes never steal a hover from each other. */
   .cluster {
     position: absolute;
     inset: 0;
     pointer-events: none;
+  }
+
+  .cluster-stars {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   .lines {
@@ -466,10 +639,11 @@ const clusters = groups.map((group, gi) => {
   .desig {
     font-family: var(--font-mono);
     font-size: 0.5625rem;
+    font-weight: 400;
     letter-spacing: 0.18em;
     text-indent: 0.18em;
-    /* No opacity dimming here: at this size it drops the designation below
-       AA in light mode (measured 2.62:1). The subtle token already carries the
+    /* No opacity dimming here: at this size it drops the designation below AA
+       in light mode (measured 2.62:1). The subtle token already carries the
        recede, and it clears AA in both themes. */
     color: var(--color-text-subtle);
   }
@@ -605,11 +779,63 @@ const clusters = groups.map((group, gi) => {
     transition: opacity var(--duration-state) var(--ease-out);
   }
 
-  /* ── Narrow screens: the plain grouped list ────────────────────────── */
-  .galaxy-list {
+  /* ── Star catalog ──────────────────────────────────────────────────── */
+  .catalog {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    padding: 0.9rem 0.1rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    list-style: none;
+    transition: color var(--duration-state) var(--ease-out);
+  }
+
+  /* Safari draws its own triangle unless this is removed too. */
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover,
+  summary:focus-visible {
+    color: var(--color-cyan);
+  }
+
+  .caret {
+    align-self: center;
+    width: 0;
+    height: 0;
+    border-left: 5px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform var(--duration-state) var(--ease-out);
+  }
+
+  .catalog[open] .caret {
+    transform: rotate(90deg);
+  }
+
+  .hint {
+    font-size: 0.625rem;
+    letter-spacing: var(--tracking-wide);
+    text-transform: none;
+    color: var(--color-text-subtle);
+  }
+
+  .catalog-body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
     gap: 1.75rem 2.5rem;
+    padding: 0.25rem 0 1.75rem;
   }
 
   .list-group {
@@ -617,7 +843,7 @@ const clusters = groups.map((group, gi) => {
     padding-left: 1rem;
   }
 
-  h3 {
+  h4 {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: 600;
@@ -627,13 +853,13 @@ const clusters = groups.map((group, gi) => {
     margin: 0 0 0.7rem;
   }
 
-  ul {
+  .list-group ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  li {
+  .list-group li {
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     line-height: 1.9;

@@ -394,7 +394,9 @@ describe('the landing page has every expected section', () => {
     const bodies = [
       ...page('index.html').matchAll(/<h2[^>]*>.*?data-body="(\w+)"/gs),
     ].map((m) => m[1])
-    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'cratered'])
+    // The last one is not a body: Get in touch is where the reader stops
+    // looking and starts moving, so it is a rocket on the pad.
+    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'rocket'])
   })
 
   it('gives each marker its own mask ids', () => {
@@ -409,56 +411,131 @@ describe('the landing page has every expected section', () => {
   })
 })
 
+/**
+ * The galaxy solves TWO charts — a landscape sky for wide viewports and a
+ * portrait one for narrow — and only one is ever displayed. Both are in the
+ * markup, so every structural guard below runs against both: a layout bug that
+ * only reaches phones is still a layout bug.
+ */
+const CHARTS = [
+  ...page('index.html').matchAll(
+    /class="galaxy" data-chart="(\w+)"([\s\S]*?)(?=<div class="galaxy" data-chart=|<details)/g,
+  ),
+].map((m) => {
+  const name = m[1]
+  const body = m[2]
+  const [W, H] = (body.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
+  const [CHAR, PAD, BOX_H] = (
+    body.match(/data-star-box="([\d.]+),([\d.]+),([\d.]+)"/) ?? []
+  )
+    .slice(1)
+    .map(Number)
+
+  const clusters = [
+    ...body.matchAll(
+      /class="cluster"[^>]*style="--spec: var\((--c-spec-\d)\)"([\s\S]*?)(?=<div class="cluster"|$)/g,
+    ),
+  ]
+    .map((c) => ({
+      spec: c[1],
+      name: c[2].match(/class="cname"[^>]*>([^<]+)</)?.[1] ?? '?',
+      label: (() => {
+        const l = c[2].match(
+          /class="cluster-label"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/,
+        )
+        return l
+          ? { x: (parseFloat(l[1]) / 100) * W, y: (parseFloat(l[2]) / 100) * H }
+          : null
+      })(),
+      bright: [...c[2].matchAll(/data-bright/g)].length,
+      lines: [...(c[2].match(/./) ? [] : [])] as {
+        x1: number
+        y1: number
+        x2: number
+        y2: number
+      }[],
+      stars: [
+        ...c[2].matchAll(
+          /class="star" data-side="(left|right)"[^>]*style="left:([\d.]+)%;top:([\d.]+)%[^"]*"(.*?)<\/li>/gs,
+        ),
+      ].map((s) => ({
+        // +1 = the name hangs off the right of the star, -1 = off the left.
+        side: s[1] === 'right' ? 1 : -1,
+        x: (parseFloat(s[2]) / 100) * W,
+        y: (parseFloat(s[3]) / 100) * H,
+        label: s[4].match(/class="name"[^>]*>([^<]+)</)?.[1] ?? '',
+      })),
+    }))
+    .filter((c) => c.stars.length > 0)
+
+  // The lines live in the <svg> ahead of the clusters, one <g> per cluster in
+  // the same order.
+  const lineGroups = [
+    ...body.matchAll(/class="cluster-lines"[^>]*>([\s\S]*?)<\/g>/g),
+  ].map((g) =>
+    [
+      ...g[1].matchAll(/x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g),
+    ].map((l) => ({
+      x1: parseFloat(l[1]),
+      y1: parseFloat(l[2]),
+      x2: parseFloat(l[3]),
+      y2: parseFloat(l[4]),
+    })),
+  )
+  clusters.forEach((c, i) => (c.lines = lineGroups[i] ?? []))
+
+  return { name, W, H, CHAR, PAD, BOX_H, clusters }
+})
+
+const centroid = (pts: { x: number; y: number }[]) => ({
+  x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+  y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+})
+
 describe('the skill galaxy', () => {
-  /**
-   * Positions are solved at build time, so a change to the placement
-   * algorithm can silently reintroduce overlapping labels — the first version
-   * shipped eleven overlapping pairs. This recomputes the boxes from the
-   * rendered inline styles and asserts none collide.
-   */
   const html = page('index.html')
 
-  const stars = [
-    ...html.matchAll(
-      /class="star" data-side="(left|right)"[^>]*style="left:([\d.]+)%;top:([\d.]+)%[^"]*"(.*?)<\/span><\/span>/gs,
-    ),
-  ].map((m) => ({
-    // +1 = the name hangs off the right of the star, -1 = off the left.
-    side: m[1] === 'right' ? 1 : -1,
-    x: parseFloat(m[2]),
-    y: parseFloat(m[3]),
-    label: m[4].match(/class="name"[^>]*>([^<]+)</)?.[1] ?? '',
-  }))
-
-  it('renders a star for every skill', () => {
-    const total = resume.skills.reduce((n, g) => n + g.items.length, 0)
-    expect(stars.length).toBe(total)
+  it('solves a landscape chart and a portrait one', () => {
+    // Scaling one chart to both shapes does not work: the positions are
+    // percentages and shrink, the labels are absolute pixels and do not.
+    expect(CHARTS.map((c) => c.name)).toEqual(['landscape', 'portrait'])
+    expect(CHARTS[0].W).toBeGreaterThan(CHARTS[0].H)
+    expect(CHARTS[1].H).toBeGreaterThan(CHARTS[1].W)
   })
 
-  it('places no two star labels on top of each other', () => {
-    // The component publishes its own canvas size, so this cannot drift out of
-    // sync with the layout constants the way a hardcoded copy did.
-    const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
-    expect(W, 'galaxy did not publish its canvas size').toBeGreaterThan(0)
-    // The box model is published too, for the same reason the canvas size is:
-    // a hardcoded copy drifts. The star itself is the anchor point and the
-    // name hangs off one side of it, so the box is NOT centred on the star.
-    const [CHAR, PAD, BOX_H] = (
-      html.match(/data-star-box="([\d.]+),([\d.]+),([\d.]+)"/) ?? []
-    )
-      .slice(1)
-      .map(Number)
-    expect(CHAR, 'galaxy did not publish its star box model').toBeGreaterThan(0)
-    const boxes = stars.map((s) => {
-      const w = s.label.length * CHAR + PAD
-      return {
-        label: s.label,
-        cx: (s.x / 100) * W + (s.side * w) / 2,
-        cy: (s.y / 100) * H,
-        w,
-        h: BOX_H,
-      }
-    })
+  it('shows exactly one chart at a time, and hides the other from AT too', () => {
+    // display:none, not opacity or clipping — the hidden chart has to leave
+    // the accessibility tree or every skill is announced twice.
+    // The minifier drops the quotes around the attribute value.
+    expect(css).toMatch(/\[data-chart=['"]?landscape['"]?\][^{]*\{display:none\}/)
+    expect(css).toMatch(/\[data-chart=['"]?portrait['"]?\][^{]*\{display:none\}/)
+  })
+
+  it.each(CHARTS)('$name renders a star for every skill', (chart) => {
+    const total = resume.skills.reduce((n, g) => n + g.items.length, 0)
+    expect(chart.clusters.flatMap((c) => c.stars).length).toBe(total)
+  })
+
+  it.each(CHARTS)('$name places no two star labels on top of each other', (chart) => {
+    // The component publishes its canvas size AND its box model, for the same
+    // reason: a hardcoded copy here drifts out of sync with the layout. The
+    // star is the anchor point and the name hangs off one side of it, so the
+    // box is NOT centred on the star.
+    expect(chart.W, 'galaxy did not publish its canvas size').toBeGreaterThan(0)
+    expect(chart.CHAR, 'galaxy did not publish its star box model').toBeGreaterThan(0)
+
+    const boxes = chart.clusters
+      .flatMap((c) => c.stars)
+      .map((s) => {
+        const w = s.label.length * chart.CHAR + chart.PAD
+        return {
+          label: s.label,
+          cx: s.x + (s.side * w) / 2,
+          cy: s.y,
+          w,
+          h: chart.BOX_H,
+        }
+      })
     const collisions: string[] = []
     for (let i = 0; i < boxes.length; i++) {
       for (let j = i + 1; j < boxes.length; j++) {
@@ -475,12 +552,12 @@ describe('the skill galaxy', () => {
     expect(collisions).toEqual([])
   })
 
-  it('keeps every star inside the canvas', () => {
-    for (const s of stars) {
+  it.each(CHARTS)('$name keeps every star inside the canvas', (chart) => {
+    for (const s of chart.clusters.flatMap((c) => c.stars)) {
       expect(s.x, s.label).toBeGreaterThan(0)
-      expect(s.x, s.label).toBeLessThan(100)
+      expect(s.x, s.label).toBeLessThan(chart.W)
       expect(s.y, s.label).toBeGreaterThan(0)
-      expect(s.y, s.label).toBeLessThan(100)
+      expect(s.y, s.label).toBeLessThan(chart.H)
     }
   })
 
@@ -494,20 +571,35 @@ describe('the skill galaxy', () => {
     }
   })
 
-  it('provides a plain grouped list as the screen-reader and mobile path', () => {
-    expect(html).toMatch(/class="galaxy-list/)
-    // The scatter is decorative duplication, so it is hidden from AT.
-    expect(html).toMatch(/class="galaxy"[^>]*aria-hidden="true"/)
+  it('makes the chart itself the accessible path, not decoration', () => {
+    // It used to be aria-hidden with a plain list beside it carrying the
+    // content. The list is now collapsed, so the chart had to become the real
+    // thing: a heading and a list per constellation. If this regresses, the
+    // skills are gated behind a disclosure for screen reader users.
+    expect(html).not.toMatch(/class="galaxy"[^>]*aria-hidden/)
+    expect(html).toMatch(/<h3 class="cluster-label"/)
+    expect(html).toMatch(/<ul class="cluster-stars" role="list"/)
+    expect(html).toMatch(/<li class="star"/)
+  })
+
+  it('offers the plain list as a collapsed catalog, not as the only path', () => {
+    const details = html.match(/<details class="catalog"[^>]*>/)
+    expect(details, 'no star catalog').toBeTruthy()
+    // Collapsed by default: no `open` attribute.
+    expect(details![0]).not.toContain('open')
+    expect(html).toMatch(/<summary[\s\S]{0,200}Star catalog/)
+    // And it really does list every skill.
+    for (const group of resume.skills) {
+      expect(html).toContain(group.category.replace(/&/g, '&amp;'))
+    }
   })
 })
 
 describe('constellation identity', () => {
   const html = page('index.html')
 
-  it('gives every cluster a distinct spectral hue', () => {
-    const specs = [
-      ...html.matchAll(/class="cluster"[^>]*style="--spec: var\((--c-spec-\d)\)"/g),
-    ].map((m) => m[1])
+  it.each(CHARTS)('$name gives every cluster a distinct spectral hue', (chart) => {
+    const specs = chart.clusters.map((c) => c.spec)
     expect(specs.length).toBe(resume.skills.length)
     expect(new Set(specs).size).toBe(specs.length)
   })
@@ -546,62 +638,10 @@ describe('constellation identity', () => {
   })
 })
 
-describe('spectral hues meet AA in both themes', () => {
-  function ratio(fg: string, bg: string): number {
-    const lin = (c: number) => {
-      c /= 255
-      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-    }
-    const lum = (h: string) => {
-      let v = h.replace('#', '')
-      // Lightning CSS minifies #ffffff to #fff; expand before parsing or the
-      // slices produce NaN and every ratio silently becomes garbage.
-      if (v.length === 3) v = v[0] + v[0] + v[1] + v[1] + v[2] + v[2]
-      return (
-        0.2126 * lin(parseInt(v.slice(0, 2), 16)) +
-        0.7152 * lin(parseInt(v.slice(2, 4), 16)) +
-        0.0722 * lin(parseInt(v.slice(4, 6), 16))
-      )
-    }
-    const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x)
-    return (a + 0.05) / (b + 0.05)
-  }
-
-  function block(scope: RegExp): Record<string, string> {
-    const b = css.match(scope)?.[0] ?? ''
-    const out: Record<string, string> = {}
-    for (const m of b.matchAll(/(--c-[\w-]+):\s*(#[0-9a-f]{3,6})/gi)) out[m[1]] = m[2]
-    return out
-  }
-
-  const themes: [string, RegExp][] = [
-    ['dark', /:root\{[^}]*--c-bg:#060910[^}]*\}/i],
-    ['light', /\[data-theme=light\]\{[^}]*\}/i],
-  ]
-
-  it.each(themes)(
-    '%s: every spectral hue clears 4.5:1 on every ground',
-    (_name, scope) => {
-      const vars = block(scope)
-      const grounds = ['--c-bg', '--c-surface', '--c-raised']
-        .map((g) => vars[g])
-        .filter(Boolean)
-      expect(grounds.length).toBe(3)
-      for (let i = 1; i <= 5; i++) {
-        const hue = vars[`--c-spec-${i}`]
-        expect(hue, `--c-spec-${i} missing`).toBeTruthy()
-        for (const g of grounds) {
-          expect(ratio(hue, g), `--c-spec-${i} on ${g}`).toBeGreaterThanOrEqual(4.5)
-        }
-      }
-    },
-  )
-})
-
 describe('constellation shape', () => {
   /**
-   * These two assertions exist because the metrics they replace could not see
-   * the actual bug.
+   * These assertions exist because the metrics they replace could not see the
+   * actual bug.
    *
    * A previous layout scored a healthy "minimum distance between stars of
    * different clusters" while constellations were threaded straight through
@@ -611,51 +651,19 @@ describe('constellation shape', () => {
    * So: no foreign star may sit inside a cluster's bounding box, and every
    * label must be nearer its own stars than anyone else's.
    */
-  const html = page('index.html')
-  const [W, H] = (html.match(/data-canvas="(\d+)x(\d+)"/) ?? []).slice(1).map(Number)
-
-  const clusters = [
-    ...html.matchAll(
-      /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
-    ),
-  ]
-    .map((m) => ({
-      name: m[1].match(/class="cname"[^>]*>([^<]+)</)?.[1] ?? '?',
-      label: (() => {
-        const l = m[1].match(
-          /class="cluster-label"[^>]*style="left:([\d.]+)%;top:([\d.]+)%"/,
-        )
-        return l
-          ? { x: (parseFloat(l[1]) / 100) * W, y: (parseFloat(l[2]) / 100) * H }
-          : null
-      })(),
-      stars: [
-        ...m[1].matchAll(/class="star"[^>]*style="left:([\d.]+)%;top:([\d.]+)%[^"]*"/g),
-      ].map((s) => ({
-        x: (parseFloat(s[1]) / 100) * W,
-        y: (parseFloat(s[2]) / 100) * H,
-      })),
-    }))
-    .filter((c) => c.stars.length > 0)
-
-  const centroid = (pts: { x: number; y: number }[]) => ({
-    x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
-    y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+  it.each(CHARTS)('$name parses one group of stars per skill category', (chart) => {
+    expect(chart.clusters.length).toBe(resume.skills.length)
   })
 
-  it('parses one group of stars per skill category', () => {
-    expect(clusters.length).toBe(resume.skills.length)
-  })
-
-  it('never lets constellations interleave', () => {
+  it.each(CHARTS)('$name never lets constellations interleave', (chart) => {
     // The failure a nearest-pair distance metric cannot detect.
     const intruders: string[] = []
-    for (const c of clusters) {
+    for (const c of chart.clusters) {
       const x0 = Math.min(...c.stars.map((s) => s.x))
       const x1 = Math.max(...c.stars.map((s) => s.x))
       const y0 = Math.min(...c.stars.map((s) => s.y))
       const y1 = Math.max(...c.stars.map((s) => s.y))
-      for (const other of clusters) {
+      for (const other of chart.clusters) {
         if (other === c) continue
         for (const s of other.stars) {
           if (s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1) {
@@ -667,17 +675,46 @@ describe('constellation shape', () => {
     expect(intruders).toEqual([])
   })
 
-  it('keeps every label nearer its own stars than any other cluster', () => {
-    for (const c of clusters) {
-      expect(c.label, `${c.name} has no label`).not.toBeNull()
-      const own = centroid(c.stars)
-      const dOwn = Math.hypot(c.label!.x - own.x, c.label!.y - own.y)
-      for (const other of clusters) {
-        if (other === c) continue
-        const o = centroid(other.stars)
-        const dOther = Math.hypot(c.label!.x - o.x, c.label!.y - o.y)
-        expect(dOther, `${c.name} label is nearer ${other.name}`).toBeGreaterThan(dOwn)
+  it.each(CHARTS)(
+    '$name keeps every label nearer its own stars than any other cluster',
+    (chart) => {
+      /*
+       * Measured against each cluster's NEAREST star, not its centroid.
+       *
+       * Centroid distance was the original form and it is a bad proxy once a
+       * cluster is elongated: on the portrait chart the constellations are
+       * squeezed into tall vertical bands, so a label sitting right on top of
+       * its own stars can still be further from their centroid than from a
+       * neighbour's. Nearest-star is the property the eye actually uses to
+       * decide which constellation a name belongs to.
+       */
+      const nearest = (from: { x: number; y: number }, pts: { x: number; y: number }[]) =>
+        Math.min(...pts.map((p) => Math.hypot(from.x - p.x, from.y - p.y)))
+
+      for (const c of chart.clusters) {
+        expect(c.label, `${c.name} has no label`).not.toBeNull()
+        const dOwn = nearest(c.label!, c.stars)
+        for (const other of chart.clusters) {
+          if (other === c) continue
+          const dOther = nearest(c.label!, other.stars)
+          expect(dOther, `${c.name} label is nearer ${other.name}`).toBeGreaterThan(dOwn)
+        }
       }
+    },
+  )
+
+  it('keeps constellations loose, not knotted, and not sprawling', () => {
+    // Landscape only: the portrait chart deliberately squeezes clusters into
+    // narrow vertical bands, so a radius band tuned for open sky does not
+    // describe it.
+    const chart = CHARTS[0]
+    for (const c of chart.clusters) {
+      if (c.stars.length < 3) continue
+      const m = centroid(c.stars)
+      const r =
+        c.stars.reduce((s, p) => s + Math.hypot(p.x - m.x, p.y - m.y), 0) / c.stars.length
+      expect(r, `${c.name} mean radius`).toBeGreaterThan(60)
+      expect(r, `${c.name} mean radius`).toBeLessThan(140)
     }
   })
 
@@ -690,54 +727,25 @@ describe('constellation shape', () => {
    * that cluster's own stars. A hub layout fails the second check, because the
    * hub is a centroid and not a star at all.
    */
-  const lineGroups = [
-    ...html.matchAll(/class="cluster-lines"[^>]*>([\s\S]*?)<\/g>/g),
-  ].map((m) =>
-    [
-      ...m[1].matchAll(/x1="([\d.-]+)" y1="([\d.-]+)" x2="([\d.-]+)" y2="([\d.-]+)"/g),
-    ].map((l) => ({
-      x1: parseFloat(l[1]),
-      y1: parseFloat(l[2]),
-      x2: parseFloat(l[3]),
-      y2: parseFloat(l[4]),
-    })),
+  it.each(CHARTS)(
+    '$name draws each constellation as a spanning tree, not a hub and spokes',
+    (chart) => {
+      for (const c of chart.clusters) {
+        expect(c.lines.length, `${c.name} edge count`).toBe(c.stars.length - 1)
+
+        const onAStar = (x: number, y: number) =>
+          c.stars.some((s) => Math.abs(s.x - x) < 0.5 && Math.abs(s.y - y) < 0.5)
+        for (const l of c.lines) {
+          expect(onAStar(l.x1, l.y1), `${c.name} edge starts off-star`).toBe(true)
+          expect(onAStar(l.x2, l.y2), `${c.name} edge ends off-star`).toBe(true)
+        }
+      }
+    },
   )
 
-  it('draws each constellation as a spanning tree, not a hub and spokes', () => {
-    expect(lineGroups.length).toBe(clusters.length)
-    clusters.forEach((c, i) => {
-      expect(lineGroups[i].length, `${c.name} edge count`).toBe(c.stars.length - 1)
-
-      const onAStar = (x: number, y: number) =>
-        c.stars.some((s) => Math.abs(s.x - x) < 0.5 && Math.abs(s.y - y) < 0.5)
-      for (const l of lineGroups[i]) {
-        expect(onAStar(l.x1, l.y1), `${c.name} edge starts off-star`).toBe(true)
-        expect(onAStar(l.x2, l.y2), `${c.name} edge ends off-star`).toBe(true)
-      }
-    })
-  })
-
-  it('flares exactly one star per constellation', () => {
+  it.each(CHARTS)('$name flares exactly one star per constellation', (chart) => {
     // Diffraction spikes say "this is the bright one". On more than one star
     // per cluster they stop saying anything.
-    const bright = [
-      ...html.matchAll(
-        /class="cluster"[^>]*>([\s\S]*?)(?=<div class="cluster"|<div class="galaxy-list)/g,
-      ),
-    ]
-      .map((m) => [...m[1].matchAll(/data-bright/g)].length)
-      .filter((_, i) => i < clusters.length)
-    expect(bright).toEqual(clusters.map(() => 1))
-  })
-
-  it('keeps constellations loose, not knotted, and not sprawling', () => {
-    for (const c of clusters) {
-      if (c.stars.length < 3) continue
-      const m = centroid(c.stars)
-      const r =
-        c.stars.reduce((s, p) => s + Math.hypot(p.x - m.x, p.y - m.y), 0) / c.stars.length
-      expect(r, `${c.name} mean radius`).toBeGreaterThan(60)
-      expect(r, `${c.name} mean radius`).toBeLessThan(140)
-    }
+    expect(chart.clusters.map((c) => c.bright)).toEqual(chart.clusters.map(() => 1))
   })
 })

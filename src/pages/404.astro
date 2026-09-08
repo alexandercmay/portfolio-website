@@ -1,8 +1,120 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
+import Button from '@/components/Button.astro'
+
+/*
+ * A 404 is the one page nobody meant to open, so it is the cheapest place on
+ * the site to be enjoyable — nothing here is load-bearing.
+ *
+ * It still has to do the job first: say plainly that the page does not exist
+ * and hand back a way out. The drifting probe is decoration around that, not
+ * instead of it.
+ */
 ---
 
-<BaseLayout title="Not found — Alexander May">
-  <h1>Page not found</h1>
-  <p>That page does not exist. <a href="/">Back to the homepage</a>.</p>
+<BaseLayout title="Lost signal — Alexander May">
+  <div class="lost">
+    <svg class="probe" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+      {/* A probe tumbling away, with its signal fanning out behind it. */}
+      <g class="signal">
+        <path
+          d="M74 46a22 22 0 0 1 0 28M82 38a34 34 0 0 1 0 44M90 30a46 46 0 0 1 0 60"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"></path>
+      </g>
+      <g class="craft">
+        <path
+          d="M46 40h20v40H46zM66 52h16v16H66zM30 52h16v16H30z"
+          fill="currentColor"
+          fill-opacity="0.85"></path>
+        <circle cx="56" cy="60" r="4" fill="var(--color-bg)"></circle>
+      </g>
+    </svg>
+
+    <p class="code">404 · no telemetry</p>
+    <h1>This page is not on any chart</h1>
+    <p class="lead">
+      The address you followed does not exist here. Nothing is broken on your end — the
+      page has either moved or never launched.
+    </p>
+
+    <div class="actions">
+      <Button href="/">Back to the homepage</Button>
+      <Button href="/projects" variant="secondary">See the projects</Button>
+    </div>
+  </div>
 </BaseLayout>
+
+<style>
+  .lost {
+    max-width: 34rem;
+    padding: clamp(2rem, 8vw, 5rem) 0 4rem;
+  }
+
+  .probe {
+    width: 5.5rem;
+    height: 5.5rem;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--color-cyan) 35%, transparent));
+  }
+
+  /* The signal fades because the probe is going, not because it is broken. */
+  .signal {
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .craft {
+      animation: tumble 14s linear infinite;
+      transform-origin: 56px 60px;
+    }
+
+    .signal {
+      animation: fade 3.2s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes tumble {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes fade {
+    0%,
+    100% {
+      opacity: 0.18;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .code {
+    margin: 1.75rem 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    font-size: var(--text-2xl);
+  }
+
+  .lead {
+    margin: 0 0 2rem;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>
