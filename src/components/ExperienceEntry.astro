@@ -40,7 +40,7 @@ const hidden = role.highlights.length - highlights.length
 
     {
       highlights.length > 0 && (
-        <ul class="highlights">
+        <ul class="highlights marker-list" role="list">
           {highlights.map((h) => (
             <li>{h}</li>
           ))}
@@ -56,7 +56,15 @@ const hidden = role.highlights.length - highlights.length
       )
     }
 
-    <StackChips stack={role.stack} />
+    {
+      /* Only on /resume. The homepage's Experience section sits directly above
+        the Skills section, which already lists all 32 technologies — every one
+        of the 19 in these chips included — so on that page the chips restated
+        what the reader was about to be shown, at the cost of a 19-item block
+        under the first entry. A resume is read as a standalone document, so it
+        keeps the per-role association. */
+      variant === 'full' && <StackChips stack={role.stack} />
+    }
   </div>
 </article>
 
@@ -100,31 +108,23 @@ const hidden = role.highlights.length - highlights.length
     color: var(--color-text);
   }
 
+  /* Marker comes from `.marker-list` in global.css — see the note there.
+     Only the spacing is local. */
   .highlights {
     margin: 1rem 0 1.1rem;
-    padding-left: 0;
-    list-style: none;
     color: var(--color-text-muted);
     font-size: var(--text-sm);
     line-height: 1.65;
   }
 
   .highlights li {
-    position: relative;
-    padding-left: 1.2rem;
     margin-bottom: 0.55rem;
   }
 
-  /* A readout marker rather than a bullet. */
-  .highlights li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.6em;
-    width: 0.5rem;
-    height: 1px;
-    background: var(--color-cyan);
-    opacity: 0.7;
+  /* The chips used to close every entry. Without them on the homepage the
+     last block's own bottom margin would stack onto the entry padding. */
+  .body > :last-child {
+    margin-bottom: 0;
   }
 
   .more {

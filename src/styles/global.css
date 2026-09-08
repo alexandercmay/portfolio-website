@@ -234,6 +234,58 @@ video {
   text-shadow: var(--glow-cyan);
 }
 
+/* ── List markers ─────────────────────────────────────────────────────────
+   ONE marker, used by every hand-styled list on the site.
+
+   There were three before this, and no two agreed: an 8px rule in the
+   experience highlights, a 6.4px rule at a different opacity and indent under
+   coursework, and a `li::before { content: '· ' }` under education that had
+   been dead for a while because that element is a <p>. The inconsistency was
+   the real bug; the dash being lacklustre was the reason to look.
+
+   The mark is a STAR, drawn the same way the starfield draws its own: an
+   opaque core falling off through a soft mid to nothing, which is exactly the
+   profile scripts/generate-starfield.ts bakes into all 77 of its stars. So the
+   marker beside the text and the sky behind it are the same object at
+   different distances.
+
+   NO GLOW, deliberately, and this is the rule rather than a preference —
+   glow is for accents, borders and display type only. A light source repeated
+   down a column of body copy is the exact thing that prohibition exists to
+   prevent, and the falloff already reads as luminous without one.
+
+   Sized in em so the star tracks whatever font-size the list is set at, and
+   sits on the first line's optical centre rather than its box centre — a
+   marker centred mathematically reads low against lowercase copy.
+
+   `list-style: none` drops list semantics in Safari/VoiceOver, so anything
+   wearing this class needs `role="list"`. Prose deliberately does NOT wear it;
+   see the note in Prose.astro. */
+.marker-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.marker-list > li {
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+.marker-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(0.62em - 4px);
+  width: 9px;
+  height: 9px;
+  background: radial-gradient(
+    circle,
+    var(--color-cyan) 0 18%,
+    color-mix(in srgb, var(--color-cyan) 45%, transparent) 38%,
+    transparent 72%
+  );
+}
+
 /* Sustained reading sits on an opaque surface so the starfield never shows
    through it. Stars are high-contrast points — text directly over a bright
    one measures 1.11:1 — so anything longer than a line or two gets a ground

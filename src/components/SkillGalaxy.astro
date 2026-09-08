@@ -920,6 +920,17 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
      parked between two lines rather than as the chart's own footer. */
   .catalog {
     margin-top: 1rem;
+    /* Lifted into the positioned layer, and this is load-bearing rather than
+       tidiness. `.galaxy` above is `position: relative`, and CSS paints
+       positioned elements ABOVE static ones no matter what the DOM order is —
+       so the chart's full-canvas `.lines` overlay sat on top of this summary
+       once the negative margin below pulled it up into the chart's box, and
+       `elementFromPoint` over the summary returned `svg.lines`. The disclosure
+       simply could not be clicked on any viewport wide enough to get that
+       margin. It also meant an OPEN catalog rendered underneath the
+       constellation strokes. z-index fixes both. */
+    position: relative;
+    z-index: 1;
   }
 
   @media (min-width: 60rem) {
@@ -934,6 +945,10 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
 
   summary {
     display: flex;
+    /* Only as wide as its own text. It overlaps the chart's empty lower sky,
+       and a full-width invisible click strip lying across a hoverable chart
+       steals star hovers along that band. */
+    width: fit-content;
     align-items: baseline;
     gap: 0.55rem;
     padding: 0.9rem 0.1rem;

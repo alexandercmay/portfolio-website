@@ -125,7 +125,7 @@ const featuredProjects = await getFeaturedProjects(3)
               {e.coursework && e.coursework.length > 0 && (
                 <div class="coursework">
                   <p class="coursework-label">Relevant coursework</p>
-                  <ul>
+                  <ul class="marker-list" role="list">
                     {e.coursework.map((c) => (
                       <li>{c}</li>
                     ))}
@@ -435,18 +435,16 @@ const featuredProjects = await getFeaturedProjects(3)
     color: var(--color-cyan);
   }
 
+  /* A <p> of values joined with ' · ', not a list — so it takes no marker.
+     It carried `list-style: none`, `padding: 0` and a `li::before` rule until
+     this pass, all of it left over from when it was a <ul>; the ::before could
+     never match. Inline separators are a different device from list markers
+     and stay as they are. */
   .edu-highlights {
     margin: 0.8rem 0 0;
-    padding: 0;
-    list-style: none;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
-  }
-
-  .edu-highlights li::before {
-    content: '· ';
-    color: var(--color-cyan);
   }
 
   /* ── Full timeline link ───────────────────────────────────────────── */
@@ -555,23 +553,11 @@ const featuredProjects = await getFeaturedProjects(3)
     list-style: none;
   }
 
+  /* Marker comes from `.marker-list` in global.css. */
   .coursework li {
-    position: relative;
-    padding-left: 1rem;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
-  }
-
-  .coursework li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.62em;
-    width: 0.4rem;
-    height: 1px;
-    background: var(--color-cyan);
-    opacity: 0.8;
   }
 
   /* ── Contact ──────────────────────────────────────────────────────── */

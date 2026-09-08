@@ -31,7 +31,7 @@ const { title, href, linkLabel, index, id } = Astro.props
  *
  *   01 Experience    a star, burning and working
  *   02 Projects      a ringed world with a moon — and, at a glance, an eye
- *   03 Skills        the Big Dipper — a constellation you can actually name
+ *   03 Skills        a constellation — literally what the section contains
  *   04 Education     a sextant — how you learn to place yourself
  *   05 Get in touch  a dish, mid-transmission
  *
@@ -123,67 +123,37 @@ const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
 
           {body === 'constellation' && (
             <>
-              {/* The Big Dipper.
+              {/* An asterism: four stars and the chain joining them. The
+                  second is the bright one, the way a real constellation has
+                  an anchor star you find first.
 
-                  This was an abstract four-star asterism, then briefly
-                  Cassiopeia, and the test both failed is the only one that
-                  matters here: a constellation marker works if the viewer
-                  NAMES it. An invented asterism is a squiggle, and the W is
-                  only obvious to people who already know it. The Dipper is
-                  the one nearly everyone can pick out, so it is the one that
-                  does the section's job without a caption.
+                  Two named constellations were tried here and both were
+                  reverted, for OPPOSITE reasons, and the pair of failures is
+                  the useful part. Cassiopeia was perfectly legible and the
+                  site's owner did not recognise the W — so it named nothing,
+                  which is the whole job. The Big Dipper is recognised by
+                  everyone and needs seven stars and six segments to draw,
+                  which at the 1.5rem these render at came out cluttered
+                  against markers that are single masses.
 
-                  The Little Dipper was the other candidate and lost on the
-                  same criterion — its bowl stars are genuinely faint, and it
-                  is mostly recognised by finding the Dipper first. Worth
-                  knowing it had an argument though: Polaris would have rhymed
-                  with the sextant at 04, which measures against a star.
-
-                  BOWL is a quadrilateral, HANDLE is three stars off its
-                  upper-right corner. The handle attaches at Megrez, which is
-                  drawn smallest on purpose — every radius here tracks real
-                  apparent magnitude, and Megrez at 3.3 is famously the faint
-                  one in an otherwise 1.8-2.4 asterism. Alioth and Dubhe are
-                  the brightest and are drawn largest.
-
-                  The bowl is NOT filled, though a fill would help it hold
-                  together at 24px. A constellation is points of light plus a
-                  line somebody imagined between them; fill the bowl and it
-                  stops being an asterism and becomes a bucket. So the stars
-                  carry the mass and the lines stay at 1.5px and 48% — which
-                  is above the ~1.5px floor the rest of this file keeps
-                  running into, and no thinner.
-
-                  This is the busiest marker in the set: seven stars and six
-                  segments where the others have at most five shapes. It holds
-                  at the 1.5rem these render at, but it is at the limit — do
-                  not add anything to it. */}
+                  So: a real constellation is either not recognised or not
+                  compact enough, and this invented four-star chain is the
+                  thing that actually fits the slot. It names nothing, and
+                  that is the price. Do not try a third one without first
+                  counting its stars — four is the budget. */}
               <path
-                d="M9.8 9.8 2.2 7.8 3.4 17.6 10.6 18.2Z"
+                d="M4.8 16.6 9.6 8.2 15 13.6 19.6 6.6"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linejoin="round"
-                opacity="0.48"
-              />
-              <path
-                d="M9.8 9.8 14.6 8.8 19 6.6 22.2 2.6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
+                stroke-width="1"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                opacity="0.48"
+                opacity="0.55"
               />
-              {/* Bowl: Dubhe, Merak, Phecda, Megrez. */}
-              <circle cx="2.2" cy="7.8" r="2.5" fill="currentColor" />
-              <circle cx="3.4" cy="17.6" r="2" fill="currentColor" />
-              <circle cx="10.6" cy="18.2" r="1.9" fill="currentColor" />
-              <circle cx="9.8" cy="9.8" r="1.35" fill="currentColor" />
-              {/* Handle: Alioth, Mizar, Alkaid. */}
-              <circle cx="14.6" cy="8.8" r="2.5" fill="currentColor" />
-              <circle cx="19" cy="6.6" r="2" fill="currentColor" />
-              <circle cx="22.2" cy="2.6" r="2.4" fill="currentColor" />
+              <circle cx="4.8" cy="16.6" r="1.5" fill="currentColor" />
+              <circle cx="9.6" cy="8.2" r="2.3" fill="currentColor" />
+              <circle cx="15" cy="13.6" r="1.6" fill="currentColor" />
+              <circle cx="19.6" cy="6.6" r="1.8" fill="currentColor" />
             </>
           )}
 
