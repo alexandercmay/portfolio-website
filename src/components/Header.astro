@@ -13,10 +13,40 @@ const path = Astro.url.pathname
 <header>
   <div class="inner">
     <a class="wordmark" href="/">
-      <span class="bracket" aria-hidden="true">[</span>alexander may<span
-        class="bracket"
-        aria-hidden="true">]</span
-      >
+      {
+        /*
+          The mark: a pulsing star, echoing the hero's "live" status dot and
+          drawn with the exact same corona/spikes/core construction as
+          SectionHeader's own star marker (section 01, "a star, burning and
+          working") — same geometry the whole site already uses for "star",
+          not a second invented one. It replaced a bracket-wrapped
+          [ALEXANDER MAY] lockup, which was the one piece of header chrome
+          that referenced nothing else on the page.
+
+          Went through two heavier builds first — a spinning-cross version,
+          then a four-planet orbital system with a ringed outermost body —
+          both reverted as too busy for chrome that sits on every page,
+          permanently, rather than a one-shot hero moment. The spikes
+          themselves were never the problem: ROTATING them read as a turbine,
+          not a star, since a plus-sign has no "front" for the eye to track.
+          Static, they read as a star just fine — SectionHeader's marker
+          proves it — so this keeps them fixed and puts the only motion on
+          the glow.
+        */
+      }
+      <svg class="star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.14" />
+        <path
+          d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"
+          stroke="currentColor"
+          stroke-width="1.1"
+          stroke-linecap="round"
+          opacity="0.55"
+          fill="none"
+        />
+        <circle cx="12" cy="12" r="5.6" fill="currentColor" />
+      </svg>
+      Alexander May
     </a>
 
     <nav aria-label="Main">
@@ -60,20 +90,49 @@ const path = Astro.url.pathname
   }
 
   .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     text-decoration: none;
+    color: var(--color-text);
     margin-right: auto;
     /* Must not wrap — a two-line wordmark doubles the header height and eats
        the vertical budget the hero's scan test depends on. */
     white-space: nowrap;
   }
 
-  .bracket {
+  .star {
+    width: 1.05rem;
+    height: 1.05rem;
     color: var(--color-cyan);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-cyan) 55%, transparent));
+    flex-shrink: 0;
+  }
+
+  /* Same pulse rhythm as the hero's `.live` status dot (2.4s), so the two
+     signals on the page read as the same kind of thing rather than two
+     unrelated animations competing for attention. Base state is the fully
+     lit glow with no animation — reduced motion loses the pulse, never the
+     mark itself. */
+  @media (prefers-reduced-motion: no-preference) {
+    .star {
+      animation: pulse-mark 2.4s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes pulse-mark {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-cyan) 55%, transparent));
+    }
+    50% {
+      filter: drop-shadow(0 0 9px color-mix(in srgb, var(--color-cyan) 80%, transparent));
+    }
   }
 
   nav ul {
@@ -103,7 +162,16 @@ const path = Astro.url.pathname
       padding: 0.85rem 1rem;
     }
 
-    .wordmark,
+    .wordmark {
+      gap: 0.45rem;
+      font-size: var(--text-xs);
+    }
+
+    .star {
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+
     nav a {
       font-size: var(--text-xs);
     }

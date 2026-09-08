@@ -1,0 +1,345 @@
+---
+/**
+ * SCRATCH — alternative mono faces to JetBrains Mono.
+ * Not linked from anywhere. Delete once a direction is picked (this also
+ * deletes public/fonts-lab-tmp/, which exists only for this comparison).
+ *
+ * Fonts.css states the site's own rule: self-hosted, Latin subset, preloaded.
+ * A Google Fonts <link> in the page <head> would violate that even for a
+ * scratch page — so these four candidates are downloaded (Latin subset only,
+ * ~120KB total) into public/fonts-lab-tmp/ and declared as @font-face here,
+ * the same way JetBrains Mono itself is loaded, not pulled from a CDN.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Button from '@/components/Button.astro'
+import Chip from '@/components/Chip.astro'
+
+const candidates = [
+  {
+    name: 'Current — JetBrains Mono',
+    family: 'JetBrains Mono',
+    note: 'Baseline. Variable, 100-800, already self-hosted with a metric-matched fallback.',
+  },
+  {
+    name: 'IBM Plex Mono',
+    family: 'IBM Plex Mono',
+    note: 'The default "serious engineering tool" mono. Static 400/500/600/700 — covers every weight this site actually uses. Closest in spirit to the current face; the safest alternative.',
+  },
+  {
+    name: 'Red Hat Mono',
+    family: 'Red Hat Mono',
+    note: 'Higher x-height, quieter letterforms, less "keyboard" character. Variable font, one file covers 300-700.',
+  },
+  {
+    name: 'Space Mono',
+    family: 'Space Mono',
+    note: 'Retro-terminal, most distinct letterforms of the set. Only ships 400/700 — every 500/600 weight on this site (Deck, Button, Header, badges) would silently fall back to 400, losing the weight contrast those rely on.',
+  },
+  {
+    name: 'Martian Mono',
+    family: 'Martian Mono',
+    note: 'The most "instrument panel" of the four — narrow, technical, faintly glitchy. Variable, 100-800. The biggest personality swing; reads closer to a HUD than a resume at body sizes.',
+  },
+]
+---
+
+<BaseLayout title="Lab — font" description="scratch" wide>
+  <style is:inline>
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('/fonts-lab-tmp/f1.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('/fonts-lab-tmp/f3.woff2') format('woff2');
+      font-weight: 500;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('/fonts-lab-tmp/f4.woff2') format('woff2');
+      font-weight: 600;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('/fonts-lab-tmp/f2.woff2') format('woff2');
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Red Hat Mono';
+      src: url('/fonts-lab-tmp/f6.woff2') format('woff2');
+      font-weight: 300 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Space Mono';
+      src: url('/fonts-lab-tmp/f8.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Space Mono';
+      src: url('/fonts-lab-tmp/f7.woff2') format('woff2');
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Martian Mono';
+      src: url('/fonts-lab-tmp/f5.woff2') format('woff2');
+      font-weight: 100 800;
+      font-display: swap;
+    }
+  </style>
+
+  <div class="wrap">
+    <p class="note">
+      Every specimen uses the site's real type scale and weights (h1 at --text-display/700,
+      Deck at --text-deck/500, metric readouts at --text-2xl, tracked labels at
+      --text-xs/600) so a candidate stands or falls on how it actually renders in place, not
+      as an isolated waterfall.
+    </p>
+
+    {
+      candidates.map((c) => (
+        <section class="panel" style={`--font-mono: '${c.family}', ui-monospace, monospace;`}>
+          <div class="panel-head">
+            <p class="panel-name">{c.name}</p>
+          </div>
+
+          <div class="surface">
+            <a class="wordmark">
+              <svg class="star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.14" />
+                <path
+                  d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"
+                  stroke="currentColor"
+                  stroke-width="1.1"
+                  stroke-linecap="round"
+                  opacity="0.55"
+                  fill="none"
+                />
+                <circle cx="12" cy="12" r="5.6" fill="currentColor" />
+              </svg>
+              Alexander May
+            </a>
+            <nav class="mini-nav">
+              <a aria-current="page">projects</a>
+              <a>resume</a>
+            </nav>
+          </div>
+
+          <div class="surface">
+            <h1 class="h1">Alexander May</h1>
+            <p class="headline">Full-stack engineer building distributed AI systems</p>
+          </div>
+
+          <div class="surface metric-row">
+            <div class="metric">
+              <span class="value">&lt;7s</span>
+              <span class="unit">to answer</span>
+            </div>
+            <div>
+              <p class="pillar-name">AI-native security</p>
+              <p class="claim">Agents that can only do what they are authorized to do.</p>
+            </div>
+          </div>
+
+          <div class="surface">
+            <p class="glyphs">0 O 1 l I 8 B &lt;7s 1M+ every 2024—26</p>
+          </div>
+
+          <div class="surface actions-row">
+            <Button href="#" transmit>
+              Get in touch
+            </Button>
+            <Chip>LlamaIndex</Chip>
+            <Chip>Threat Modeling</Chip>
+          </div>
+
+          <p class="caption" style="font-family: var(--font-mono);">
+            {c.note}
+          </p>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .wrap {
+    max-width: var(--container-content);
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  .note {
+    max-width: 68ch;
+    margin: 0 0 2.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+  }
+
+  .panel {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  /* The panel only overrides the --font-mono CUSTOM PROPERTY (see the inline
+     style on .panel in the markup), not `font-family` directly — matching how
+     every real mono-set element on the site works, Button and Chip included,
+     so those two components pick up each candidate correctly without special
+     casing. Everything mono-set in this specimen has to opt in the same way
+     real components do: an explicit `font-family: var(--font-mono)`. */
+  .panel-name,
+  .wordmark,
+  .mini-nav,
+  .h1,
+  .headline,
+  .value,
+  .unit,
+  .pillar-name,
+  .claim,
+  .glyphs {
+    font-family: var(--font-mono);
+  }
+
+  .panel-head {
+    margin-bottom: 1.25rem;
+  }
+
+  .panel-name {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .surface {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    margin-bottom: 0.75rem;
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text);
+  }
+
+  .star {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-cyan) 55%, transparent));
+    flex-shrink: 0;
+  }
+
+  .mini-nav {
+    display: inline-flex;
+    gap: 1.25rem;
+    font-size: var(--text-sm);
+    float: right;
+  }
+
+  .mini-nav a {
+    color: var(--color-text-muted);
+  }
+
+  .mini-nav a[aria-current='page'] {
+    color: var(--color-cyan);
+  }
+
+  .h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    letter-spacing: var(--tracking-display);
+    color: var(--color-text);
+    text-shadow: 0 0 32px color-mix(in srgb, var(--color-cyan) 22%, transparent);
+  }
+
+  .headline {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--color-cyan);
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .metric {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .value {
+    display: block;
+    font-size: var(--text-2xl);
+    color: var(--color-cyan);
+    text-shadow: 0 0 24px color-mix(in srgb, var(--color-cyan) 30%, transparent);
+  }
+
+  .unit {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-subtle);
+  }
+
+  .pillar-name {
+    margin: 0 0 0.4rem;
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-cyan);
+  }
+
+  .claim {
+    margin: 0;
+    font-size: var(--text-deck);
+    font-weight: 500;
+    line-height: var(--leading-deck);
+    color: var(--color-text);
+  }
+
+  .glyphs {
+    margin: 0;
+    font-size: var(--text-lg);
+    letter-spacing: 0.08em;
+    color: var(--color-text);
+  }
+
+  .actions-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .caption {
+    margin: 1rem 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+    line-height: 1.6;
+  }
+</style>

@@ -273,7 +273,7 @@ export const resume: Resume = {
     {
       glyph: 'backend',
       name: 'Distributed Backend',
-      claim: 'Event-driven services that stay correct under real load.',
+      claim: 'Event-driven services built to hold up under real load.',
       metric: { value: '1M+', unit: 'messages a day' },
       proof: [
         'Architected an AMQP pipeline enriching over a million messages a day',
@@ -288,8 +288,8 @@ export const resume: Resume = {
       claim: 'Agents that can only do what they are authorized to do.',
       metric: { value: 'every', unit: 'agent call authorized' },
       proof: [
-        'Built the gateway every agent call is authorized through — no tool reaches a user system unvetted',
-        'Wrote the middleware that stops an agent reaching a user system it has no claim to',
+        'Added the authorized routes to the agent gateway — no tool call reaches a user system unvetted',
+        'Extended the middleware that stops an agent reaching a user system it has no claim to',
         'Structured the agent stack so one agent cannot prompt-inject another',
         'Published an org-wide AI threat-modeling skill — reviews that took days now take minutes',
       ],

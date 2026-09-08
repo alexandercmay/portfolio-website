@@ -178,7 +178,11 @@
   --c-text-muted: #9aa7b4; /*  7.93:1 */
   --c-text-subtle: #7d8b9a; /*  5.59:1 — the floor */
 
-  --c-cyan: #22d3ee; /* 10.77:1 */
+  /* Lightened and desaturated from the original #22d3ee — same hue family,
+     just colder and quieter rather than a different accent. Verified against
+     all three dark grounds before the swap: 11.95:1 / 11.16:1 / 10.45:1
+     against bg / surface / raised, all above this file's stated 4.76 floor. */
+  --c-cyan: #7dd3fc; /* 11.95:1 */
   --c-lime: #a3e635; /* 12.91:1 */
   --c-violet: #c4b5fd; /* 10.54:1 */
   --c-amber: #fbbf24; /* 11.66:1 */
