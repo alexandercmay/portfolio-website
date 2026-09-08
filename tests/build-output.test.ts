@@ -399,8 +399,12 @@ describe('the landing page has every expected section', () => {
      * planetary system outward instead, and that failed because position is
      * not meaning: Skills got a gas giant for being third, not for being
      * Skills.
+     *
+     * 04 was an observatory dome until it was a sextant — a building turned
+     * out to be a bad 24px object, and "measure where you are from a star"
+     * beats "the place you go" as a claim about an education anyway.
      */
-    expect(bodies).toEqual(['star', 'ringed', 'constellation', 'observatory', 'dish'])
+    expect(bodies).toEqual(['star', 'ringed', 'constellation', 'sextant', 'dish'])
   })
 
   it('keeps the markers free of ids entirely', () => {

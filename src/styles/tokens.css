@@ -116,9 +116,11 @@
      uniform grid, so they cost more readability per unit of brightness.
 
      Most of these are read at BUILD time by scripts/generate-starfield.ts,
-     which bakes the field into tiled SVGs — the CSS-gradient version was
-     92 layers over a document-sized layer and made scrolling heavy. Change
-     one and run `npm run gen:starfield`, or the sky will not move.
+     which bakes the field into tiled PNGs — the CSS-gradient version was
+     92 layers over a document-sized layer and made scrolling heavy, and the
+     tiled-SVG version that replaced it re-rasterized at the display's pixel
+     ratio, which cost 76MB on Retina and stuttered worse. Change one of
+     these and run `npm run gen:starfield`, or the sky will not move.
      --c-star-blue is the exception: the dust clouds in global.css still
      read it at runtime. */
   --c-star-core: #ffffff;

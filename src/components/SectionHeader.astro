@@ -30,9 +30,9 @@ const { title, href, linkLabel, index, id } = Astro.props
  * arbitrary rather than as a system.
  *
  *   01 Experience    a star, burning and working
- *   02 Projects      a ringed planet — distinct worlds, built
- *   03 Skills        a constellation — literally what the section contains
- *   04 Education     an observatory dome — where you learn to look
+ *   02 Projects      a ringed world with a moon — and, at a glance, an eye
+ *   03 Skills        the Big Dipper — a constellation you can actually name
+ *   04 Education     a sextant — how you learn to place yourself
  *   05 Get in touch  a dish, mid-transmission
  *
  * The dish is not a rocket, which was the first version of that one. A rocket
@@ -41,18 +41,19 @@ const { title, href, linkLabel, index, id } = Astro.props
  * transmission, and it gives the site ONE comms language: the same arcs the
  * lost probe on the 404 is sending.
  *
- * Filled silhouettes, and where a shape needs a hole — the observatory's slit,
- * the dish's dark side — it is a real cutout via an even-odd fill, never a
- * shape painted in the background colour. At 24px a solid silhouette with a
- * cutout stays legible where an outline-and-fill drawing turns to mush, and a
- * cutout is genuinely transparent, so these survive sitting on the starfield.
+ * Filled silhouettes and weighted strokes, and where a shape ever needs a hole
+ * it is a real cutout via an even-odd fill, never a shape painted in the
+ * background colour — these sit on the starfield, so a "hole" in the ground
+ * colour would be an opaque blot over the stars. At 24px a heavy silhouette
+ * stays legible where an outline-and-fill drawing turns to mush, which is why
+ * each of these has ONE dominant mass and the rest is detail hung off it.
  *
  * No ids anywhere in here, deliberately. Five of these render on one page, and
  * an earlier pass used masks whose ids had to be hand-namespaced or every
  * section would draw the first section's cutouts. Even-odd fills need no ids,
  * so the whole class of bug is gone.
  */
-const BODIES = ['star', 'ringed', 'constellation', 'observatory', 'dish'] as const
+const BODIES = ['star', 'ringed', 'constellation', 'sextant', 'dish'] as const
 const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
 ---
 
@@ -84,75 +85,159 @@ const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
 
           {body === 'ringed' && (
             <>
+              {/* A ringed world with a moon sitting on the rim — which also
+                  reads as an EYE, and that is the point rather than an
+                  accident. 02 is the section you look into.
+
+                  The ring is 2.3px and steeply tilted, and both numbers are
+                  load-bearing. An earlier version of this idea drew the second
+                  body on a 0.9px orbit and it simply vanished: at the 1.5rem
+                  these actually render at, a stroke under about 1.5px is not a
+                  line, it is a rumour, and what survived was two unrelated
+                  dots. Anything decorative in this set has to be MASS or a
+                  genuinely bold stroke — there is no middle setting.
+
+                  The steep rotation is what turns a ring into an iris. The old
+                  ring lay almost flat (-22 degrees, ry 3.6), which reads as
+                  Saturn seen edge-on; opening it to ry 5.8 at -30 degrees
+                  closes the ellipse toward a circle and the eye appears. */}
               <ellipse
                 cx="12"
                 cy="12"
-                rx="11"
-                ry="3.6"
-                transform="rotate(-22 12 12)"
+                rx="9.8"
+                ry="5.8"
+                transform="rotate(-30 12 12)"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="1.2"
-                opacity="0.7"
+                stroke-width="2.3"
+                opacity="0.48"
               />
-              <circle cx="12" cy="12" r="6" fill="currentColor" />
+              <circle cx="12" cy="12" r="4.8" fill="currentColor" />
+              {/* Parked on the ansa — the tip of the ring's major axis, where
+                  a real ring is widest and where the moon looks seated rather
+                  than floating near the line. Move the ellipse and this has to
+                  move with it or it detaches. */}
+              <circle cx="20.5" cy="7.1" r="2.9" fill="currentColor" />
             </>
           )}
 
           {body === 'constellation' && (
             <>
-              {/* An asterism: four stars and the chain joining them. The
-                  second is the bright one, the way a real constellation has
-                  an anchor star you find first. */}
+              {/* The Big Dipper.
+
+                  This was an abstract four-star asterism, then briefly
+                  Cassiopeia, and the test both failed is the only one that
+                  matters here: a constellation marker works if the viewer
+                  NAMES it. An invented asterism is a squiggle, and the W is
+                  only obvious to people who already know it. The Dipper is
+                  the one nearly everyone can pick out, so it is the one that
+                  does the section's job without a caption.
+
+                  The Little Dipper was the other candidate and lost on the
+                  same criterion — its bowl stars are genuinely faint, and it
+                  is mostly recognised by finding the Dipper first. Worth
+                  knowing it had an argument though: Polaris would have rhymed
+                  with the sextant at 04, which measures against a star.
+
+                  BOWL is a quadrilateral, HANDLE is three stars off its
+                  upper-right corner. The handle attaches at Megrez, which is
+                  drawn smallest on purpose — every radius here tracks real
+                  apparent magnitude, and Megrez at 3.3 is famously the faint
+                  one in an otherwise 1.8-2.4 asterism. Alioth and Dubhe are
+                  the brightest and are drawn largest.
+
+                  The bowl is NOT filled, though a fill would help it hold
+                  together at 24px. A constellation is points of light plus a
+                  line somebody imagined between them; fill the bowl and it
+                  stops being an asterism and becomes a bucket. So the stars
+                  carry the mass and the lines stay at 1.5px and 48% — which
+                  is above the ~1.5px floor the rest of this file keeps
+                  running into, and no thinner.
+
+                  This is the busiest marker in the set: seven stars and six
+                  segments where the others have at most five shapes. It holds
+                  at the 1.5rem these render at, but it is at the limit — do
+                  not add anything to it. */}
               <path
-                d="M4.8 16.6 9.6 8.2 15 13.6 19.6 6.6"
+                d="M9.8 9.8 2.2 7.8 3.4 17.6 10.6 18.2Z"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="1"
+                stroke-width="1.5"
+                stroke-linejoin="round"
+                opacity="0.48"
+              />
+              <path
+                d="M9.8 9.8 14.6 8.8 19 6.6 22.2 2.6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                opacity="0.55"
+                opacity="0.48"
               />
-              <circle cx="4.8" cy="16.6" r="1.5" fill="currentColor" />
-              <circle cx="9.6" cy="8.2" r="2.3" fill="currentColor" />
-              <circle cx="15" cy="13.6" r="1.6" fill="currentColor" />
-              <circle cx="19.6" cy="6.6" r="1.8" fill="currentColor" />
+              {/* Bowl: Dubhe, Merak, Phecda, Megrez. */}
+              <circle cx="2.2" cy="7.8" r="2.5" fill="currentColor" />
+              <circle cx="3.4" cy="17.6" r="2" fill="currentColor" />
+              <circle cx="10.6" cy="18.2" r="1.9" fill="currentColor" />
+              <circle cx="9.8" cy="9.8" r="1.35" fill="currentColor" />
+              {/* Handle: Alioth, Mizar, Alkaid. */}
+              <circle cx="14.6" cy="8.8" r="2.5" fill="currentColor" />
+              <circle cx="19" cy="6.6" r="2" fill="currentColor" />
+              <circle cx="22.2" cy="2.6" r="2.4" fill="currentColor" />
             </>
           )}
 
-          {body === 'observatory' && (
+          {body === 'sextant' && (
             <>
-              {/* A telescope looking out through an angled slit.
+              {/* A sextant sighting a star.
 
-                  Two rewrites. A plain semicircle with a notch read as a hill
-                  on a plinth. Splitting the dome down the middle and standing
-                  it on a narrow drum fixed the dome and produced an unmistakably
-                  phallic silhouette instead — a vertical shaft on a narrow base
-                  is that shape, whatever it is meant to be.
+                  This replaces an observatory dome that never worked. The dome
+                  went through three rewrites — a hill on a plinth, then a
+                  frankly phallic shaft on a drum, then a wide low version that
+                  read as a bell — and the problem was never the drawing. A
+                  building is a bad 24px object: its meaning lives in the dome,
+                  which is a featureless curve at that size.
 
-                  What fixes it is breaking the vertical symmetry: the drum is
-                  now nearly as wide as the dome, so there is no shaft, and the
-                  opening runs on a DIAGONAL with the instrument leaning out of
-                  it. A tube pointing off-axis is the thing no other object
-                  reads as. */}
-              <path d="M2.6 20.8h18.8v1.8H2.6Z" fill="currentColor" opacity="0.85" />
-              <path d="M5.3 17h13.4v3.6H5.3Z" fill="currentColor" opacity="0.85" />
-              <path d="M5.6 17a6.4 6.4 0 0 1 12.8 0Z" fill="currentColor" />
-              {/* The tube leaves the dome through the slit, so it is drawn over
-                  the dome and past its edge. */}
+                  The sextant is also a better claim. A dome is where you go;
+                  a sextant is what you DO — measure the angle between a star
+                  and the horizon to work out where you are. That is closer to
+                  what an education is for, and it speaks the instrument-panel
+                  language the rest of the site is built in.
+
+                  The LIMB is the heavy mass; frame, index arm and pivot hang
+                  off it. Three details keep it from reading as an anchor,
+                  which is the failure mode of any wide arc under a vertical
+                  stem: the frame is lighter than the limb, the index arm is
+                  heavier and runs OFF-AXIS, and it breaks past the limb rather
+                  than stopping at it. Symmetry is what made it an anchor. */}
               <path
-                d="M11.6 16.3 18.7 8.4"
+                d="M4.2 15.2A9.8 9.8 0 0 0 19.8 15.2"
+                fill="none"
                 stroke="currentColor"
-                stroke-width="3.2"
+                stroke-width="3.4"
                 stroke-linecap="round"
               />
               <path
-                d="M17.2 6.9 21.1 10.4"
+                d="M12 5 6 17M12 5 18 17"
                 stroke="currentColor"
                 stroke-width="1.7"
                 stroke-linecap="round"
-                opacity="0.8"
+                opacity="0.6"
               />
+              {/* The index arm — the part that actually takes the measurement,
+                  so it is the one line drawn at full weight. */}
+              <path
+                d="M12 5 15.6 19"
+                stroke="currentColor"
+                stroke-width="2.3"
+                stroke-linecap="round"
+              />
+              <circle cx="12" cy="4.8" r="2.2" fill="currentColor" />
+              {/* The star being shot. Same move the dish makes with its arcs:
+                  an instrument aimed at something reads as working, not
+                  parked — and it ties 04 back to the sky the other four
+                  markers live in. */}
+              <circle cx="20.8" cy="4" r="1.6" fill="currentColor" opacity="0.9" />
             </>
           )}
 

@@ -7,12 +7,37 @@
  * the page, so the background layer is the size of the whole DOCUMENT — around
  * 1440x4600, or 6.7 million pixels — and the browser rasterizes fresh tiles of
  * it as you scroll. Every one of those tiles had to evaluate all 92 gradient
- * layers. That is what made scrolling feel heavy; it was measured as a
- * scrolling symptom, not a load or hover one.
+ * layers. That is what made scrolling feel heavy.
  *
- * Baking each tier into ONE tiled SVG collapses that to five image layers. An
- * image is decoded once and then blitted, rather than 92 gradients being
- * evaluated per pixel per tile.
+ * Baking each tier into ONE tiled image collapses that to five image layers.
+ * An image is decoded once and then blitted.
+ *
+ * WHY THE TILES ARE PNG AND NOT SVG
+ *
+ * The first version of this fix baked them as inline SVG, which fixed the
+ * gradient-evaluation cost and introduced a worse one. An SVG background is a
+ * VECTOR source: the browser has no cached bitmap for it, so it rasterizes at
+ * the DESTINATION device scale, and re-rasterizes whenever that scale changes
+ * or the cache entry is evicted. These tiles are large — the biggest is
+ * 1500x1500 CSS px — and raster cost is quadratic in tile size. On a Retina
+ * display the five tiers came to 19.8 MEGAPIXELS, about 76MB of raster, to
+ * carry roughly 77 stars. The hero tier alone was a 3000x3000 bitmap holding
+ * THREE stars.
+ *
+ * That overruns the image cache, so tiles get evicted and re-rasterized mid
+ * scroll. Measured on the real page it produced 500ms frames with a 1.3s
+ * worst case, in dark mode only — light mode has no star images at all, and
+ * held a locked 60fps through the identical scroll. That asymmetry is the
+ * whole diagnosis.
+ *
+ * A PNG is a RASTER source. It is decoded once at its own intrinsic size and
+ * the GPU scales it, so cost stops depending on the display's pixel ratio and
+ * the same five tiers come to 5 megapixels instead of 19.8.
+ *
+ * Nothing in this field has a hard edge — every shape is a radial gradient
+ * that fades to zero — so there is no high-frequency detail for a fixed
+ * resolution to lose. That is precisely why this content can afford to be a
+ * bitmap and, say, body text could not.
  *
  * The colours are read out of tokens.css at generate time, so the tokens stay
  * the single source of truth. The one thing that could NOT survive the move is
@@ -24,6 +49,7 @@
  * Run: npm run gen:starfield
  */
 import { readFileSync, writeFileSync } from 'node:fs'
+import { deflateSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -48,18 +74,177 @@ function readTokens(): Record<string, string> {
 
 const T = readTokens()
 
-/** `#rrggbb` or `rgb(r g b / a%)` → an SVG stop-color + stop-opacity pair. */
-function stop(token: string): { color: string; opacity: number } {
+type Paint = { r: number; g: number; b: number; a: number }
+
+/** `#rrggbb` or `rgb(r g b / a%)` → 0-255 channels plus a 0-1 alpha. */
+function paint(token: string): Paint {
   const v = T[token]
   if (!v) throw new Error(`missing token ${token} in tokens.css`)
   const rgba = v.match(/rgb\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\/\s*([\d.]+)%\s*\)/)
   if (rgba) {
-    const hex = [rgba[1], rgba[2], rgba[3]]
-      .map((n) => Number(n).toString(16).padStart(2, '0'))
-      .join('')
-    return { color: `#${hex}`, opacity: Number(rgba[4]) / 100 }
+    return {
+      r: Number(rgba[1]),
+      g: Number(rgba[2]),
+      b: Number(rgba[3]),
+      a: Number(rgba[4]) / 100,
+    }
   }
-  return { color: v, opacity: 1 }
+  const hex = v.match(/^#([0-9a-f]{6})$/i)
+  if (!hex) throw new Error(`token ${token} is neither #rrggbb nor rgb(... / ...%): ${v}`)
+  const n = parseInt(hex[1], 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, a: 1 }
+}
+
+/* ── PNG ──────────────────────────────────────────────────────────────────
+   A minimal 8-bit RGBA encoder. Node ships the only hard part (deflate) in
+   node:zlib, so this needs no dependency.
+
+   Every scanline uses filter 0 (None). The usual reason to pick a smarter
+   filter is to turn gradients into small deltas, but these tiles are ~99%
+   fully transparent black, and long runs of zero are what deflate is best at
+   — the filtered forms measure larger here, not smaller.
+   ─────────────────────────────────────────────────────────────────────── */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256)
+  for (let n = 0; n < 256; n++) {
+    let c = n
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
+    t[n] = c >>> 0
+  }
+  return t
+})()
+
+function crc32(buf: Uint8Array): number {
+  let c = 0xffffffff
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 255] ^ (c >>> 8)
+  return (c ^ 0xffffffff) >>> 0
+}
+
+function chunk(type: string, data: Uint8Array): Buffer {
+  const body = Buffer.concat([Buffer.from(type, 'latin1'), data])
+  const len = Buffer.alloc(4)
+  len.writeUInt32BE(data.length)
+  const crc = Buffer.alloc(4)
+  crc.writeUInt32BE(crc32(body))
+  return Buffer.concat([len, body, crc])
+}
+
+function encodePNG(w: number, h: number, rgba: Uint8Array): Buffer {
+  const stride = w * 4
+  const raw = Buffer.alloc(h * (stride + 1))
+  for (let y = 0; y < h; y++) {
+    raw[y * (stride + 1)] = 0
+    raw.set(rgba.subarray(y * stride, y * stride + stride), y * (stride + 1) + 1)
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8 // bit depth
+  ihdr[9] = 6 // colour type: RGBA
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw, { level: 9 })),
+    chunk('IEND', new Uint8Array(0)),
+  ])
+}
+
+/* ── Rasterizer ───────────────────────────────────────────────────────────
+   Small enough to be worth having rather than pulling in a canvas.
+
+   A tile is a premultiplied RGBA float buffer that shapes composite into
+   source-over, in draw order — same as the SVG it replaces, so a hero's
+   spikes, halo and core still stack correctly.
+
+   Shapes are drawn 4x4 SUPERSAMPLED, and only inside their own bounding box.
+   The faint tiers are sub-pixel dots (r as low as 0.5), so point sampling
+   turns them into a flickering mess of on/off pixels; and since every shape is
+   tiny next to the tile, restricting to the bbox is what keeps a 1500x1500
+   tile in the tens of milliseconds rather than the tens of seconds.
+   ─────────────────────────────────────────────────────────────────────── */
+const SS = 4
+
+class Tile {
+  readonly buf: Float32Array // premultiplied r,g,b,a in 0-1
+  readonly size: number
+  constructor(size: number) {
+    this.size = size
+    this.buf = new Float32Array(size * size * 4)
+  }
+
+  /**
+   * Composite one radial-gradient shape.
+   *
+   * `norm` maps a point to gradient position: 0 at the centre, 1 at the shape
+   * edge, >1 outside (and clipped away, exactly as the SVG shape clipped it).
+   *
+   * `fadeAt` mirrors the SVG stop layout: alpha runs from the paint's own
+   * alpha at 0 down to zero at `fadeAt`, and stays zero out to the edge. The
+   * halos use it to hold their glow tighter than their radius.
+   */
+  private shape(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    p: Paint,
+    fadeAt: number,
+    norm: (x: number, y: number) => number,
+  ) {
+    const lo = (v: number) => Math.max(0, Math.floor(v))
+    const hi = (v: number, m: number) => Math.min(m, Math.ceil(v))
+    const R = p.r / 255
+    const G = p.g / 255
+    const B = p.b / 255
+    for (let py = lo(y0); py < hi(y1, this.size); py++) {
+      for (let px = lo(x0); px < hi(x1, this.size); px++) {
+        let acc = 0
+        for (let sy = 0; sy < SS; sy++) {
+          for (let sx = 0; sx < SS; sx++) {
+            const t = norm(px + (sx + 0.5) / SS, py + (sy + 0.5) / SS)
+            if (t >= 1) continue
+            acc += t < fadeAt ? p.a * (1 - t / fadeAt) : 0
+          }
+        }
+        if (acc === 0) continue
+        const a = acc / (SS * SS)
+        const i = (py * this.size + px) * 4
+        // source-over, premultiplied
+        this.buf[i] = R * a + this.buf[i] * (1 - a)
+        this.buf[i + 1] = G * a + this.buf[i + 1] * (1 - a)
+        this.buf[i + 2] = B * a + this.buf[i + 2] * (1 - a)
+        this.buf[i + 3] = a + this.buf[i + 3] * (1 - a)
+      }
+    }
+  }
+
+  /** A soft disc: `p`'s alpha at the centre, zero at radius `r`. */
+  circle(cx: number, cy: number, r: number, p: Paint, fadeAt = 1) {
+    this.shape(cx - r, cy - r, cx + r, cy + r, p, fadeAt, (x, y) =>
+      Math.hypot((x - cx) / r, (y - cy) / r),
+    )
+  }
+
+  /** The same, stretched — this is how a diffraction spike is drawn. */
+  ellipse(cx: number, cy: number, rx: number, ry: number, p: Paint, fadeAt = 1) {
+    this.shape(cx - rx, cy - ry, cx + rx, cy + ry, p, fadeAt, (x, y) =>
+      Math.hypot((x - cx) / rx, (y - cy) / ry),
+    )
+  }
+
+  /** Premultiplied floats → straight 8-bit RGBA, which is what PNG stores. */
+  toRGBA(): Uint8Array {
+    const out = new Uint8Array(this.size * this.size * 4)
+    for (let i = 0; i < out.length; i += 4) {
+      const a = this.buf[i + 3]
+      if (a <= 0) continue
+      out[i] = Math.round(Math.min(1, this.buf[i] / a) * 255)
+      out[i + 1] = Math.round(Math.min(1, this.buf[i + 1] / a) * 255)
+      out[i + 2] = Math.round(Math.min(1, this.buf[i + 2] / a) * 255)
+      out[i + 3] = Math.round(a * 255)
+    }
+    return out
+  }
 }
 
 /**
@@ -84,44 +269,24 @@ function field(seed: number, n: number, minDist: number): [number, number][] {
   return pts
 }
 
-const r2 = (n: number) => +n.toFixed(2)
+const layers: { css: string; size: number; bytes: number }[] = []
 
-/**
- * One tier → a `url("data:image/svg+xml,...")` background layer.
- *
- * The SVG is written with plain `#` in its internal `url(#id)` gradient
- * references and encoded ONCE here. Pre-escaping those to `%23` by hand and
- * then encoding produced `%2523`, every gradient reference dangled, and the
- * whole field rendered empty — with no error anywhere.
- */
-function tier(opts: { tile: number; defs: string; body: string }): string {
-  const svg =
-    `<svg xmlns='http://www.w3.org/2000/svg' width='${opts.tile}' height='${opts.tile}' ` +
-    `viewBox='0 0 ${opts.tile} ${opts.tile}'>` +
-    `<defs>${opts.defs}</defs>${opts.body}</svg>`
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+function emit(tile: Tile) {
+  const png = encodePNG(tile.size, tile.size, tile.toRGBA())
+  layers.push({
+    // Single quotes because that is what Prettier normalises a url() to when
+    // its contents contain no apostrophe. The SVG payloads this replaced were
+    // full of them, so they kept double quotes and the check passed either way.
+    css: `url('data:image/png;base64,${png.toString('base64')}')`,
+    size: tile.size,
+    bytes: png.length,
+  })
 }
-
-/** A soft dot: opaque at the centre, gone at the edge — a CSS radial-gradient. */
-function softGradient(id: string, token: string, fadeAt = 1): string {
-  const { color, opacity } = stop(token)
-  return (
-    `<radialGradient id='${id}'>` +
-    `<stop offset='0' stop-color='${color}' stop-opacity='${opacity}'/>` +
-    (fadeAt < 1
-      ? `<stop offset='${fadeAt}' stop-color='${color}' stop-opacity='0'/>` +
-        `<stop offset='1' stop-color='${color}' stop-opacity='0'/>`
-      : `<stop offset='1' stop-color='${color}' stop-opacity='0'/>`) +
-    `</radialGradient>`
-  )
-}
-
-const layers: { css: string; size: number }[] = []
 
 // ── hero: halo, hard core, and the diffraction spikes a bright star throws
 //    through a lens. Rare on purpose. ──────────────────────────────────────
 {
-  const tile = 1500
+  const tile = new Tile(1500)
   const heroes = [
     { spike: 26, spikeTok: '--c-spike-blue', halo: 9, haloTok: '--c-halo-blue', core: 2 },
     {
@@ -139,69 +304,61 @@ const layers: { css: string; size: number }[] = []
       core: 1.7,
     },
   ]
-  const pts = field(7, 3, 0.34)
-  let defs = softGradient('c', '--c-star-core')
-  let body = ''
-  heroes.forEach((h, i) => {
-    const [px, py] = pts[i]
-    const x = r2(px * tile)
-    const y = r2(py * tile)
-    defs += softGradient(`s${i}`, h.spikeTok) + softGradient(`h${i}`, h.haloTok, 0.7)
-    body +=
-      `<ellipse cx='${x}' cy='${y}' rx='${h.spike}' ry='1' fill='url(#s${i})'/>` +
-      `<ellipse cx='${x}' cy='${y}' rx='1' ry='${h.spike}' fill='url(#s${i})'/>` +
-      `<circle cx='${x}' cy='${y}' r='${h.halo}' fill='url(#h${i})'/>` +
-      `<circle cx='${x}' cy='${y}' r='${h.core}' fill='url(#c)'/>`
+  const core = paint('--c-star-core')
+  field(7, 3, 0.34).forEach(([px, py], i) => {
+    const h = heroes[i]
+    const x = px * tile.size
+    const y = py * tile.size
+    const sp = paint(h.spikeTok)
+    tile.ellipse(x, y, h.spike, 1, sp)
+    tile.ellipse(x, y, 1, h.spike, sp)
+    tile.circle(x, y, h.halo, paint(h.haloTok), 0.7)
+    tile.circle(x, y, h.core, core)
   })
-  layers.push({ css: tier({ tile, defs, body }), size: tile })
+  emit(tile)
 }
 
 // ── bright: halo then core. Sparse on purpose. ───────────────────────────
 {
-  const tile = 1100
+  const tile = new Tile(1100)
   const bright = [
     { halo: 9, haloTok: '--c-halo-blue', core: 1.6, coreTok: '--c-star-core' },
     { halo: 11, haloTok: '--c-halo-cyan', core: 1.5, coreTok: '--c-star-cyan' },
     { halo: 9, haloTok: '--c-halo-violet', core: 1.4, coreTok: '--c-star-violet' },
     { halo: 8, haloTok: '--c-halo-gold', core: 1.3, coreTok: '--c-star-gold' },
   ]
-  const pts = field(11, 4, 0.3)
-  let defs = ''
-  let body = ''
-  bright.forEach((b, i) => {
-    const [px, py] = pts[i]
-    const x = r2(px * tile)
-    const y = r2(py * tile)
-    defs += softGradient(`h${i}`, b.haloTok, 0.7) + softGradient(`k${i}`, b.coreTok)
-    body +=
-      `<circle cx='${x}' cy='${y}' r='${b.halo}' fill='url(#h${i})'/>` +
-      `<circle cx='${x}' cy='${y}' r='${b.core}' fill='url(#k${i})'/>`
+  field(11, 4, 0.3).forEach(([px, py], i) => {
+    const b = bright[i]
+    const x = px * tile.size
+    const y = py * tile.size
+    tile.circle(x, y, b.halo, paint(b.haloTok), 0.7)
+    tile.circle(x, y, b.core, paint(b.coreTok))
   })
-  layers.push({ css: tier({ tile, defs, body }), size: tile })
+  emit(tile)
 }
 
 /** The plain tiers: one soft dot per star, coloured by token. */
 function dotTier(
-  tile: number,
+  size: number,
   seed: number,
   minDist: number,
   spec: { token: string; r: number; n: number }[],
 ) {
-  const total = spec.reduce((n, s) => n + s.n, 0)
-  const pts = field(seed, total, minDist)
-  const tokens = [...new Set(spec.map((s) => s.token))]
-  const defs = tokens.map((t, i) => softGradient(`g${i}`, t)).join('')
-  let body = ''
+  const tile = new Tile(size)
+  const pts = field(
+    seed,
+    spec.reduce((n, s) => n + s.n, 0),
+    minDist,
+  )
   let k = 0
   for (const s of spec) {
+    const p = paint(s.token)
     for (let j = 0; j < s.n; j++, k++) {
       if (!pts[k]) break
-      const x = r2(pts[k][0] * tile)
-      const y = r2(pts[k][1] * tile)
-      body += `<circle cx='${x}' cy='${y}' r='${s.r}' fill='url(#g${tokens.indexOf(s.token)})'/>`
+      tile.circle(pts[k][0] * size, pts[k][1] * size, s.r, p)
     }
   }
-  layers.push({ css: tier({ tile, defs, body }), size: tile })
+  emit(tile)
 }
 
 // ── mid field ────────────────────────────────────────────────────────────
@@ -239,7 +396,7 @@ const sizes = [
 const out = `/* GENERATED FILE — do not edit by hand.
    Regenerate with: npm run gen:starfield
    Source of truth for every colour here is src/styles/tokens.css.
-   Rationale for baking the field into images lives in the generator,
+   Rationale for baking the field into PNG tiles lives in the generator,
    scripts/generate-starfield.ts. */
 
 /* ── Deep space ──────────────────────────────────────────────────────────
@@ -263,6 +420,13 @@ const out = `/* GENERATED FILE — do not edit by hand.
    more than about twice across a wide screen. Growing a tile without growing
    its star count just thins the sky out — that mistake made the field five
    times sparser and read as emptier rather than deeper.
+
+   These are PNG, not SVG, and that is a PERFORMANCE constraint on the tile
+   sizes above: a vector tile is re-rasterized at the display's pixel ratio, so
+   on Retina these five came to 76MB of raster for ~77 stars and blew the image
+   cache, which is what made dark-mode scrolling stutter. A raster tile decodes
+   once at its own size. If you grow a tile here, you are growing a bitmap
+   quadratically — check the reported size when you regenerate.
 
    EVERYTHING here scrolls with the page. The spiked hero stars were briefly a
    separate fixed layer that held still while the rest of the sky moved, which
@@ -304,5 +468,13 @@ body {
 `
 
 writeFileSync(OUT, out)
-const kb = (out.length / 1024).toFixed(1)
-console.log(`wrote ${OUT} — ${layers.length} image layers + ${GRID.length} grid, ${kb}kB`)
+const mp = layers.reduce((n, l) => n + l.size * l.size, 0) / 1e6
+console.log(
+  `wrote ${OUT} — ${layers.length} PNG tiles + ${GRID.length} grid, ${(out.length / 1024).toFixed(1)}kB css`,
+)
+for (const l of layers) {
+  console.log(`  ${l.size}x${l.size}  ${(l.bytes / 1024).toFixed(1)}kB png`)
+}
+console.log(
+  `  raster total: ${mp.toFixed(1)} megapixels (${(mp * 4).toFixed(0)}MB), scale-independent`,
+)
