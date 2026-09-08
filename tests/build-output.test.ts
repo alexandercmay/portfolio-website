@@ -388,9 +388,20 @@ describe('the landing page has every expected section', () => {
     expect(headings.map((h) => h.replace(/^\d+/, ''))).toEqual(EXPECTED)
   })
 
-  it('numbers them consecutively from 01', () => {
-    const indexes = headings.map((h) => h.match(/^(\d+)/)?.[1])
-    expect(indexes).toEqual(['01', '02', '03', '04', '05'])
+  it('marks them with the system, in order, one body each', () => {
+    // The numerals used to carry this. They are celestial bodies now, but the
+    // guard is the same one: a deleted or reordered section shows up here.
+    const bodies = [
+      ...page('index.html').matchAll(/<h2[^>]*>.*?data-body="(\w+)"/gs),
+    ].map((m) => m[1])
+    expect(bodies).toEqual(['star', 'ringed', 'banded', 'crescent', 'cratered'])
+  })
+
+  it('gives each marker its own mask ids', () => {
+    // Five of these render on one page. Duplicate ids and every section draws
+    // the first section's cutouts, which is invisible in code review.
+    const ids = [...page('index.html').matchAll(/<mask id="([^"]+)"/g)].map((m) => m[1])
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   it('still reaches contact — the section deleted by that edit', () => {

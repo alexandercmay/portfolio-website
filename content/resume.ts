@@ -190,7 +190,10 @@ export const resume: Resume = {
         'event-driven',
       ],
     },
-    { category: 'Frontend', items: ['react'] },
+    {
+      category: 'Frontend',
+      items: ['react', 'astro', 'javascript', 'html', 'css', 'a11y'],
+    },
     { category: 'Security', items: ['stride', 'cvss', 'vault', 'rbac', 'oauth'] },
   ],
 }

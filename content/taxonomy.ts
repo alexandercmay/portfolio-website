@@ -45,6 +45,11 @@ export const TECH = {
 
   // Frontend
   react: { label: 'React', category: 'Frontend' },
+  astro: { label: 'Astro', category: 'Frontend' },
+  html: { label: 'Semantic HTML', category: 'Frontend' },
+  css: { label: 'Modern CSS', category: 'Frontend' },
+  javascript: { label: 'JavaScript', category: 'Frontend' },
+  a11y: { label: 'WCAG / Accessibility', category: 'Frontend' },
 
   // Security
   stride: { label: 'STRIDE Threat Modeling', category: 'Security' },
