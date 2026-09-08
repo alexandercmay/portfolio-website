@@ -13,9 +13,6 @@ html {
 }
 
 body {
-  /* Containing block for the cloud layer below, so the clouds span the whole
-     DOCUMENT rather than the viewport — see body::before. */
-  position: relative;
   /* background-COLOR, not the shorthand: the shorthand resets background-image
      and would wipe out the star field that starfield.css sets on this same
      element. */
@@ -38,13 +35,24 @@ body {
    different angles and very low alpha, overlapping so no single one reads as a
    shape. If you can see where one cloud ends, it is too strong.
 
-   Absolutely positioned over the whole DOCUMENT, not fixed to the viewport.
-   Nebulosity that holds still while the stars in front of it move is the same
-   distraction the hero stars were: the sky has to move as one thing.
+   FIXED to the viewport, and that is a performance decision, not a look one.
+
+   These were briefly absolute and document-tall, on the theory that the sky
+   should move as one thing. It cost far more than it was worth. Unlike the
+   star field, these gradients are NOT tiled — each one spans the entire layer,
+   so a document-sized version means evaluating four 6.7-million-pixel gradient
+   functions that can never be rasterized once and blitted, and it happens
+   progressively as you scroll. Fixed, the layer is one viewport (1.3M px) and
+   the compositor keeps it.
+
+   Nobody could see the difference anyway: over 4600px these are stretched so
+   far that there is no structure left to track. The complaint that started
+   this was about STARS holding still, which is a different thing — a point of
+   light is something the eye locks onto, a diffuse wash is not.
    ─────────────────────────────────────────────────────────────────────── */
 body::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
@@ -71,12 +79,17 @@ body::before {
     );
 }
 
-/* Vignette — the falloff of a viewport looking into space. */
+/* Vignette — the falloff of a viewport looking into space.
+
+   will-change promotes it to its own compositor layer. It is a full-viewport
+   overlay sitting above ALL content, so without that the compositor has to
+   blend it over the page on every scroll frame. */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
+  will-change: transform;
   z-index: 80;
   /* Falloff starts at 62%, not 50%: the old one erased the star field exactly
      where peripheral vision reads depth, leaving a lit centre on a flat

@@ -122,20 +122,37 @@ const body = BODIES[(Number(index) || 1) - 1] ?? 'star'
 
           {body === 'observatory' && (
             <>
-              {/* The dome is drawn as TWO halves with the shutter slit as the
-                  GAP between them, open all the way to the apex.
+              {/* A telescope looking out through an angled slit.
 
-                  The first version was one semicircle with a notch cut in it,
-                  and it read as a hill on a plinth: a half-circle alone is an
-                  arch, and the slit stopped short of the top so nothing was
-                  actually open. What identifies an observatory is the profile
-                  — a dome deeper than a half-circle, a lip ringing its base,
-                  and a drum NARROWER than the dome underneath. The old base
-                  was wider than the dome, which is what made it a mushroom. */}
-              <path d="M5.4 16.5A6.6 6.6 0 0 1 11 8.5V16.5Z" fill="currentColor" />
-              <path d="M13 8.5A6.6 6.6 0 0 1 18.6 16.5H13Z" fill="currentColor" />
-              <path d="M4.2 16.5h15.6v1.7H4.2Z" fill="currentColor" />
-              <path d="M6.6 18.2h10.8v3.6H6.6Z" fill="currentColor" opacity="0.85" />
+                  Two rewrites. A plain semicircle with a notch read as a hill
+                  on a plinth. Splitting the dome down the middle and standing
+                  it on a narrow drum fixed the dome and produced an unmistakably
+                  phallic silhouette instead — a vertical shaft on a narrow base
+                  is that shape, whatever it is meant to be.
+
+                  What fixes it is breaking the vertical symmetry: the drum is
+                  now nearly as wide as the dome, so there is no shaft, and the
+                  opening runs on a DIAGONAL with the instrument leaning out of
+                  it. A tube pointing off-axis is the thing no other object
+                  reads as. */}
+              <path d="M2.6 20.8h18.8v1.8H2.6Z" fill="currentColor" opacity="0.85" />
+              <path d="M5.3 17h13.4v3.6H5.3Z" fill="currentColor" opacity="0.85" />
+              <path d="M5.6 17a6.4 6.4 0 0 1 12.8 0Z" fill="currentColor" />
+              {/* The tube leaves the dome through the slit, so it is drawn over
+                  the dome and past its edge. */}
+              <path
+                d="M11.6 16.3 18.7 8.4"
+                stroke="currentColor"
+                stroke-width="3.2"
+                stroke-linecap="round"
+              />
+              <path
+                d="M17.2 6.9 21.1 10.4"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                opacity="0.8"
+              />
             </>
           )}
 
