@@ -52,7 +52,9 @@ export const TECH = {
   a11y: { label: 'WCAG / Accessibility', category: 'Frontend' },
 
   // Security
-  stride: { label: 'STRIDE Threat Modeling', category: 'Security' },
+  'threat-modeling': { label: 'Threat Modeling', category: 'Security' },
+  'agent-authz': { label: 'Agent Authorization', category: 'Security' },
+  'prompt-injection': { label: 'Prompt Injection Defense', category: 'Security' },
   cvss: { label: 'CVSS v3.1', category: 'Security' },
   vault: { label: 'HashiCorp Vault', category: 'Security' },
   rbac: { label: 'RBAC', category: 'Security' },

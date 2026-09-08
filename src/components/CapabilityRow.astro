@@ -1,0 +1,180 @@
+---
+import Chip from './Chip.astro'
+import CapabilityGlyph from './CapabilityGlyph.astro'
+import { techLabel } from '../../content/taxonomy'
+import type { Capability } from '../../content/resume'
+
+/**
+ * One capability, drawn as an instrument row: readout, claim, schematic.
+ *
+ * The three-column shape is the point. A reader scanning the left column alone
+ * gets three hard numbers and nothing else, which is the fastest honest
+ * summary of the section; a reader who stops gets the claim at deck size and
+ * the evidence under it. That only works while every capability HAS a number —
+ * see the note on `Capability` in content/resume.ts.
+ *
+ * Below 56rem the glyph is dropped rather than scaled. It is a schematic with
+ * 1.4px strokes and 1.7px vias; at the ~4rem a phone would give it, it stops
+ * being a drawing and becomes grey texture beside the text.
+ */
+interface Props {
+  capability: Capability
+}
+const { capability } = Astro.props
+---
+
+<article class="row">
+  <div class="metric">
+    <span class="value">{capability.metric.value}</span>
+    <span class="unit">{capability.metric.unit}</span>
+  </div>
+
+  <div class="body">
+    <p class="name">{capability.name}</p>
+    <p class="claim">{capability.claim}</p>
+
+    <ul class="proof" role="list">
+      {capability.proof.map((p) => <li>{p}</li>)}
+    </ul>
+
+    <div class="chips">
+      {capability.stack.map((key) => <Chip>{techLabel(key)}</Chip>)}
+    </div>
+  </div>
+
+  <div class="glyph-cell">
+    <CapabilityGlyph name={capability.glyph} />
+  </div>
+</article>
+
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) 9rem;
+    gap: 2rem;
+    align-items: start;
+    padding: 2.25rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .row:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* ── Readout ──────────────────────────────────────────────────────── */
+  .metric {
+    text-align: right;
+    padding-top: 0.1rem;
+  }
+
+  .value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xl);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-cyan);
+    /* Permitted: this is a display-size readout, not running copy. */
+    text-shadow: 0 0 24px color-mix(in srgb, var(--color-cyan) 30%, transparent);
+  }
+
+  .unit {
+    display: block;
+    margin-top: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  /* ── Body ─────────────────────────────────────────────────────────── */
+  .name {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-cyan);
+    margin: 0 0 0.5rem;
+  }
+
+  .claim {
+    font-family: var(--font-mono);
+    font-size: var(--text-deck);
+    font-weight: 500;
+    line-height: var(--leading-deck);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text);
+    margin: 0;
+    max-width: 34ch;
+    text-wrap: balance;
+  }
+
+  .proof {
+    list-style: none;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    max-width: 68ch;
+  }
+
+  .proof li {
+    position: relative;
+    padding: 0.3rem 0 0.3rem 0.95rem;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  /* A tick, not a bullet — the same scale mark the milestone rows used. It is
+     deliberately not `.marker-list`'s radial dot, which means "list item"
+     everywhere else on the site. */
+  .proof li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 0.4rem;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .row:hover .proof li::before {
+    background: color-mix(in srgb, var(--color-cyan) 60%, transparent);
+  }
+
+  .proof li::before {
+    transition: background var(--duration-state) var(--ease-out);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.25rem;
+  }
+
+  /* ── Schematic ────────────────────────────────────────────────────── */
+  .glyph-cell {
+    opacity: 0.8;
+    padding-top: 0.4rem;
+    transition: opacity var(--duration-state) var(--ease-out);
+  }
+
+  .row:hover .glyph-cell {
+    opacity: 1;
+  }
+
+  @media (max-width: 56rem) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .metric {
+      text-align: left;
+    }
+
+    .glyph-cell {
+      display: none;
+    }
+  }
+</style>

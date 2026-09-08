@@ -227,14 +227,47 @@ describe('the education section', () => {
     }
   })
 
-  it('offers the full timeline at the end of Experience', () => {
-    expect(page('index.html')).toMatch(/View the full detailed timeline/)
+  it('keeps the employment history reachable from the capabilities section', () => {
+    // The Experience timeline was replaced by capabilities; org, title and
+    // dates moved to the one-line `Where` strip. A reader who wants an
+    // employer and a date must still find one WITHOUT leaving the page —
+    // that was the whole risk of dropping the timeline.
+    const html = page('index.html')
+    expect(html).toMatch(/class="where\b/)
+    for (const role of resume.work) {
+      expect(html).toContain(role.org)
+    }
   })
 
-  it('no longer renders a context-free metrics band', () => {
-    // The figures (1M+, <7s, 50+) read as out of place with no surrounding
-    // explanation, so the band and its data were removed outright.
-    expect(page('index.html')).not.toMatch(/class="[^"]*\bmetric\b/)
+  it('gives every capability a claim, a readout and its proof', () => {
+    const html = page('index.html')
+    // Astro escapes on output, so '<7s' reaches the page as '&lt;7s'.
+    const esc = (t: string) =>
+      t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+    for (const c of resume.capabilities) {
+      expect(html).toContain(esc(c.metric.value))
+      expect(html).toContain(esc(c.claim))
+      for (const line of c.proof) {
+        expect(html).toContain(esc(line))
+      }
+    }
+  })
+
+  it('never shows a figure without the claim it belongs to', () => {
+    // The original sin this guards was a standalone metrics BAND: 1M+, <7s
+    // and 50+ set large in a row of their own, with no surrounding
+    // explanation. It was deleted outright.
+    //
+    // The figures came back with the capability rows, and are fine there for
+    // exactly the reason the band was not: each one sits in a row beside the
+    // claim it evidences. So the assertion is no longer "no metrics" — it is
+    // that a readout only ever appears inside a capability row.
+    const html = page('index.html')
+    expect(html).not.toMatch(/class="[^"]*\bmetrics\b/)
+
+    const readouts = [...html.matchAll(/class="[^"]*\bvalue\b[^"]*"/g)].length
+    expect(readouts).toBe(resume.capabilities.length)
   })
 })
 
@@ -383,7 +416,7 @@ describe('the landing page has every expected section', () => {
    *
    * This asserts the sections exist, in order, with consecutive indexes.
    */
-  const EXPECTED = ['Experience', 'Projects', 'Skills', 'Education', 'Get in touch']
+  const EXPECTED = ['What I build', 'Projects', 'Skills', 'Education', 'Get in touch']
 
   const headings = [...page('index.html').matchAll(/<h2[^>]*>(.*?)<\/h2>/gs)].map((m) =>
     m[1].replace(/<[^>]+>/g, '').trim(),

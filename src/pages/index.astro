@@ -4,17 +4,22 @@ import Button from '@/components/Button.astro'
 import Rule from '@/components/Rule.astro'
 import SectionHeader from '@/components/SectionHeader.astro'
 import Label from '@/components/Label.astro'
-import ExperienceEntry from '@/components/ExperienceEntry.astro'
+import CapabilityRow from '@/components/CapabilityRow.astro'
 import ProjectCard from '@/components/ProjectCard.astro'
 import SkillGalaxy from '@/components/SkillGalaxy.astro'
 import { getFeaturedProjects, formatPeriod } from '@/lib/content'
 import { resume } from '../../content/resume'
 
-const { basics, work, education, skills } = resume
+const { basics, work, capabilities, education, skills } = resume
 
-const featuredRoles = work
-  .filter((r) => r.featured)
-  .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+/**
+ * The `Where` strip under the capabilities: every role, newest first.
+ *
+ * Deliberately ALL of them and not the `featured` subset. The strip exists so
+ * a reader looking for an employer and a date finds one without leaving the
+ * page, and a filtered employment history does that job badly.
+ */
+const roles = [...work].sort((a, b) => b.start.getTime() - a.start.getTime())
 
 const featuredProjects = await getFeaturedProjects(3)
 ---
@@ -55,17 +60,31 @@ const featuredProjects = await getFeaturedProjects(3)
   <div class="wrap">
     <Rule />
 
-    {/* SELECTED EXPERIENCE — the heart of the page. */}
-    <section class="band" aria-labelledby="experience">
-      <SectionHeader index="01" id="experience" title="Experience" />
-      <div class="timeline reveal-stagger">
-        {featuredRoles.map((role) => <ExperienceEntry role={role} />)}
+    {
+      /* WHAT I BUILD — the heart of the page.
+         Capabilities, not a timeline: the reader arrives asking what he can
+         do, and the employment history they might also want is one line down
+         in the `Where` strip. See the note on `Capability` in resume.ts. */
+    }
+    <section class="band" aria-labelledby="capabilities">
+      <SectionHeader index="01" id="capabilities" title="What I build" />
+      <div class="capabilities reveal-stagger">
+        {capabilities.map((capability) => <CapabilityRow capability={capability} />)}
       </div>
 
-      <a class="timeline-more" href="/resume">
-        <span class="tm-icon" aria-hidden="true"></span>
-        View the full detailed timeline
-      </a>
+      <div class="where reveal">
+        <span class="where-label">Where</span>
+        {
+          roles.map((role) => (
+            <span class="where-role">
+              <span class="where-org">{role.org}</span>
+              <span class="where-title">{role.shortTitle ?? role.title}</span>
+              <span class="where-period">{formatPeriod(role.start, role.end)}</span>
+            </span>
+          ))
+        }
+        <a class="where-more" href="/resume">Full resume &rarr;</a>
+      </div>
     </section>
 
     {
@@ -277,70 +296,85 @@ const featuredProjects = await getFeaturedProjects(3)
     padding: var(--spacing-section) 0;
   }
 
+  /* ── Capabilities ─────────────────────────────────────────────────── */
   /*
-    Scroll-linked progress rule down the experience section.
-
-    Base state is a fully drawn rule, so browsers without animation-timeline
-    and readers with reduced motion get a correct static line rather than a
-    missing one. The animation only ever *removes* ink that is already there.
+    The rows own their own borders, so the group needs no rule of its own; it
+    exists to hang `.reveal-stagger` off and to keep the `Where` strip attached
+    to the section rather than floating between it and the next.
   */
-  /* `--rail-gutter` is the distance from the rail to the content edge, and
-     ExperienceEntry reads it to park its epoch node on the line. It has to be
-     one number in one place: set the padding and the node offset separately
-     and they drift the moment either breakpoint changes. Wide enough now to
-     clear the 2.25rem node discs. */
-  .timeline {
-    --rail-gutter: 2.75rem;
-    position: relative;
-    padding-left: var(--rail-gutter);
+  .capabilities {
+    margin-bottom: 1.75rem;
   }
 
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    border-radius: var(--radius-full);
-    background: var(--color-border);
+  /*
+    The employment history, compressed to one line.
+
+    This is what is left of the Experience timeline, and the compression is
+    deliberate: org, title and dates are what a reader scans for, and they read
+    faster in a single mono row than as a rail of dated entries. Anyone who
+    wants the entries themselves is one link away.
+  */
+  .where {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 2rem;
+    padding: 0.9rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
   }
 
-  .timeline::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(var(--color-cyan), var(--color-violet));
-    box-shadow: var(--glow-cyan);
-    transform-origin: top;
+  .where-label {
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
   }
 
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .timeline::after {
-        animation: draw linear both;
-        animation-timeline: view();
-        animation-range: entry 90% exit 10%;
-      }
-    }
+  .where-role {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
   }
 
-  @keyframes draw {
-    from {
-      scale: 1 0;
-    }
-    to {
-      scale: 1 1;
-    }
+  .where-org {
+    color: var(--color-text);
   }
 
+  .where-title {
+    color: var(--color-text-muted);
+  }
+
+  .where-period {
+    color: var(--color-cyan);
+    white-space: nowrap;
+  }
+
+  .where-more {
+    margin-left: auto;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color var(--duration-state) var(--ease-out);
+  }
+
+  .where-more:hover {
+    color: var(--color-cyan);
+  }
+
+  /* The strip is a row of independent facts on a wide viewport and a stack of
+     them on a narrow one; `margin-left: auto` on the link only makes sense
+     while there is a row to push it to the end of. */
   @media (max-width: 46rem) {
-    .timeline {
-      --rail-gutter: 2.1rem;
+    .where {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+
+    .where-more {
+      margin-left: 0;
     }
   }
 
@@ -451,46 +485,6 @@ const featuredProjects = await getFeaturedProjects(3)
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-text-muted);
-  }
-
-  /* ── Full timeline link ───────────────────────────────────────────── */
-  .timeline-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-left: 2.75rem;
-    padding: 0.65em 1.1em;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition:
-      color var(--duration-state) var(--ease-out),
-      border-color var(--duration-state) var(--ease-out),
-      box-shadow var(--duration-state) var(--ease-out);
-  }
-
-  .timeline-more:hover {
-    color: var(--color-cyan);
-    border-color: var(--color-cyan);
-    box-shadow: var(--glow-cyan);
-  }
-
-  .tm-icon {
-    width: 0.4rem;
-    height: 0.4rem;
-    border-radius: var(--radius-full);
-    background: var(--color-cyan);
-    box-shadow: var(--glow-cyan);
-  }
-
-  @media (max-width: 46rem) {
-    .timeline-more {
-      margin-left: 2.1rem;
-    }
   }
 
   /* ── Education ────────────────────────────────────────────────────── */

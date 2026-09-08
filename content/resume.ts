@@ -31,23 +31,21 @@ export interface Milestone {
   text: string
 }
 
-/** Big-bang chronology, oldest epoch first. See EpochIcon.astro. */
-export type EpochIcon =
-  | 'singularity'
-  | 'inflation'
-  | 'nucleosynthesis'
-  | 'first-light'
-  | 'galaxy'
-  | 'orbit'
-
 export interface WorkEntry {
   org: string
   title: string
+  /**
+   * The title as it appears in the homepage's one-line `Where` strip.
+   *
+   * Only set this where the real title is too long for a strip that has to
+   * hold every role plus a link on one row — the E115 title runs to 63
+   * characters and pushed the link onto a second line by itself. The full
+   * title is still what /resume and the PDF carry.
+   */
+  shortTitle?: string
   location?: string
   start: Date
   end?: Date
-  /** The node drawn on the timeline rail for this role. */
-  icon: EpochIcon
   /**
    * THE sentence — set at ~3x body size on the homepage.
    *
@@ -64,6 +62,50 @@ export interface WorkEntry {
    * studied — the prose version of any of them lives in the PDF.
    */
   milestones: Milestone[]
+  stack: readonly TechKey[]
+}
+
+/**
+ * One thing I do, drawn as a row of the homepage's "What I build" section.
+ *
+ * This replaced the Selected-experience timeline. The reason is worth
+ * recording: a timeline answers "where has he been", which a resume already
+ * answers better, and it buries the answer to the question a reader actually
+ * arrives with — "what can he do". The employment history did not disappear;
+ * it moved to the one-line `Where` strip under this section, which is where a
+ * reader who wants an org and a date will look for one.
+ *
+ * A capability with no number in `metric` does not belong here. Three claims
+ * with three hard figures beside them is the whole point of the layout; a
+ * fourth pillar with a soft one drags the other three down to its level. This
+ * is exactly why 'Full-Stack Interface' was cut — the site itself is the only
+ * evidence it had, and the site is already the thing being read.
+ */
+export interface Capability {
+  /** Which schematic is drawn at the end of the row. See CapabilityGlyph. */
+  glyph: 'ai' | 'backend' | 'security'
+  /** Set in small caps above the claim. Two or three words. */
+  name: string
+  /**
+   * THE sentence — set at --text-deck, the same size a role headline used to
+   * get. That size is unforgiving: if a claim reads weakly here, the sentence
+   * is wrong, not the type size.
+   */
+  claim: string
+  /**
+   * The readout in the left column, set at --text-2xl.
+   *
+   * `value` is a stamp, not a phrase. The column is 9rem and mono is wide, so
+   * anything past about eight characters wraps and breaks the row — 'days →
+   * min' had to become 'minutes' for exactly this reason. Put the explanation
+   * in `unit`, which is small and may wrap freely.
+   */
+  metric: { value: string; unit: string }
+  /**
+   * Evidence. One line each, verb-first, a number wherever one exists.
+   * Three or four — past that the metric stops anchoring the row.
+   */
+  proof: string[]
   stack: readonly TechKey[]
 }
 
@@ -89,6 +131,7 @@ export interface Resume {
     summary: string
   }
   work: WorkEntry[]
+  capabilities: Capability[]
   education: EducationEntry[]
   skills: { category: string; items: readonly TechKey[] }[]
 }
@@ -122,7 +165,6 @@ export const resume: Resume = {
       location: 'Hopkinton, MA',
       start: new Date('2024-07-01'),
       end: new Date('2026-08-31'),
-      icon: 'orbit',
       headline:
         'Built the LLM tool layer that answers natural-language questions about production storage in under 7 seconds',
       featured: true,
@@ -185,7 +227,7 @@ export const resume: Resume = {
         'amqp',
         'postgres',
         'event-driven',
-        'stride',
+        'threat-modeling',
         'cvss',
         'vault',
       ],
@@ -193,10 +235,10 @@ export const resume: Resume = {
     {
       org: 'North Carolina State University',
       title: 'Teaching Assistant, E115 — Introduction to Computing Environments',
+      shortTitle: 'Teaching Assistant',
       location: 'Raleigh, NC',
       start: new Date('2022-08-01'),
       end: new Date('2024-05-01'),
-      icon: 'first-light',
       headline:
         'Taught Unix and Linux fundamentals to 200+ students across four semesters',
       featured: true,
@@ -212,6 +254,53 @@ export const resume: Resume = {
         },
       ],
       stack: ['python'],
+    },
+  ],
+
+  capabilities: [
+    {
+      glyph: 'ai',
+      name: 'AI Systems',
+      claim: 'Agents that answer real questions about live infrastructure.',
+      metric: { value: '<7s', unit: 'to answer' },
+      proof: [
+        'LLM-routable diagnostic tools over production storage — natural language in, grounded answer out',
+        'A2A routing for a LlamaIndex ReAct agent on Bedrock, driving live update workflows',
+        'A timestamp protocol that keeps streamed model output machine-parseable across agents',
+      ],
+      stack: ['llamaindex', 'react-agents', 'llm-tools', 'mcp', 'a2a', 'bedrock'],
+    },
+    {
+      glyph: 'backend',
+      name: 'Distributed Backend',
+      claim: 'Event-driven services that stay correct under real load.',
+      metric: { value: '1M+', unit: 'messages a day' },
+      proof: [
+        'Architected an AMQP pipeline enriching over a million messages a day',
+        'Go controllers that recover failed Kubernetes node operations, avoiding 8-hour redeploys',
+        'FastAPI and Spring Boot services across a 50+ service platform',
+      ],
+      stack: ['go', 'python', 'kubernetes', 'amqp', 'fastapi', 'postgres'],
+    },
+    {
+      glyph: 'security',
+      name: 'AI-Native Security',
+      claim: 'Agents that can only do what they are authorized to do.',
+      metric: { value: 'every', unit: 'agent call authorized' },
+      proof: [
+        'Built the gateway every agent call is authorized through — no tool reaches a user system unvetted',
+        'Wrote the middleware that stops an agent reaching a user system it has no claim to',
+        'Structured the agent stack so one agent cannot prompt-inject another',
+        'Published an org-wide AI threat-modeling skill — reviews that took days now take minutes',
+      ],
+      stack: [
+        'agent-authz',
+        'prompt-injection',
+        'threat-modeling',
+        'vault',
+        'rbac',
+        'oauth',
+      ],
     },
   ],
 
@@ -263,6 +352,17 @@ export const resume: Resume = {
       category: 'Frontend',
       items: ['react', 'astro', 'javascript', 'html', 'css', 'a11y'],
     },
-    { category: 'Security', items: ['stride', 'cvss', 'vault', 'rbac', 'oauth'] },
+    {
+      category: 'Security',
+      items: [
+        'threat-modeling',
+        'agent-authz',
+        'prompt-injection',
+        'cvss',
+        'vault',
+        'rbac',
+        'oauth',
+      ],
+    },
   ],
 }
