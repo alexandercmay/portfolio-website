@@ -79,28 +79,6 @@ const featuredProjects = await getFeaturedProjects(3)
     <Rule />
 
     {
-      /* The employment history, ahead of the capability rows rather than under
-         them. It used to sit below, as the evidence for the claims — but that
-         put the answer to "where has he worked" a full scroll past three long
-         rows, which is the second thing a reader asks and the first thing they
-         look for. Read BEFORE the claims it also does more work: 'Dell
-         Technologies' is the credential that makes the three claims land. */
-    }
-    <div class="where reveal">
-      <span class="where-label">Where</span>
-      {
-        roles.map((role) => (
-          <span class="where-role">
-            <span class="where-org">{role.org}</span>
-            <span class="where-title">{role.shortTitle ?? role.title}</span>
-            <span class="where-period">{formatPeriod(role.start, role.end)}</span>
-          </span>
-        ))
-      }
-      <a class="where-more" href="/resume">Full resume &rarr;</a>
-    </div>
-
-    {
       /* WHAT I BUILD — the heart of the page.
          Capabilities, not a timeline: the reader arrives asking what he can
          do, and the employment history they might also want is one line down
@@ -110,6 +88,27 @@ const featuredProjects = await getFeaturedProjects(3)
       <SectionHeader index="01" id="capabilities" title="What I build" />
       <div class="capabilities reveal-stagger">
         {capabilities.map((capability) => <CapabilityRow capability={capability} />)}
+      </div>
+
+      {
+        /* The employment history, under the claims it evidences. It was tried
+           above them, on the theory that "where has he worked" is the second
+           thing a reader asks — but read first it front-loads the page with a
+           credential nobody has been given a reason to care about yet. Under
+           the rows it is what it always was: the receipts. */
+      }
+      <div class="where reveal">
+        <span class="where-label">Where</span>
+        {
+          roles.map((role) => (
+            <span class="where-role">
+              <span class="where-org">{role.org}</span>
+              <span class="where-title">{role.shortTitle ?? role.title}</span>
+              <span class="where-period">{formatPeriod(role.start, role.end)}</span>
+            </span>
+          ))
+        }
+        <a class="where-more" href="/resume">Full resume &rarr;</a>
       </div>
     </section>
 
@@ -448,10 +447,11 @@ const featuredProjects = await getFeaturedProjects(3)
     wants the entries themselves is one link away.
   */
   .where {
-    /* Sits between the hero's rule and the capabilities section, whose own
-       `--spacing-section` padding supplies the gap below it. Only the space
-       above is this element's to set. */
-    margin-top: 2.25rem;
+    /* Hangs off the bottom of the capability rows, whose section padding
+       supplies the gap below it. Only the space above is this element's to
+       set — and the last row no longer draws a closing border, so this strip's
+       own top edge is what closes the group. */
+    margin-top: 1.75rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

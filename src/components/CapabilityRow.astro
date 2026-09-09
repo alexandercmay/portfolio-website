@@ -94,9 +94,11 @@ const longValue = capability.metric.value.length > 4
     border-top: 1px solid var(--color-border);
   }
 
-  .row:last-child {
-    border-bottom: 1px solid var(--color-border);
-  }
+  /* No closing border on the last row. The section's own <Rule /> sits 112px
+     below it and draws the same 1px line in the same colour, so the group
+     ended in TWO rules with an empty band between them — which is the gap that
+     read as dead space between this section and Projects. One line closes a
+     group; two with nothing between them is a hole. */
 
   /* ── Readout ──────────────────────────────────────────────────────── */
   /* Pushed down to sit on the NAME's baseline rather than the row's top edge.
@@ -160,6 +162,15 @@ const longValue = capability.metric.value.length > 4
     max-width: 30ch;
     text-wrap: balance;
 
+    /* The same permitted exception the readouts take: a glow on display-size
+       type, never on running copy. Without it the name sat flat against the
+       ground while the readout beside it glowed, and the eye went to the
+       smaller element. Declared here rather than inside the @supports block so
+       it lands on the flat-colour fallback too — text-shadow paints behind the
+       glyphs, so it survives `color: transparent` and reads as the light
+       coming off the letterforms either way. */
+    text-shadow: 0 0 26px color-mix(in srgb, var(--color-cyan) 48%, transparent);
+
     /* A single low-contrast band drifting across the accent, once every nine
        seconds. Subtle to the point of being deniable, which is the intent: it
        should read as the section being powered rather than as an animation.
@@ -176,9 +187,9 @@ const longValue = capability.metric.value.length > 4
       .name {
         background-image: linear-gradient(
           100deg,
-          var(--color-cyan) 42%,
-          color-mix(in srgb, var(--color-cyan) 62%, white) 50%,
-          var(--color-cyan) 58%
+          color-mix(in srgb, var(--color-cyan) 92%, white) 42%,
+          color-mix(in srgb, var(--color-cyan) 48%, white) 50%,
+          color-mix(in srgb, var(--color-cyan) 92%, white) 58%
         );
         background-size: 320% 100%;
         background-position: 100% 0;
@@ -213,7 +224,11 @@ const longValue = capability.metric.value.length > 4
     font-size: var(--text-lg);
     font-weight: 400;
     line-height: 1.45;
-    color: var(--color-text-muted);
+    /* Between the muted channel and page text, not on it. --color-text-muted
+       is tuned for long-form secondary copy; these are three short sentences
+       carrying the actual claim, and at full muted they read as a caption on
+       the name rather than as the thing being said. */
+    color: color-mix(in srgb, var(--color-text) 68%, var(--color-text-muted));
     margin: 0.6rem 0 0;
     /* Option B, same reasoning as the name above: 56ch instead of 40ch. */
     max-width: 56ch;
