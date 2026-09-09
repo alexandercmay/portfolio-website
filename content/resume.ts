@@ -115,6 +115,13 @@ export interface EducationEntry {
   field: string
   start: Date
   end?: Date
+  /**
+   * Set apart from `highlights` because it is the only number in the section,
+   * and a number buried in a middot-joined run of muted text is a number
+   * nobody reads. It gets the same mono readout treatment the capability rows
+   * give their metrics. Omit it rather than writing a weak one.
+   */
+  gpa?: string
   highlights: string[]
   /** Relevant coursework, shown as a grid on the Education section. */
   coursework?: string[]
@@ -155,7 +162,7 @@ export const resume: Resume = {
       },
     ],
     summary:
-      'I build full-stack systems end to end, with a bias toward the ones that stay fast and correct under real load. Lately that means distributed AI — agent orchestration, tool layers, and the event-driven backbones underneath — fitting intelligence into the systems that already exist so it makes them measurably better, not just adjacent.',
+      'I care about software built well — correct, fast, and still both when real traffic is on it. And I care about how AI arrives in the systems people depend on: that it earns the access it is given, and is genuinely useful once it has it. I build the whole stack, end to end.',
   },
 
   work: [
@@ -261,7 +268,8 @@ export const resume: Resume = {
     {
       glyph: 'ai',
       name: 'Agentic Infrastructure and Operations',
-      claim: 'Agents that diagnose production and keep it healthy.',
+      claim:
+        'Agents that diagnose live infrastructure in plain language, then act to keep it healthy.',
       metric: { value: '<7s', unit: 'to answer' },
       proof: [
         'LLM-routable diagnostic tools over production storage — natural language in, grounded answer out',
@@ -285,7 +293,8 @@ export const resume: Resume = {
     {
       glyph: 'security',
       name: 'AI-Native Security',
-      claim: 'Empowering agents to act while enforcing authorization and data protection.',
+      claim:
+        'Agents that can act on real systems, and can’t act outside their authority.',
       metric: { value: 'every', unit: 'agent call authorized' },
       proof: [
         'Added the authorized routes to the agent gateway — no tool call reaches a user system unvetted',
@@ -311,7 +320,8 @@ export const resume: Resume = {
       field: 'Computer Science',
       start: new Date('2020-08-01'),
       end: new Date('2024-05-01'),
-      highlights: ['GPA 3.98'],
+      gpa: '3.98',
+      highlights: [],
       // PLACEHOLDER COURSEWORK — replace with what you actually took. These
       // are plausible NC State CSC titles, not a transcript.
       coursework: [

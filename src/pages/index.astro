@@ -58,10 +58,10 @@ const featuredProjects = await getFeaturedProjects(3)
           */
         }
         <svg class="live" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <circle cx="10" cy="12.5" r="5.3" fill="currentColor" />
-          <circle cx="18" cy="8.5" r="2.6" fill="currentColor" />
+          <circle cx="10" cy="12.5" r="5.3" fill="currentColor"></circle>
+          <circle cx="18" cy="8.5" r="2.6" fill="currentColor"></circle>
         </svg>
-        Open to full-stack &amp; AI engineering roles
+        Searching for full-stack &amp; AI engineering roles
       </Label>
       <h1>{basics.name}</h1>
       <p class="headline">{basics.headline}</p>
@@ -79,6 +79,28 @@ const featuredProjects = await getFeaturedProjects(3)
     <Rule />
 
     {
+      /* The employment history, ahead of the capability rows rather than under
+         them. It used to sit below, as the evidence for the claims — but that
+         put the answer to "where has he worked" a full scroll past three long
+         rows, which is the second thing a reader asks and the first thing they
+         look for. Read BEFORE the claims it also does more work: 'Dell
+         Technologies' is the credential that makes the three claims land. */
+    }
+    <div class="where reveal">
+      <span class="where-label">Where</span>
+      {
+        roles.map((role) => (
+          <span class="where-role">
+            <span class="where-org">{role.org}</span>
+            <span class="where-title">{role.shortTitle ?? role.title}</span>
+            <span class="where-period">{formatPeriod(role.start, role.end)}</span>
+          </span>
+        ))
+      }
+      <a class="where-more" href="/resume">Full resume &rarr;</a>
+    </div>
+
+    {
       /* WHAT I BUILD — the heart of the page.
          Capabilities, not a timeline: the reader arrives asking what he can
          do, and the employment history they might also want is one line down
@@ -88,20 +110,6 @@ const featuredProjects = await getFeaturedProjects(3)
       <SectionHeader index="01" id="capabilities" title="What I build" />
       <div class="capabilities reveal-stagger">
         {capabilities.map((capability) => <CapabilityRow capability={capability} />)}
-      </div>
-
-      <div class="where reveal">
-        <span class="where-label">Where</span>
-        {
-          roles.map((role) => (
-            <span class="where-role">
-              <span class="where-org">{role.org}</span>
-              <span class="where-title">{role.shortTitle ?? role.title}</span>
-              <span class="where-period">{formatPeriod(role.start, role.end)}</span>
-            </span>
-          ))
-        }
-        <a class="where-more" href="/resume">Full resume &rarr;</a>
       </div>
     </section>
 
@@ -156,7 +164,20 @@ const featuredProjects = await getFeaturedProjects(3)
                     <p class="edu-highlights">{e.highlights.join(' · ')}</p>
                   )}
                 </div>
-                <p class="edu-period">{formatPeriod(e.start, e.end)}</p>
+                <div class="edu-side">
+                  {/* The GPA is the only number in this section, and as one
+                      more middot-separated item in `highlights` it read as
+                      trivia. It gets the readout treatment the capability
+                      metrics get instead: mono, cyan, display size, its own
+                      label underneath. */}
+                  {e.gpa && (
+                    <p class="edu-gpa">
+                      <span class="gpa-figure">{e.gpa}</span>
+                      <span class="gpa-unit">GPA</span>
+                    </p>
+                  )}
+                  <p class="edu-period">{formatPeriod(e.start, e.end)}</p>
+                </div>
               </div>
 
               {e.coursework && e.coursework.length > 0 && (
@@ -180,15 +201,31 @@ const featuredProjects = await getFeaturedProjects(3)
     <section class="band" aria-labelledby="contact">
       <SectionHeader index="05" id="contact" title="Get in touch" />
 
-      <div class="module marks reveal">
-        <div class="module-head">
-          <span class="head-dot" aria-hidden="true"></span>
-          Contact
-        </div>
-        <div class="module-body contact-panel">
+      {
+        /*
+          Not a module. Every other section on this page ends in a bordered
+          plate with a small mono header, and the contact section arriving as
+          one more of those made the page's last screen its least interesting —
+          the one place a reader is actually being asked to do something.
+
+          So the dish the "Get in touch" button already carries is drawn here
+          at ~15rem instead, transmitting continuously rather than on hover,
+          and the copy and the buttons sit inside its beam. The mast, feed and
+          base are the button's, scaled 5x into a 170-unit box; the REFLECTOR
+          is not — a solid ellipse survives being an icon and does not survive
+          being 15rem tall, so it is redrawn as a mesh. Four longer arcs are
+          solved around the dish centre at (55.5, 102.5) rather than the
+          button's three short ones.
+
+          The dish is aria-hidden. It says nothing the heading and the buttons
+          do not already say in text.
+        */
+      }
+      <div class="contact reveal">
+        <div class="contact-copy">
           <p class="lead">
-            I'm looking for full-stack and AI engineering roles. The fastest way to reach
-            me is email.
+            I’m searching for full-stack and AI engineering roles, and I’m always happy to
+            talk about the work above. Email is the direct line.
           </p>
           <div class="actions">
             <Button href={`mailto:${basics.email}`} transmit>
@@ -202,6 +239,90 @@ const featuredProjects = await getFeaturedProjects(3)
               ))
             }
           </div>
+        </div>
+
+        <div class="dish-cell" aria-hidden="true">
+          <div class="dish-wash"></div>
+          {
+            /* viewBox cropped to the drawing's measured bbox (24,12 → 139,146)
+              plus 3 units for the widest stroke. Solving the arcs in a square
+              170 box and then displaying that box left ~30% of the graphic as
+              empty margin, which just made the dish smaller for no reason. */
+          }
+          <svg class="big-dish" viewBox="21 9 121 140" focusable="false">
+            {
+              /* The reflector is the button's solid ellipse with two changes,
+                both deliberately small: the fill drops to 0.6 so the starfield
+                reads through the bowl, and six panel seams sit in the outer
+                annulus with a hub ring closing them off.
+
+                The seams STOP at 0.46 of the radius rather than running the
+                full diameter. Full chords through the centre were tried first
+                and cut the dish into six equal wedges — it read as a sliced
+                pizza, not an antenna. Lines that never converge on a point
+                cannot do that, and stopping them at a hub ring is also what a
+                real segmented reflector looks like: the centre is one piece,
+                the outer ring is panelled.
+
+                Endpoints are solved on the rotated ellipse (rx 29.5, ry 16,
+                50°, centre 55.5/102.5) at 60° steps, from 0.46 to 0.97 of the
+                radius — 0.97 rather than 1.0 so a seam never pokes through the
+                rim stroke. Change the ellipse and every number here has to be
+                re-solved; do it in a generator, not by nudging path data. */
+            }
+            <ellipse
+              cx="55.5"
+              cy="102.5"
+              rx="29.5"
+              ry="16"
+              transform="rotate(50 55.5 102.5)"
+              fill="currentColor"
+              fill-opacity="0.6"
+              stroke="currentColor"
+              stroke-width="2.4"></ellipse>
+            <g
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linecap="round"
+              opacity="0.62"
+            >
+              <path
+                d="M64.2 112.9L73.9 124.4M55.0 111.8L54.4 122.1M46.3 101.4L36.0 100.2M46.8 92.1L37.1 80.6M56.0 93.2L56.6 82.9M64.7 103.6L75.0 104.8"
+              ></path>
+              <ellipse
+                cx="55.5"
+                cy="102.5"
+                rx="13.6"
+                ry="7.4"
+                transform="rotate(50 55.5 102.5)"></ellipse>
+            </g>
+            <path
+              d="M55.5 102.5 72.5 88.2"
+              stroke="currentColor"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              fill="none"></path>
+            <circle cx="74.5" cy="86.5" r="5.4" fill="currentColor"></circle>
+            {
+              /* Mast and base stay filled. The reflector is the thing that had to
+                open up; a hollow mast would only read as an unfinished drawing. */
+            }
+            <g fill="currentColor" opacity="0.85">
+              <path d="M51 104.5 45 134.5h11.5L61 108Z"></path>
+              <path d="M35 138h41v7.5H35Z"></path>
+            </g>
+            <g class="beam" fill="none" stroke="currentColor" stroke-linecap="round">
+              <path class="arc" d="M62.4 63.1A40 40 0 0 1 91.8 85.6" stroke-width="3.4"
+              ></path>
+              <path class="arc" d="M65.1 48.3A55 55 0 0 1 105.3 79.3" stroke-width="3"
+              ></path>
+              <path class="arc" d="M67.7 33.6A70 70 0 0 1 118.9 72.9" stroke-width="2.6"
+              ></path>
+              <path class="arc" d="M70.3 18.8A85 85 0 0 1 132.5 66.6" stroke-width="2.2"
+              ></path>
+            </g>
+          </svg>
         </div>
       </div>
     </section>
@@ -315,14 +436,8 @@ const featuredProjects = await getFeaturedProjects(3)
   }
 
   /* ── Capabilities ─────────────────────────────────────────────────── */
-  /*
-    The rows own their own borders, so the group needs no rule of its own; it
-    exists to hang `.reveal-stagger` off and to keep the `Where` strip attached
-    to the section rather than floating between it and the next.
-  */
-  .capabilities {
-    margin-bottom: 1.75rem;
-  }
+  /* The rows own their own borders, so the group needs no rule of its own and
+     no spacing; it exists solely to hang `.reveal-stagger` off. */
 
   /*
     The employment history, compressed to one line.
@@ -333,6 +448,10 @@ const featuredProjects = await getFeaturedProjects(3)
     wants the entries themselves is one link away.
   */
   .where {
+    /* Sits between the hero's rule and the capabilities section, whose own
+       `--spacing-section` padding supplies the gap below it. Only the space
+       above is this element's to set. */
+    margin-top: 2.25rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -547,6 +666,54 @@ const featuredProjects = await getFeaturedProjects(3)
     white-space: nowrap;
   }
 
+  /* Right-hand column of the module head: the readout, then the dates under
+     it. Right-aligned so the GPA's digits sit on the module's edge and read
+     as an instrument value rather than as a stray word in a sentence. */
+  .edu-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+  }
+
+  .edu-gpa {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0 !important;
+  }
+
+  /* Not `.gpa-value`: build-output.test.ts asserts that a `value` readout
+     only ever appears inside a capability row, and matches on the class name
+     with a \b word boundary — so `gpa-value` trips a guard it does not
+     actually violate. */
+  .gpa-figure {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-cyan);
+    /* Permitted: display-size readout, not running copy — same exception the
+       capability metrics take. */
+    text-shadow: 0 0 28px color-mix(in srgb, var(--color-cyan) 38%, transparent);
+  }
+
+  .gpa-unit {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+  }
+
+  /* Stacked, the readout leads and the dates follow it, both left-aligned
+     with everything else rather than stranded against the right edge. */
+  @media (max-width: 46rem) {
+    .edu-side {
+      align-items: flex-start;
+    }
+  }
+
   .coursework {
     margin-top: 1.5rem;
     padding-top: 1.25rem;
@@ -579,17 +746,110 @@ const featuredProjects = await getFeaturedProjects(3)
   }
 
   /* ── Contact ──────────────────────────────────────────────────────── */
-  .contact-panel {
-    display: flex;
-    flex-wrap: wrap;
+  .contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
+    gap: clamp(1.5rem, 5vw, 3.5rem);
   }
 
-  .contact-panel .lead {
-    max-width: 40ch;
+  .contact .lead {
+    max-width: 44ch;
+    font-size: var(--text-lg);
+    line-height: 1.6;
     color: var(--color-text-muted);
-    margin: 0;
+    margin: 0 0 1.75rem;
+  }
+
+  .dish-cell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+  }
+
+  /* The instrument light the hero gets, scaled down to one object. Without it
+     the dish is a flat cyan silhouette on the page ground; with it, it reads
+     as powered. Sits behind the drawing and takes no pointer events. */
+  .dish-wash {
+    position: absolute;
+    inset: -30%;
+    z-index: -1;
+    pointer-events: none;
+    /* `closest-side` and a stop at 100%, not a bare `circle` with a stop at
+       68%: the default farthest-corner circle did not reach transparent
+       before the element's own edge, and the wash ended in a visible
+       rectangular seam down the left of the cell. */
+    background: radial-gradient(
+      circle closest-side at 38% 64%,
+      color-mix(in srgb, var(--color-cyan) 22%, transparent) 0%,
+      transparent 100%
+    );
+  }
+
+  .big-dish {
+    width: clamp(8.5rem, 23vw, 15.5rem);
+    height: auto;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--color-cyan) 30%, transparent));
+  }
+
+  /* Unlike the button's, these transmit unprompted. The button is an action
+     whose arcs answer a pointer; this is the section's own graphic and there
+     is no pointer to answer — held still it is a dish aimed at nothing.
+     Reduced motion gets the arcs at a fixed opacity instead of none, so the
+     drawing still reads as sending. */
+  .arc {
+    opacity: 0.42;
+    transform-origin: 55.5px 102.5px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .arc {
+      opacity: 0;
+      animation: transmit-big 2.8s var(--ease-out) infinite;
+    }
+
+    .arc:nth-child(2) {
+      animation-delay: 0.35s;
+    }
+
+    .arc:nth-child(3) {
+      animation-delay: 0.7s;
+    }
+
+    .arc:nth-child(4) {
+      animation-delay: 1.05s;
+    }
+  }
+
+  @keyframes transmit-big {
+    0% {
+      opacity: 0;
+      transform: scale(0.82);
+    }
+    28% {
+      opacity: 0.75;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+  }
+
+  /* Below the two-column threshold the dish leads and the copy follows it.
+     Kept rather than dropped — it is the whole point of the section — but it
+     stops competing for width with the buttons. */
+  @media (max-width: 46rem) {
+    .contact {
+      grid-template-columns: 1fr;
+      justify-items: start;
+      gap: 1.25rem;
+    }
+
+    .dish-cell {
+      order: -1;
+      justify-self: center;
+    }
   }
 </style>

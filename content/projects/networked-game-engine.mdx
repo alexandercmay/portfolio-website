@@ -12,8 +12,11 @@ featured: true
 weight: 8
 summary: >-
   A 2D game engine written from scratch for NC State's Game Engine Foundations
-  course — SFML rendering, a priority-ordered event system, collision physics,
-  an embedded V8 runtime for gameplay scripting, and ZeroMQ multiplayer.
+  course — the parts of an engine that are normally invisible, built rather
+  than imported. A priority-ordered event bus every subsystem registers
+  against, collision physics, an embedded scripting runtime so gameplay logic
+  changes without recompiling, client-server multiplayer, and a thread-safe
+  anchored timeline that survives pause and variable tick rates.
 ---
 
 ## The problem

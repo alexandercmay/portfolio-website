@@ -941,6 +941,17 @@ const CHARTS = [LANDSCAPE, PORTRAIT].map((chart) => ({
          The portrait chart fills its canvas, so it keeps the plain margin. */
       margin-top: -4.5rem;
     }
+
+    /* The chart's box still runs ~24px past the summary once it is pulled up,
+       and that empty sky lands on top of the section's own bottom padding —
+       so a closed catalog sat 112px above the rule and only 62px below the
+       lowest star, and read as a caption that had come unmoored from its
+       chart. Pulling the flow back up closes that; the leftover sky is empty
+       and may overlap what follows. Only while CLOSED: an open catalog ends
+       in `.catalog-body`'s own 1.75rem of padding, which this would eat. */
+    .catalog:not([open]) {
+      margin-bottom: -2rem;
+    }
   }
 
   summary {

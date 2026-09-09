@@ -140,7 +140,13 @@ const { capability } = Astro.props
     content: '';
     position: absolute;
     left: 0;
-    top: calc(0.62em - 4px);
+    /* Centred on the FIRST LINE's box, not guessed from the em size. The
+       `calc(0.62em - 4px)` this replaced was inherited from `.marker-list`,
+       which has no padding-top; here the li adds 0.3rem of it, so every dot
+       sat ~6px above its line and the whole column read as drifting upward.
+       0.3rem = the padding, (1.55em - 9px)/2 = half the leading minus half
+       the dot. Both numbers track the padding and line-height above. */
+    top: calc(0.3rem + (1.55em - 9px) / 2);
     width: 9px;
     height: 9px;
     background: radial-gradient(

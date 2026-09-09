@@ -38,7 +38,14 @@ const d = project.data
   <h3>
     <a href={`/projects/${project.id}`}>{d.title}</a>
   </h3>
-  <p class="tagline">{d.tagline}</p>
+  {
+    /* The SUMMARY, not the tagline. The tagline is one line solved for OG
+      images and the <title>; on a card it left the reader knowing what the
+      project was called and nothing about what it did. The summaries name no
+      technologies — the chips directly below are already the answer to that,
+      and saying it twice in two registers reads as padding. */
+  }
+  <p class="synopsis">{d.summary}</p>
 
   <div class="chips">
     <StackChips stack={d.stack} />
@@ -108,10 +115,10 @@ const d = project.data
     color: var(--color-cyan);
   }
 
-  .tagline {
+  .synopsis {
     margin: 0;
     font-size: var(--text-sm);
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--color-text-muted);
   }
 
