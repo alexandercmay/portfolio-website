@@ -102,6 +102,17 @@ export interface Capability {
    */
   metric: { value: string; unit: string }
   /**
+   * Label on the row's disclosure, which hides `proof` until asked for.
+   *
+   * Per-capability rather than one shared string. Three rows in a column all
+   * saying "What that meant in practice" reads as UI chrome the eye skips;
+   * three different lines read as three different offers, and each one is a
+   * chance to say what is behind it. Keep them short and lowercase-shaped —
+   * they are set in small caps, and anything past about forty characters wraps
+   * a control that should be one line.
+   */
+  proofLabel: string
+  /**
    * Evidence. One line each, verb-first, a number wherever one exists.
    * Three or four — past that the metric stops anchoring the row.
    */
@@ -271,6 +282,7 @@ export const resume: Resume = {
       claim:
         'Agents that diagnose live infrastructure in plain language, then act to keep it healthy.',
       metric: { value: '<7s', unit: 'to answer' },
+      proofLabel: 'What the agents actually do',
       proof: [
         'LLM-routable diagnostic tools over production storage — natural language in, grounded answer out',
         'A2A routing for a LlamaIndex ReAct agent on Bedrock, driving live update workflows',
@@ -283,6 +295,7 @@ export const resume: Resume = {
       name: 'Distributed Systems',
       claim: 'Event-driven architecture built to hold up under real load.',
       metric: { value: '1M+', unit: 'messages a day' },
+      proofLabel: 'What holds it up',
       proof: [
         'Architected an AMQP pipeline enriching over a million messages a day',
         'Go controllers that recover failed Kubernetes node operations, avoiding 8-hour redeploys',
@@ -296,6 +309,7 @@ export const resume: Resume = {
       claim:
         'Agents that can act on real systems, and can’t act outside their authority.',
       metric: { value: 'every', unit: 'agent call authorized' },
+      proofLabel: 'How the authorization works',
       proof: [
         'Added the authorized routes to the agent gateway — no tool call reaches a user system unvetted',
         'Extended the middleware that stops an agent reaching a user system it has no claim to',

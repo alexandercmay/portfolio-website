@@ -1,7 +1,5 @@
 ---
-import Chip from './Chip.astro'
 import CapabilityGlyph from './CapabilityGlyph.astro'
-import { techLabel } from '../../content/taxonomy'
 import type { Capability } from '../../content/resume'
 
 /**
@@ -13,6 +11,31 @@ import type { Capability } from '../../content/resume'
  * the evidence under it. That only works while every capability HAS a number —
  * see the note on `Capability` in content/resume.ts.
  *
+ * WHAT A ROW SHOWS AT REST, and why it changed:
+ *
+ * The row used to put the NAME in small caps above a deck-size claim, then
+ * three or four proof lines, then a strip of technology chips — all of it
+ * open, all of it at once. Three of those stacked is a wall of text, and the
+ * reader it punished hardest is the one this page is actually for: someone
+ * scanning to find out what he does. They do not want the evidence yet.
+ *
+ * So the hierarchy is inverted and the detail is folded away:
+ *
+ *   NAME    display size — the thing being scanned for
+ *   CLAIM   one size down — the sentence that qualifies it
+ *   <details> the proof, closed
+ *
+ * The chips are gone entirely rather than moved inside. Every technology they
+ * listed already appears in the Skills chart one section down, drawn as its
+ * own star; repeating the same twenty labels here as bordered pills was the
+ * densest thing on the row and said nothing the chart does not.
+ *
+ * The disclosure is a real <details>, so it costs no JavaScript and works
+ * before CSS loads — the same device SkillGalaxy's star catalog uses, and it
+ * behaves the same way on purpose. Nothing is gated behind it that the row
+ * does not already say in the open: the name and claim carry the meaning, the
+ * proof only evidences it.
+ *
  * Below 56rem the glyph is dropped rather than scaled. It is a schematic with
  * 1.4px strokes and 1.7px vias; at the ~4rem a phone would give it, it stops
  * being a drawing and becomes grey texture beside the text.
@@ -21,25 +44,39 @@ interface Props {
   capability: Capability
 }
 const { capability } = Astro.props
+
+/**
+ * A readout of more than four characters gets a size down.
+ *
+ * The column is 9rem and mono is wide: '<7s' and '1M+' sit comfortably at
+ * --text-2xl, but 'every' at that size runs the full column and reads as a
+ * different, larger element than the two numbers above it — which is exactly
+ * backwards, since it is the softest of the three figures. Measured at build
+ * time rather than guessed with a media query, so a future value picks up the
+ * right size on its own.
+ */
+const longValue = capability.metric.value.length > 4
 ---
 
 <article class="row">
   <div class="metric">
-    <span class="value">{capability.metric.value}</span>
+    <span class:list={['value', longValue && 'long']}>{capability.metric.value}</span>
     <span class="unit">{capability.metric.unit}</span>
   </div>
 
   <div class="body">
-    <p class="name">{capability.name}</p>
+    <h3 class="name">{capability.name}</h3>
     <p class="claim">{capability.claim}</p>
 
-    <ul class="proof" role="list">
-      {capability.proof.map((p) => <li>{p}</li>)}
-    </ul>
-
-    <div class="chips">
-      {capability.stack.map((key) => <Chip>{techLabel(key)}</Chip>)}
-    </div>
+    <details class="more">
+      <summary>
+        <span class="caret" aria-hidden="true"></span>
+        {capability.proofLabel}
+      </summary>
+      <ul class="proof" role="list">
+        {capability.proof.map((p) => <li>{p}</li>)}
+      </ul>
+    </details>
   </div>
 
   <div class="glyph-cell">
@@ -62,9 +99,12 @@ const { capability } = Astro.props
   }
 
   /* ── Readout ──────────────────────────────────────────────────────── */
+  /* Pushed down to sit on the NAME's baseline rather than the row's top edge.
+     The name is display-size now, so a readout aligned to the box top floated
+     level with nothing. */
   .metric {
     text-align: right;
-    padding-top: 0.1rem;
+    padding-top: 0.55rem;
   }
 
   .value {
@@ -78,6 +118,13 @@ const { capability } = Astro.props
     text-shadow: 0 0 28px color-mix(in srgb, var(--color-cyan) 38%, transparent);
   }
 
+  .value.long {
+    font-size: var(--text-xl);
+    /* Rides up slightly so a smaller value still sits on the name's cap line
+       rather than dropping toward the unit label beneath it. */
+    line-height: 1.35;
+  }
+
   .unit {
     display: block;
     margin-top: 0.3rem;
@@ -89,30 +136,140 @@ const { capability } = Astro.props
   }
 
   /* ── Body ─────────────────────────────────────────────────────────── */
+  /*
+    The name leads now, at deck size — it is what a scanning reader is looking
+    for, and it used to be the smallest thing on the row.
+
+    In cyan, which puts six accent elements in this band alongside the three
+    readouts. That was the argument against it; it lost, and the reason is
+    worth recording rather than re-litigating: the readouts are already
+    separated from the names by a 9rem column, a right alignment and a 3x size
+    gap, so they do not actually compete for the same glance. Accent on the
+    name is what makes the section scannable in one pass.
+  */
   .name {
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    letter-spacing: var(--tracking-wide);
-    text-transform: uppercase;
-    color: var(--color-cyan);
-    margin: 0 0 0.6rem;
-  }
-
-  .claim {
-    font-family: var(--font-mono);
     font-size: var(--text-deck);
-    font-weight: 500;
+    font-weight: 600;
     line-height: var(--leading-deck);
     letter-spacing: var(--tracking-tight);
-    color: var(--color-text);
     margin: 0;
-    max-width: 34ch;
+    /* Option B. 30ch, not 22ch — nothing here resized; the names simply stopped
+       wrapping onto three ragged lines. The complaint was raggedness, not
+       scale, and a wider measure is the cheaper of the two fixes. */
+    max-width: 30ch;
     text-wrap: balance;
+
+    /* A single low-contrast band drifting across the accent, once every nine
+       seconds. Subtle to the point of being deniable, which is the intent: it
+       should read as the section being powered rather than as an animation.
+
+       The colour stays a real `color` declaration and the gradient is layered
+       on top only where background-clip:text is supported, so a browser
+       without it renders flat cyan rather than invisible text — the failure
+       mode of the naive `color: transparent` version. */
+    color: var(--color-cyan);
+  }
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    @media (prefers-reduced-motion: no-preference) {
+      .name {
+        background-image: linear-gradient(
+          100deg,
+          var(--color-cyan) 42%,
+          color-mix(in srgb, var(--color-cyan) 62%, white) 50%,
+          var(--color-cyan) 58%
+        );
+        background-size: 320% 100%;
+        background-position: 100% 0;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: name-sheen 9s linear infinite;
+      }
+
+      /* Staggered, or all three sweep in lockstep and the band reads as one
+         effect applied to the page rather than three lit instruments. */
+      .row:nth-child(2) .name {
+        animation-delay: -3s;
+      }
+
+      .row:nth-child(3) .name {
+        animation-delay: -6s;
+      }
+    }
+  }
+
+  @keyframes name-sheen {
+    to {
+      background-position: -220% 0;
+    }
+  }
+
+  /* One step down from the name, and muted. It qualifies the name; it is no
+     longer the headline it was when the name above it was a small-caps label. */
+  .claim {
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+    margin: 0.6rem 0 0;
+    /* Option B, same reasoning as the name above: 56ch instead of 40ch. */
+    max-width: 56ch;
+    text-wrap: balance;
+  }
+
+  /* ── Disclosure ───────────────────────────────────────────────────── */
+  .more {
+    margin-top: 1.1rem;
+  }
+
+  summary {
+    display: flex;
+    /* Only as wide as its own text — a full-width summary makes a click strip
+       across the whole column for a control that is three words long. */
+    width: fit-content;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.1rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    cursor: pointer;
+    list-style: none;
+    transition: color var(--duration-state) var(--ease-out);
+  }
+
+  /* Safari draws its own triangle unless this is removed too. */
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover,
+  summary:focus-visible {
+    color: var(--color-cyan);
+  }
+
+  .caret {
+    width: 0;
+    height: 0;
+    border-left: 5px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    flex-shrink: 0;
+    transition: transform var(--duration-state) var(--ease-out);
+  }
+
+  .more[open] .caret {
+    transform: rotate(90deg);
   }
 
   .proof {
     list-style: none;
-    margin: 1.1rem 0 0;
+    margin: 0.5rem 0 0;
     padding: 0;
     max-width: 68ch;
   }
@@ -157,13 +314,6 @@ const { capability } = Astro.props
     );
   }
 
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 1.25rem;
-  }
-
   /* ── Schematic ────────────────────────────────────────────────────── */
   .glyph-cell {
     opacity: 0.8;
@@ -183,6 +333,7 @@ const { capability } = Astro.props
 
     .metric {
       text-align: left;
+      padding-top: 0;
     }
 
     .glyph-cell {
