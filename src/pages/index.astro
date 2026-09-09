@@ -42,7 +42,25 @@ const featuredProjects = await getFeaturedProjects(3)
     <div class="ambient" aria-hidden="true"></div>
     <div class="wrap">
       <Label class="status">
-        <span class="live" aria-hidden="true"></span>
+        {
+          /*
+            Binary pair, in the primary cyan accent rather than the lime
+            "live/running" channel tokens.css otherwise reserves for exactly
+            this kind of status dot — a deliberate, explicit exception, not
+            an oversight; the semantic-channel rule stays intact everywhere
+            else on the site.
+
+            The shape needed a bigger box than the plain dot it replaced —
+            0.45rem was tuned for a single circle, and two circles at that
+            size read as noise, not bodies. 0.9rem is the size this was
+            actually verified at (a repeated strip at true render size,
+            alongside the header star's candidates) before being picked.
+          */
+        }
+        <svg class="live" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="10" cy="12.5" r="5.3" fill="currentColor" />
+          <circle cx="18" cy="8.5" r="2.6" fill="currentColor" />
+        </svg>
         Open to full-stack &amp; AI engineering roles
       </Label>
       <h1>{basics.name}</h1>
@@ -228,19 +246,21 @@ const featuredProjects = await getFeaturedProjects(3)
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 1.25rem;
-    color: var(--color-lime);
   }
 
   .live {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: var(--radius-full);
-    background: var(--color-lime);
-    box-shadow:
-      var(--glow-lime),
-      0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-cyan) 55%, transparent));
+    flex-shrink: 0;
   }
 
+  /* Same pulse technique the header star uses — filter on the whole SVG,
+     not a box-shadow on a single circle, since a box-shadow can't wrap two
+     independent shapes the way this mark needs. Same 2.4s rhythm too, so the
+     header mark and this one still read as one family of signal even though
+     the shape moved from a plain dot to a paired one. */
   @media (prefers-reduced-motion: no-preference) {
     .live {
       animation: pulse-live 2.4s var(--ease-out) infinite;
@@ -250,14 +270,10 @@ const featuredProjects = await getFeaturedProjects(3)
   @keyframes pulse-live {
     0%,
     100% {
-      box-shadow:
-        var(--glow-lime),
-        0 0 0 2px color-mix(in srgb, var(--color-lime) 22%, transparent);
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-cyan) 55%, transparent));
     }
     50% {
-      box-shadow:
-        0 0 16px color-mix(in srgb, var(--color-lime) 70%, transparent),
-        0 0 0 5px color-mix(in srgb, var(--color-lime) 8%, transparent);
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-cyan) 80%, transparent));
     }
   }
 
@@ -266,8 +282,10 @@ const featuredProjects = await getFeaturedProjects(3)
     font-weight: 700;
     letter-spacing: var(--tracking-display);
     margin: 0 0 0.9rem;
-    /* Permitted: large display type. Never on running copy. */
-    text-shadow: 0 0 32px color-mix(in srgb, var(--color-cyan) 22%, transparent);
+    /* Permitted: large display type. Never on running copy. Blur and
+       opacity boosted alongside the Ice-Deep accent swap in tokens.css — see
+       the comment on --c-cyan there for why. */
+    text-shadow: 0 0 38px color-mix(in srgb, var(--color-cyan) 30%, transparent);
   }
 
   .headline {

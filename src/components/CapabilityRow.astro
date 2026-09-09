@@ -73,8 +73,9 @@ const { capability } = Astro.props
     font-size: var(--text-2xl);
     letter-spacing: var(--tracking-tight);
     color: var(--color-cyan);
-    /* Permitted: this is a display-size readout, not running copy. */
-    text-shadow: 0 0 24px color-mix(in srgb, var(--color-cyan) 30%, transparent);
+    /* Permitted: this is a display-size readout, not running copy. Blur and
+       opacity boosted alongside the Ice-Deep accent swap in tokens.css. */
+    text-shadow: 0 0 28px color-mix(in srgb, var(--color-cyan) 38%, transparent);
   }
 
   .unit {
@@ -118,31 +119,36 @@ const { capability } = Astro.props
 
   .proof li {
     position: relative;
-    padding: 0.3rem 0 0.3rem 0.95rem;
+    padding: 0.3rem 0 0.3rem 1.35rem;
     font-size: var(--text-sm);
     line-height: 1.55;
     color: var(--color-text-muted);
   }
 
-  /* A tick, not a bullet — the same scale mark the milestone rows used. It is
-     deliberately not `.marker-list`'s radial dot, which means "list item"
-     everywhere else on the site. */
+  /* The same soft radial-gradient dot as `.marker-list` in global.css (the
+     coursework list under Education is the other place it appears) — a
+     glowing core fading to transparent, not a flat circle. Duplicated
+     rather than sharing the class: `.marker-list > li` and `.proof li` set
+     the same padding-left at equal specificity from two different
+     stylesheets, and whichever loads second silently wins that fight. A
+     literal copy has no such race. This used to be a short horizontal tick
+     instead, on the theory that a bullet means "list item" everywhere else
+     on the site and a proof line is closer to a timeline entry — but having
+     two different bullet shapes on the same page read as an inconsistency,
+     not a distinction, so it was reverted. */
   .proof li::before {
     content: '';
     position: absolute;
     left: 0;
-    top: 0.85em;
-    width: 0.4rem;
-    height: 1px;
-    background: var(--color-border);
-  }
-
-  .row:hover .proof li::before {
-    background: color-mix(in srgb, var(--color-cyan) 60%, transparent);
-  }
-
-  .proof li::before {
-    transition: background var(--duration-state) var(--ease-out);
+    top: calc(0.62em - 4px);
+    width: 9px;
+    height: 9px;
+    background: radial-gradient(
+      circle,
+      var(--color-cyan) 0 18%,
+      color-mix(in srgb, var(--color-cyan) 45%, transparent) 38%,
+      transparent 72%
+    );
   }
 
   .chips {

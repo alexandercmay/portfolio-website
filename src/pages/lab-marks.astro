@@ -1,0 +1,335 @@
+---
+/**
+ * SCRATCH — round 2. The comet from round 1 looked fine as a concept and
+ * failed in the browser: at the real 0.9rem render size its tail+head
+ * collapsed into what reads as an eye emoji, not a comet. That failure is
+ * the whole brief for this round — every candidate below is designed around
+ * the site's OWN stated small-icon rules (EpochIcon.astro: "a stroke under
+ * about 1.5px is not a line, it is a rumour"; "ONE dominant mass") and is
+ * checked against a repeated strip at TRUE render size, not just a big
+ * blown-up reference. The big reference is still shown alongside — for
+ * shape, not for legibility — but the strip is the actual test.
+ * Not linked from anywhere. Delete once directions are picked.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Label from '@/components/Label.astro'
+
+const headerMarks = [
+  {
+    id: 'bold-spark',
+    name: 'A — Bold spark',
+    note: 'The round-1 sparkle, thickened: shorter, fatter points and a bigger core. The original was legible but thin; this is the same idea built for a 17px box instead of a large preview.',
+  },
+  {
+    id: 'point',
+    name: 'B — Distant point',
+    note: 'Carried over from round 1 unchanged — it already passed the small-scale test (a bright core, a soft halo, nothing else) and nothing here beats it on legibility.',
+  },
+  {
+    id: 'asterisk',
+    name: 'C — Asterisk',
+    note: 'Three thick strokes crossing at 60°, not 90° — so it reads as a spark/mark rather than a plus sign, the exact failure the corona+spikes star was reverted for.',
+  },
+  {
+    id: 'binary',
+    name: 'D — Binary pair',
+    note: 'Two solid masses, one large one small, touching. The fewest distinct elements of any candidate — nothing to lose at small size because there is nothing fine to begin with.',
+  },
+]
+
+const statusMarks = [
+  {
+    id: 'spark',
+    name: '1 — Filled spark',
+    note: 'The round-1 twinkling sparkle, which already passed the real-size test — carried forward, not reinvented.',
+  },
+  {
+    id: 'point',
+    name: '2 — Distant point',
+    note: 'The lime version of header option B. If B is the header pick, this is the status mark that keeps the two reading as one family rather than two unrelated decisions.',
+  },
+  {
+    id: 'asterisk',
+    name: '3 — Asterisk',
+    note: 'The lime version of header option C, for the same reason.',
+  },
+  {
+    id: 'blip',
+    name: '4 — Rising blip',
+    note: 'A core with a single short ray, angled up — a signal being picked up, not a shape being drawn. The one candidate that is not a recolored header option.',
+  },
+]
+
+/**
+ * Astro frontmatter is plain TypeScript, not JSX — a helper function here
+ * cannot return template markup the way a .tsx component could. Raw SVG
+ * inner-markup strings, injected with `set:html`, sidestep that: every
+ * string below is hand-written and trusted (nothing here comes from user
+ * input), so `set:html` carries none of the risk it would with anything
+ * external.
+ */
+const markSvg: Record<string, string> = {
+  // A straight-line 8-vertex star (4 outer points, 4 inner) rather than the
+  // round-1 sparkle's smooth bezier curves — angular facets are easier to
+  // verify correct by construction than hand-typed curve math, and read as
+  // a distinctly different, blunter mark.
+  'bold-spark': '<path d="M12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9Z" fill="currentColor" />',
+  // The exact round-1 diamond sparkle (smooth bezier concave points), kept
+  // under its own key — status option 1 claims to be this unchanged, so it
+  // has to actually be this path, not round 2's new straight-edged star.
+  spark: '<path d="M12 1.8C12 7 13 10 15.2 12 13 14 12 17 12 22.2 12 17 11 14 8.8 12 11 10 12 7 12 1.8Z" fill="currentColor" />',
+  point: '<circle cx="12" cy="12" r="4.4" fill="currentColor" />',
+  asterisk:
+    '<path d="M12 4v16M12 4 5.6 15.8M12 4l6.4 11.8M5.6 8.2 18.4 15.8M18.4 8.2 5.6 15.8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />',
+  binary:
+    '<circle cx="10" cy="12.5" r="5.3" fill="currentColor" /><circle cx="18" cy="8.5" r="2.6" fill="currentColor" />',
+  blip: '<circle cx="10" cy="14" r="4.6" fill="currentColor" /><path d="M14 10 20 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />',
+}
+---
+
+<BaseLayout title="Lab — marks v2" description="scratch" wide>
+  <div class="wrap">
+    <p class="section-label">HEADER WORDMARK — round 2, built for the 17px box</p>
+    <div class="grid">
+      {
+        headerMarks.map((m) => (
+          <div class="mark-block">
+            <header class="mock">
+              <div class="inner">
+                <a class="wordmark">
+                  <svg
+                    class="mark-svg"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                    set:html={markSvg[m.id]}
+                  />
+                  Alexander May
+                </a>
+                <nav class="mini-nav">
+                  <a aria-current="page">projects</a>
+                  <a>resume</a>
+                </nav>
+              </div>
+            </header>
+
+            <p class="strip-label">true size, repeated — the actual test</p>
+            <div class="strip">
+              {Array.from({ length: 14 }).map(() => (
+                <svg
+                  class="strip-svg"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                  set:html={markSvg[m.id]}
+                />
+              ))}
+            </div>
+
+            <p class="mark-name">{m.name}</p>
+            <p class="mark-note">{m.note}</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="section-label">HERO STATUS — round 2, built for the 14px box</p>
+    <div class="grid">
+      {
+        statusMarks.map((m) => (
+          <div class="mark-block">
+            <div class="mock status-mock">
+              <Label class="status">
+                <span class="indicator" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                    set:html={markSvg[m.id]}
+                  />
+                </span>
+                Open to full-stack &amp; AI engineering roles
+              </Label>
+            </div>
+
+            <p class="strip-label">true size, repeated — the actual test</p>
+            <div class="strip strip-lime">
+              {Array.from({ length: 16 }).map(() => (
+                <svg
+                  class="strip-svg-sm"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                  set:html={markSvg[m.id]}
+                />
+              ))}
+            </div>
+
+            <p class="mark-name">{m.name}</p>
+            <p class="mark-note">{m.note}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .wrap {
+    max-width: var(--container-content);
+    margin: 0 auto;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  .section-label {
+    margin: 3rem 0 1.25rem;
+    padding-top: 2rem;
+    border-top: 1px dashed var(--color-amber);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-amber);
+  }
+
+  .section-label:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .mark-block {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mock {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    overflow: hidden;
+  }
+
+  .status-mock {
+    padding: 1.25rem;
+  }
+
+  .inner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .mini-nav {
+    display: flex;
+    gap: 1.25rem;
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .mini-nav a {
+    color: var(--color-text-muted);
+  }
+
+  .mini-nav a[aria-current='page'] {
+    color: var(--color-cyan);
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  .mark-svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-cyan) 55%, transparent));
+    flex-shrink: 0;
+  }
+
+  /* ── the actual test: true size, repeated ────────────────────────── */
+  .strip-label {
+    margin: 0.9rem 0 0.4rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+  }
+
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+  }
+
+  .strip-svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--color-cyan);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-cyan) 50%, transparent));
+    flex-shrink: 0;
+  }
+
+  .strip-lime .strip-svg-sm {
+    color: var(--color-lime);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-lime) 55%, transparent));
+  }
+
+  .strip-svg-sm {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .mark-name {
+    margin: 0.75rem 0 0.2rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  .mark-note {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+    line-height: 1.6;
+  }
+
+  /* ── status indicator ─────────────────────────────────────────────── */
+  .indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--color-lime);
+    margin-right: 0.15rem;
+    vertical-align: -0.15em;
+  }
+
+  .indicator svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-lime) 60%, transparent));
+  }
+</style>

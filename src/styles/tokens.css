@@ -59,8 +59,15 @@
      Instrument light. Applied to accents, borders, and large display type
      ONLY — glow on running copy destroys legibility and is the fastest way
      this aesthetic tips into unreadable. */
-  --glow-cyan: 0 0 12px color-mix(in srgb, var(--color-cyan) 45%, transparent);
-  --glow-cyan-lg: 0 0 28px color-mix(in srgb, var(--color-cyan) 35%, transparent);
+  /* Cyan's two radii/opacities are boosted above lime/violet/amber's, not
+     matched to them — glow is a contrast effect (a bright blur against a
+     dark ground), and Ice-Deep, chosen for being cooler than the original
+     #22d3ee cyan without Ice's (#7dd3fc) softness, still has less contrast
+     to spend than the fully-saturated original. Wider, brighter halos make
+     up the difference. See tokens.css's dark-theme --c-cyan for that
+     history. */
+  --glow-cyan: 0 0 16px color-mix(in srgb, var(--color-cyan) 55%, transparent);
+  --glow-cyan-lg: 0 0 34px color-mix(in srgb, var(--color-cyan) 45%, transparent);
   --glow-lime: 0 0 10px color-mix(in srgb, var(--color-lime) 55%, transparent);
   --glow-violet: 0 0 18px color-mix(in srgb, var(--color-violet) 40%, transparent);
 
@@ -178,11 +185,16 @@
   --c-text-muted: #9aa7b4; /*  7.93:1 */
   --c-text-subtle: #7d8b9a; /*  5.59:1 — the floor */
 
-  /* Lightened and desaturated from the original #22d3ee — same hue family,
-     just colder and quieter rather than a different accent. Verified against
-     all three dark grounds before the swap: 11.95:1 / 11.16:1 / 10.45:1
-     against bg / surface / raised, all above this file's stated 4.76 floor. */
-  --c-cyan: #7dd3fc; /* 11.95:1 */
+  /* Ice-Deep — a second pass on the original #22d3ee cyan. The first pass,
+     Ice (#7dd3fc), lightened and desaturated it to read colder and quieter,
+     but glow is a contrast effect and the paler core left less of it to
+     spend: buttons and headlines read calm bordering on flat. Ice-Deep sits
+     exactly between the two — cooler and more saturated than Ice, cooler
+     than the original — paired with the boosted --glow-cyan/-lg below to
+     recover the punch without giving back the color. Verified against all
+     three dark grounds before the swap: 11.35:1 / 10.60:1 / 9.93:1 against
+     bg / surface / raised, all above this file's stated 4.76 floor. */
+  --c-cyan: #4fd3f5; /* 11.35:1 */
   --c-lime: #a3e635; /* 12.91:1 */
   --c-violet: #c4b5fd; /* 10.54:1 */
   --c-amber: #fbbf24; /* 11.66:1 */
@@ -225,7 +237,12 @@
     --c-text-muted: #4a5763;
     --c-text-subtle: #5c6b7a;
 
-    --c-cyan: #0e7490;
+    /* Bold cerulean — was #0e7490, a muted teal picked with zero contrast
+       margin (exactly 4.76:1, this file's own floor, against --c-raised).
+       That margin, not the hue, was why it read flat: there was nothing
+       held back to look vivid with. This clears 5.69 / 6.06 / 5.38 : 1
+       against bg / surface / raised — real headroom on every ground. */
+    --c-cyan: #0864b1;
     --c-lime: #446d0c;
     --c-violet: #6d28d9;
     --c-amber: #945708;
@@ -273,7 +290,10 @@
   --c-text-muted: #4a5763;
   --c-text-subtle: #5c6b7a;
 
-  --c-cyan: #0e7490;
+  /* Bold cerulean — see the matching comment on the media-query block
+     above; the two blocks are kept identical by design (default vs.
+     explicit toggle), so the same swap has to land in both. */
+  --c-cyan: #0864b1;
   --c-lime: #446d0c;
   --c-violet: #6d28d9;
   --c-amber: #945708;

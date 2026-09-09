@@ -260,8 +260,8 @@ export const resume: Resume = {
   capabilities: [
     {
       glyph: 'ai',
-      name: 'AI Systems',
-      claim: 'Agents that answer real questions about live infrastructure.',
+      name: 'Agentic Infrastructure and Operations',
+      claim: 'Agents that diagnose production and keep it healthy.',
       metric: { value: '<7s', unit: 'to answer' },
       proof: [
         'LLM-routable diagnostic tools over production storage — natural language in, grounded answer out',
@@ -272,8 +272,8 @@ export const resume: Resume = {
     },
     {
       glyph: 'backend',
-      name: 'Distributed Backend',
-      claim: 'Event-driven services built to hold up under real load.',
+      name: 'Distributed Systems',
+      claim: 'Event-driven architecture built to hold up under real load.',
       metric: { value: '1M+', unit: 'messages a day' },
       proof: [
         'Architected an AMQP pipeline enriching over a million messages a day',
@@ -285,7 +285,7 @@ export const resume: Resume = {
     {
       glyph: 'security',
       name: 'AI-Native Security',
-      claim: 'Agents that can only do what they are authorized to do.',
+      claim: 'Empowering agents to act while enforcing authorization and data protection.',
       metric: { value: 'every', unit: 'agent call authorized' },
       proof: [
         'Added the authorized routes to the agent gateway — no tool call reaches a user system unvetted',

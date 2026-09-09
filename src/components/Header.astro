@@ -15,36 +15,31 @@ const path = Astro.url.pathname
     <a class="wordmark" href="/">
       {
         /*
-          The mark: a pulsing star, echoing the hero's "live" status dot and
-          drawn with the exact same corona/spikes/core construction as
-          SectionHeader's own star marker (section 01, "a star, burning and
-          working") — same geometry the whole site already uses for "star",
-          not a second invented one. It replaced a bracket-wrapped
-          [ALEXANDER MAY] lockup, which was the one piece of header chrome
-          that referenced nothing else on the page.
+          The mark: a pulsing four-point star, deliberately NOT drawn with
+          the corona/spikes/core construction SectionHeader's own star marker
+          uses on section 01 ("What I build") — that earlier version was the
+          exact same icon repeated in two places on one page, and got
+          replaced for it. It in turn replaced a bracket-wrapped
+          [ALEXANDER MAY] lockup, the piece of header chrome that referenced
+          nothing else on the page at all.
 
-          Went through two heavier builds first — a spinning-cross version,
-          then a four-planet orbital system with a ringed outermost body —
-          both reverted as too busy for chrome that sits on every page,
-          permanently, rather than a one-shot hero moment. The spikes
-          themselves were never the problem: ROTATING them read as a turbine,
-          not a star, since a plus-sign has no "front" for the eye to track.
-          Static, they read as a star just fine — SectionHeader's marker
-          proves it — so this keeps them fixed and puts the only motion on
-          the glow.
+          A single filled, straight-edged 8-vertex polygon (4 outer points,
+          4 inner) rather than the smooth bezier curves an earlier sparkle
+          draft used — angular facets are correct-by-construction in a way
+          hand-typed curve math is not, and they hold their shape at the 17px
+          this actually renders at, which was verified with a repeated strip
+          at true render size before this was picked over three other
+          candidates (a bare point of light, a six-ray asterisk, a two-body
+          pair) that were built alongside it for exactly that comparison.
+
+          Two heavier builds were tried and reverted before any of these
+          four: a spinning-cross version, then a four-planet orbital system
+          with a ringed outermost body, both too busy for chrome that sits on
+          every page permanently rather than a one-shot hero moment.
         */
       }
       <svg class="star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.14" />
-        <path
-          d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"
-          stroke="currentColor"
-          stroke-width="1.1"
-          stroke-linecap="round"
-          opacity="0.55"
-          fill="none"
-        />
-        <circle cx="12" cy="12" r="5.6" fill="currentColor" />
+        <path d="M12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9Z" fill="currentColor" />
       </svg>
       Alexander May
     </a>
