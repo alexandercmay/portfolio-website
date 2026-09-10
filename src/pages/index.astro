@@ -237,7 +237,9 @@ const featuredProjects = await getFeaturedProjects(3)
                  made three of them in one screen. The big one already says
                  transmission; the button only has to say the address. */
             }
-            <Button href={`mailto:${basics.email}`}>{basics.email}</Button>
+            <Button href={`mailto:${basics.email}`} class="email-link"
+              >{basics.email}</Button
+            >
             {
               basics.profiles.map((profile) => (
                 <Button href={profile.url} variant="secondary">
@@ -277,40 +279,49 @@ const featuredProjects = await getFeaturedProjects(3)
                 rim stroke. Change the ellipse and every number here has to be
                 re-solved; do it in a generator, not by nudging path data. */
             }
-            <ellipse
-              cx="55.5"
-              cy="102.5"
-              rx="29.5"
-              ry="16"
-              transform="rotate(50 55.5 102.5)"
-              fill="currentColor"
-              fill-opacity="0.6"
-              stroke="currentColor"
-              stroke-width="2.4"></ellipse>
-            <g
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.3"
-              stroke-linecap="round"
-              opacity="0.62"
-            >
-              <path
-                d="M64.2 112.9L73.9 124.4M55.0 111.8L54.4 122.1M46.3 101.4L36.0 100.2M46.8 92.1L37.1 80.6M56.0 93.2L56.6 82.9M64.7 103.6L75.0 104.8"
-              ></path>
+            {
+              /* Everything that moves when the dish slews is inside <g
+                 class="reflector">: bowl, seams, feed arm, feed. The mast and
+                 base below are deliberately OUTSIDE it — a real antenna swings
+                 on its mount and the pedestal stays planted, and rotating the
+                 whole drawing instead tips the base off the ground. */
+            }
+            <g class="reflector">
               <ellipse
                 cx="55.5"
                 cy="102.5"
-                rx="13.6"
-                ry="7.4"
-                transform="rotate(50 55.5 102.5)"></ellipse>
+                rx="29.5"
+                ry="16"
+                transform="rotate(50 55.5 102.5)"
+                fill="currentColor"
+                fill-opacity="0.6"
+                stroke="currentColor"
+                stroke-width="2.4"></ellipse>
+              <g
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                opacity="0.62"
+              >
+                <path
+                  d="M64.2 112.9L73.9 124.4M55.0 111.8L54.4 122.1M46.3 101.4L36.0 100.2M46.8 92.1L37.1 80.6M56.0 93.2L56.6 82.9M64.7 103.6L75.0 104.8"
+                ></path>
+                <ellipse
+                  cx="55.5"
+                  cy="102.5"
+                  rx="13.6"
+                  ry="7.4"
+                  transform="rotate(50 55.5 102.5)"></ellipse>
+              </g>
+              <path
+                d="M55.5 102.5 72.5 88.2"
+                stroke="currentColor"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                fill="none"></path>
+              <circle cx="74.5" cy="86.5" r="5.4" fill="currentColor"></circle>
             </g>
-            <path
-              d="M55.5 102.5 72.5 88.2"
-              stroke="currentColor"
-              stroke-width="2.6"
-              stroke-linecap="round"
-              fill="none"></path>
-            <circle cx="74.5" cy="86.5" r="5.4" fill="currentColor"></circle>
             {
               /* Mast and base stay filled. The reflector is the thing that had to
                 open up; a hollow mast would only read as an unfinished drawing. */
@@ -848,6 +859,69 @@ const featuredProjects = await getFeaturedProjects(3)
     100% {
       opacity: 0;
       transform: scale(1.12);
+    }
+  }
+
+  /* ── Slew to the pointer ──────────────────────────────────────────── */
+  /*
+    Hovering or focusing the email address makes the antenna answer: the
+    reflector swings a few degrees up its mount, the wash and the drop-shadow
+    brighten, and the beam spools up from a 2.8s cycle to 1.1s. The section
+    stops being an illustration beside a button and becomes an instrument the
+    button is wired to.
+
+    `:has()` is what makes this possible with no JavaScript — the dish is a
+    SIBLING of the copy, so there is no descendant or general-sibling selector
+    that reaches it from the link. A browser without `:has()` simply gets the
+    resting state, which is a complete drawing on its own; nothing is gated
+    behind the hover.
+
+    `:focus-visible` alongside `:hover` throughout, so this is not a
+    pointer-only affordance.
+  */
+  .contact:has(.email-link:hover) .big-dish,
+  .contact:has(.email-link:focus-visible) .big-dish {
+    filter: drop-shadow(0 0 30px color-mix(in srgb, var(--color-cyan) 52%, transparent));
+  }
+
+  .contact:has(.email-link:hover) .dish-wash,
+  .contact:has(.email-link:focus-visible) .dish-wash {
+    background: radial-gradient(
+      circle closest-side at 38% 64%,
+      color-mix(in srgb, var(--color-cyan) 34%, transparent) 0%,
+      transparent 100%
+    );
+  }
+
+  .big-dish,
+  .dish-wash {
+    transition:
+      filter var(--duration-state) var(--ease-out),
+      background var(--duration-state) var(--ease-out);
+  }
+
+  /* The swing and the faster beam are motion, so both are gated. The glow
+     above is not — a brightness change still answers the pointer for a reader
+     who has asked for no animation. */
+  @media (prefers-reduced-motion: no-preference) {
+    /* Origin is the top of the mast, not the bowl's centre: an antenna pivots
+       where it is bolted. Rotating about the reflector's own centre makes it
+       spin in place, which reads as a loading spinner rather than as aiming. */
+    .reflector {
+      transform-origin: 51px 106px;
+      transition: transform 480ms var(--ease-out);
+    }
+
+    /* Negative, so it cranes UP toward the beam it is already sending.
+       Positive swung it down into the mast. */
+    .contact:has(.email-link:hover) .reflector,
+    .contact:has(.email-link:focus-visible) .reflector {
+      transform: rotate(-9deg);
+    }
+
+    .contact:has(.email-link:hover) .arc,
+    .contact:has(.email-link:focus-visible) .arc {
+      animation-duration: 1.1s;
     }
   }
 
