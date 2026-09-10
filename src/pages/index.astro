@@ -227,9 +227,17 @@ const featuredProjects = await getFeaturedProjects(3)
             talk about the work above. Email is the direct line.
           </p>
           <div class="actions">
-            <Button href={`mailto:${basics.email}`} transmit>
-              {basics.email}
-            </Button>
+            {
+              /* No `transmit` here, unlike the hero's. Button.astro's own note
+                 says the dish is only for the reach-out action because a page
+                 where every button transmits is a page where transmitting
+                 means nothing — and inside THIS section that argument turns on
+                 itself. The section marker is a dish, the graphic beside this
+                 is a dish at 15rem, and a third one at 1.15em on the button
+                 made three of them in one screen. The big one already says
+                 transmission; the button only has to say the address. */
+            }
+            <Button href={`mailto:${basics.email}`}>{basics.email}</Button>
             {
               basics.profiles.map((profile) => (
                 <Button href={profile.url} variant="secondary">
@@ -748,9 +756,15 @@ const featuredProjects = await getFeaturedProjects(3)
   /* ── Contact ──────────────────────────────────────────────────────── */
   .contact {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    /* Both columns sized to their content and packed to the start, rather than
+       a 1fr copy column that stretched to the container and shoved the dish
+       against the right edge. The copy is capped at 44ch either way, so the
+       old 1fr was pure empty space between the two things that belong
+       together. */
+    grid-template-columns: auto auto;
+    justify-content: start;
     align-items: center;
-    gap: clamp(1.5rem, 5vw, 3.5rem);
+    gap: clamp(1.5rem, 4vw, 3rem);
   }
 
   .contact .lead {

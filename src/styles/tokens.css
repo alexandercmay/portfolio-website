@@ -44,7 +44,10 @@
   --container-prose: 68ch;
   --container-content: 1100px;
   --container-wide: 1400px;
-  --spacing-section: clamp(3.5rem, 9vw, 7rem);
+  /* Was clamp(3.5rem, 9vw, 7rem) — 112px above AND below every rule on a
+     desktop viewport, so consecutive sections sat 224px apart and the page
+     read as a series of islands rather than one document. */
+  --spacing-section: clamp(2.75rem, 6.5vw, 5rem);
 
   /* Shape — rounded, paired with 1px hard borders and no soft shadows.
      Rounded + crisp border reads as hardware; rounded + blur reads as a
